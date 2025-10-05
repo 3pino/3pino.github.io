@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMR Formatter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Section: Metadata Editor -->
+        <section class="metadata-section">
+            <h2>Metadata</h2>
+            <div class="metadata-grid">
+                <div class="metadata-group">
+                    <label for="nuclei">Nuclei:</label>
+                    <div id="nuclei" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., ¹H"></div>
+                    <div class="metadata-dropdown" id="nuclei-dropdown">
+                        <!-- Dropdown items will be dynamically generated from NUCLEI_PRESETS -->
+                    </div>
+                </div>
+                <div class="metadata-group">
+                    <label for="solvent">Solvent:</label>
+                    <div id="solvent" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., CDCl₃"></div>
+                    <div class="metadata-dropdown" id="solvent-dropdown">
+                        <!-- Dropdown items will be dynamically generated from SOLVENT_PRESETS -->
+                    </div>
+                </div>
+                <div class="metadata-group">
+                    <label for="frequency">Frequency (MHz):</label>
+                    <input type="number" id="frequency" class="metadata-input" step="1" placeholder="e.g., 500">
+                </div>
+            </div>
+            <div class="metadata-grid">
+                <div class="metadata-group">
+                    <label for="shift-precision">Chemical Shift Precision:</label>
+                    <input type="number" id="shift-precision" class="metadata-input" min="0" max="4" value="2">
+                </div>
+                <div class="metadata-group">
+                    <label for="j-precision">J-value Precision:</label>
+                    <input type="number" id="j-precision" class="metadata-input" min="0" max="4" value="1">
+                </div>
+                <div class="metadata-group">
+                    <label for="sort-order">Sort Order:</label>
+                    <select id="sort-order" class="metadata-input">
+                        <option value="desc">Descending (High → Low)</option>
+                        <option value="asc">Ascending (Low → High)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Middle Section: Table Editor -->
+        <section class="table-section">
+            <h2>Peak Data</h2>
+            <div class="table-controls">
+                <button id="add-peak-btn" class="control-btn">Add Peak</button>
+                <button id="remove-peak-btn" class="control-btn">Remove Selected</button>
+                <div class="formatting-toolbar">
+                    <span class="toolbar-label">Format:</span>
+                    <button id="format-bold-btn" class="format-btn" title="Bold (Ctrl+B)"><b>B</b></button>
+                    <button id="format-italic-btn" class="format-btn" title="Italic (Ctrl+I)"><i>I</i></button>
+                    <button id="format-sub-btn" class="format-btn" title="Subscript">x<sub>2</sub></button>
+                    <button id="format-sup-btn" class="format-btn" title="Superscript">x<sup>2</sup></button>
+                    <button id="insert-endash-btn" class="format-btn" title="Insert en-dash (–)">–</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="nmr-table" class="nmr-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-header"><input type="checkbox" id="select-all-checkbox"></th>
+                            <th>δ (ppm)</th>
+                            <th>Multiplicity</th>
+                            <!-- J columns will be dynamically inserted here -->
+                            <th class="integration-header">Integration</th>
+                            <th class="assignment-header">Assignment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nmr-table-body">
+                        <!-- Table rows will be dynamically generated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Conversion Buttons -->
+        <section class="conversion-section">
+            <button id="convert-up-btn" class="conversion-btn" style="display: none;" title="Convert rich text to table (disabled)">↑ Parse Text</button>
+            <button id="convert-down-btn" class="conversion-btn" title="Generate formatted text from table">↓ Generate Text</button>
+        </section>
+
+        <!-- Bottom Section: Rich Text Display (Read-only) -->
+        <section class="rich-text-section">
+            <div class="section-header">
+                <h2>Formatted Output</h2>
+                <button id="copy-btn" class="copy-btn" title="Copy formatted text to clipboard">Copy</button>
+            </div>
+            <!--
+                To enable editing, uncomment the line below and comment out the read-only line:
+                <div id="rich-text-editor" class="rich-text-editor" contenteditable="true"></div>
+            -->
+            <div id="rich-text-editor" class="rich-text-editor" contenteditable="false"></div>
+        </section>
+    </div>
+
+    <!-- Load browser-compatible bundle -->
+    <script src="dist/browser.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
