@@ -773,15 +773,18 @@ class NMRFormatterApp {
                 shiftInput.classList.remove('error');
             }
 
-            // Validate multiplicity
+            // Validate multiplicity (only for 1H NMR)
+            const nucleiValue = this.metadataInputs.nuclei.textContent.trim();
+            const is1HNMR = nucleiValue.includes('1') && nucleiValue.includes('H');
+
             const multiplicityInput = multInput.value.trim();
             const multiplicity = this.convertMultiplicityToText(multiplicityInput);
 
             // Check if multiplicity is valid
             let isValidMultiplicity = false;
             if (multiplicityInput === '') {
-                // Empty multiplicity is invalid
-                isValidMultiplicity = false;
+                // Empty multiplicity is invalid (only for 1H NMR)
+                isValidMultiplicity = !is1HNMR;
             } else {
                 try {
                     // Try to get J-counts to validate
@@ -792,16 +795,16 @@ class NMRFormatterApp {
                 }
             }
 
-            if (!isValidMultiplicity) {
+            if (!isValidMultiplicity && is1HNMR) {
                 multInput.classList.add('error');
                 hasErrors = true;
             } else {
                 multInput.classList.remove('error');
             }
 
-            // Validate integration
+            // Validate integration (only for 1H NMR)
             const integrationValue = intInput.value.trim();
-            if (integrationValue === '' || isNaN(parseFloat(integrationValue))) {
+            if ((integrationValue === '' || isNaN(parseFloat(integrationValue))) && is1HNMR) {
                 intInput.classList.add('error');
                 hasErrors = true;
             } else {

@@ -331,11 +331,13 @@ function formatJValues(jValues, decimalPlaces = 2) {
     const jString = jValues.map(j => j.toFixed(decimalPlaces)).join(", ");
     return ` <I>J</I> = ${jString} Hz`;
 }
-function formatIntegration(integration, decimalPlaces = 1) {
+function formatIntegration(integration, decimalPlaces = 1, nuclei = "1H") {
     // Handle empty/zero values
     if (integration === 0 || integration === "" || integration === null || integration === undefined) {
         return "";
     }
+    // Extract the atom symbol from nuclei (e.g., "1H" -> "H", "13C" -> "C")
+    const atomSymbol = nuclei.replace(/^\d+/, "") || "H";
     // Handle string integration values
     if (typeof integration === "string") {
         const trimmed = integration.trim();
@@ -346,19 +348,19 @@ function formatIntegration(integration, decimalPlaces = 1) {
         if (!isNaN(parsed)) {
             if (parsed === 0)
                 return "";
-            return `, ${parsed.toFixed(decimalPlaces)}H`;
+            return `, ${parsed.toFixed(decimalPlaces)}${atomSymbol}`;
         }
-        // If it's already formatted (contains 'H'), return as is with comma
-        if (trimmed.includes('H')) {
+        // If it's already formatted (contains atom symbols), return as is with comma
+        if (/[A-Z]/.test(trimmed)) {
             return trimmed.startsWith(',') ? trimmed : `, ${trimmed}`;
         }
-        // Otherwise, treat as raw integration string and add H
-        return `, ${trimmed}H`;
+        // Otherwise, treat as raw integration string and add atom symbol
+        return `, ${trimmed}${atomSymbol}`;
     }
     // Handle number integration values with precise decimal formatting
     if (integration === 0)
         return "";
-    return `, ${integration.toFixed(decimalPlaces)}H`;
+    return `, ${integration.toFixed(decimalPlaces)}${atomSymbol}`;
 }
 // Helper function to format multiplicity
 function formatMultiplicity(multiplicity) {
@@ -373,11 +375,11 @@ function formatAssignment(assignment) {
     return assignment.trim();
 }
 // Helper function to format a single peak
-function formatSinglePeak(peak, shiftDecimalPlaces = 2, jValueDecimalPlaces = 1, integrationDecimalPlaces = 0) {
+function formatSinglePeak(peak, shiftDecimalPlaces = 2, jValueDecimalPlaces = 1, integrationDecimalPlaces = 0, nuclei = "1H") {
     const shift = formatChemicalShift(peak.chemicalShift, shiftDecimalPlaces);
     const mult = formatMultiplicity(peak.multiplicity);
     const jValues = formatJValues(peak.jValues, jValueDecimalPlaces);
-    const integration = formatIntegration(peak.integration, integrationDecimalPlaces);
+    const integration = formatIntegration(peak.integration, integrationDecimalPlaces, nuclei);
     const assignment = formatAssignment(peak.assignment);
     // Build the peak string: δ shift (multiplicity, J-values, integration, assignment)
     let peakStr = shift;
@@ -432,6 +434,7 @@ function formatMetadata(metadata) {
 }
 // Main formatting function
 function generateFormattedText(data, shiftDecimalPlaces = 2, jValueDecimalPlaces = 1, integrationDecimalPlaces = 0) {
+    var _a;
     if (!data || !data.peaks || data.peaks.length === 0) {
         return "";
     }
@@ -443,7 +446,8 @@ function generateFormattedText(data, shiftDecimalPlaces = 2, jValueDecimalPlaces
         result.push(metadataStr);
     }
     // Add delta symbol and peaks
-    const peakStrings = data.peaks.map(peak => formatSinglePeak(peak, shiftDecimalPlaces, jValueDecimalPlaces, integrationDecimalPlaces));
+    const nuclei = ((_a = data.metadata) === null || _a === void 0 ? void 0 : _a.nuclei) || "1H";
+    const peakStrings = data.peaks.map(peak => formatSinglePeak(peak, shiftDecimalPlaces, jValueDecimalPlaces, integrationDecimalPlaces, nuclei));
     const peaksSection = "δ " + peakStrings.join(", ");
     result.push(peaksSection);
     // Join with space
