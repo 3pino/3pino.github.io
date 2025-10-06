@@ -111,10 +111,10 @@ class NMRFormatterApp {
         // Metadata dropdown functionality
         this.initializeMetadataDropdowns();
 
-        // Add error clearing for frequency field
-        this.metadataInputs.frequency.addEventListener('input', () => {
-            this.clearErrorHighlight(this.metadataInputs.frequency);
-        });
+        // Setup number-only contenteditable fields
+        this.setupNumberField('frequency');
+        this.setupNumberField('shiftPrecision', 0, 10);
+        this.setupNumberField('jPrecision', 0, 10);
     }
 
     initializeMetadataDropdowns() {
@@ -213,7 +213,7 @@ class NMRFormatterApp {
         });
     }
 
-    filterHTMLTags(element, allowedTags) {
+filterHTMLTags(element, allowedTags) {
         let result = '';
 
         element.childNodes.forEach(node => {
@@ -232,9 +232,70 @@ class NMRFormatterApp {
         return result;
     }
 
-    initializeTable() {
+    /**
+     * Setup a contenteditable field to only accept integer input
+     * @param {string} fieldName - Name of the field in metadataInputs
+     * @param {number} min - Minimum allowed value (optional)
+     * @param {number} max - Maximum allowed value (optional)
+     */
+    setupNumberField(fieldName, min = null, max = null) {
+        const field = this.metadataInputs[fieldName];
+        if (!field) return;
+
+        // Restrict input to numbers only
+        field.addEventListener('input', () => {
+            const text = field.textContent;
+            const cleanText = text.replace(/[^0-9]/g, '');
+
+            if (text !== cleanText) {
+                field.textContent = cleanText;
+                // Move cursor to end
+                const range = document.createRange();
+                const sel = window.getSelection();
+                if (field.childNodes.length > 0) {
+                    range.setStart(field.childNodes[0], cleanText.length);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
+
+            // Validate range if specified
+            if (cleanText !== '') {
+                const num = parseInt(cleanText);
+                if (min !== null && num < min) {
+                    field.classList.add('error');
+                } else if (max !== null && num > max) {
+                    field.classList.add('error');
+                } else {
+                    field.classList.remove('error');
+                }
+            } else {
+                field.classList.remove('error');
+            }
+        });
+
+        // Prevent paste of non-numeric content
+        field.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            const cleanText = text.replace(/[^0-9]/g, '');
+            document.execCommand('insertText', false, cleanText);
+        });
+
+        // Clear error on focus
+        field.addEventListener('focus', () => {
+            this.clearErrorHighlight(field);
+        });
+    }
+
+initializeTable() {
         // Set default nuclei value
         this.metadataInputs.nuclei.innerHTML = '<sup>1</sup>H';
+
+        // Set default precision values
+        this.metadataInputs.shiftPrecision.textContent = '2';
+        this.metadataInputs.jPrecision.textContent = '1';
 
         // Add initial empty row
         this.addTableRow();
@@ -635,11 +696,13 @@ class NMRFormatterApp {
         return shift;
     }
 
-    getMetadataFromInputs() {
+getMetadataFromInputs() {
         // For contenteditable divs, use innerHTML to preserve HTML tags
         const nuclei = this.metadataInputs.nuclei.innerHTML.trim();
         const solvent = this.metadataInputs.solvent.innerHTML.trim();
-        const frequency = parseFloat(this.metadataInputs.frequency.value) || 0;
+
+        // For number contenteditable fields, use textContent
+        const frequency = parseFloat(this.metadataInputs.frequency.textContent) || 0;
 
         return new Metadata(nuclei, solvent, frequency);
     }
@@ -661,7 +724,7 @@ class NMRFormatterApp {
             const multiplicityInput = multInput.value.trim();
             const multiplicity = this.convertMultiplicityToText(multiplicityInput);
             const integration = parseFloat(intInput.value) || 0;
-            
+
             // For contenteditable, use innerHTML to preserve formatting
             // But treat empty/whitespace-only content as empty string
             let assignment = "";
@@ -768,7 +831,7 @@ class NMRFormatterApp {
             this.metadataInputs.solvent.classList.remove('error');
         }
 
-        const frequencyValue = this.metadataInputs.frequency.value.trim();
+const frequencyValue = this.metadataInputs.frequency.textContent.trim();
         if (frequencyValue === '' || isNaN(parseFloat(frequencyValue))) {
             this.metadataInputs.frequency.classList.add('error');
             hasErrors = true;
@@ -836,7 +899,7 @@ class NMRFormatterApp {
                 const val = input.value.trim();
                 return val !== '' && !isNaN(parseFloat(val));
             }).length;
-            
+
             // If optional: allow 0 or all J-values filled
             // If not optional: all J-values must be filled
             if (isOptional) {
@@ -903,10 +966,11 @@ class NMRFormatterApp {
             const sortOrder = this.metadataInputs.sortOrder.value || 'desc';
             this.sortPeaksByShift(peaks, sortOrder);
 
-            const nmrData = new NMRData(peaks, metadata);
+const nmrData = new NMRData(peaks, metadata);
 
-            const shiftPrecision = parseInt(this.metadataInputs.shiftPrecision.value) || 2;
-            const jPrecision = parseInt(this.metadataInputs.jPrecision.value) || 1;
+            // For number contenteditable fields, use textContent
+            const shiftPrecision = parseInt(this.metadataInputs.shiftPrecision.textContent) || 2;
+            const jPrecision = parseInt(this.metadataInputs.jPrecision.textContent) || 1;
 
             const formattedText = generateFormattedText(nmrData, shiftPrecision, jPrecision, 0);
 

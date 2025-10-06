@@ -43,8 +43,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
-    max-width: 1000px;
-    margin-bottom: 8px;
+    max-width: 100%;
 }
 
 .metadata-group {
@@ -68,7 +67,10 @@ body {
     font-size: 13px;
     background-color: white;
     transition: border-color 0.2s;
-    min-height: 28px;
+    min-height: 32px;
+    height: 32px;
+    line-height: 18px;
+    box-sizing: border-box;
 }
 
 .metadata-input:focus {
@@ -82,11 +84,20 @@ body {
 }
 
 /* Contenteditable metadata inputs */
-.metadata-editable {
+.metadata-editable,
+.metadata-number {
     cursor: text;
 }
 
-.metadata-editable:empty:before {
+.metadata-select {
+    cursor: pointer;
+    appearance: auto;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+}
+
+.metadata-editable:empty:before,
+.metadata-number:empty:before {
     content: attr(data-placeholder);
     color: #bbb;
     font-style: italic;
