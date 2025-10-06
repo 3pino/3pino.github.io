@@ -87,6 +87,8 @@ body {
 .metadata-editable,
 .metadata-number {
     cursor: text;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .metadata-select {
@@ -355,6 +357,8 @@ body {
     padding: 2px;
     outline: none;
     cursor: text;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .assignment-input:focus {

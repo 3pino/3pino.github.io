@@ -150,8 +150,15 @@ class NMRFormatterApp {
                 document.execCommand('insertHTML', false, filtered);
             });
 
-            // Add keyboard shortcuts (Ctrl+B, Ctrl+I) for metadata fields
+            // Add keyboard shortcuts (Ctrl+B, Ctrl+I) and Enter handling for metadata fields
             input.addEventListener('keydown', (e) => {
+                // Prevent Enter (treat as Tab instead)
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.focusNextMetadataField(input, e.shiftKey);
+                    return;
+                }
+
                 if (e.ctrlKey || e.metaKey) {
                     if (e.key === 'b' || e.key === 'B') {
                         e.preventDefault();
@@ -242,6 +249,14 @@ filterHTMLTags(element, allowedTags) {
         const field = this.metadataInputs[fieldName];
         if (!field) return;
 
+        // Prevent Enter key (treat as Tab)
+        field.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextMetadataField(field, e.shiftKey);
+            }
+        });
+
         // Restrict input to numbers only
         field.addEventListener('input', () => {
             const text = field.textContent;
@@ -287,6 +302,133 @@ filterHTMLTags(element, allowedTags) {
         field.addEventListener('focus', () => {
             this.clearErrorHighlight(field);
         });
+    }
+
+    /**
+     * Focus next metadata field (Tab navigation)
+     * @param {HTMLElement} currentField - Current focused field
+     * @param {boolean} reverse - If true, focus previous field (Shift+Tab)
+     */
+    focusNextMetadataField(currentField, reverse = false) {
+        // Define tab order for metadata fields
+        const fieldOrder = [
+            this.metadataInputs.nuclei,
+            this.metadataInputs.solvent,
+            this.metadataInputs.frequency,
+            this.metadataInputs.shiftPrecision,
+            this.metadataInputs.jPrecision,
+            this.metadataInputs.sortOrder
+        ];
+
+        const currentIndex = fieldOrder.indexOf(currentField);
+        if (currentIndex === -1) return;
+
+        let targetIndex;
+        if (reverse) {
+            // Shift+Tab: go to previous field, or wrap to last field
+            targetIndex = currentIndex > 0 ? currentIndex - 1 : fieldOrder.length - 1;
+        } else {
+            // Tab: go to next field, or wrap to first table row
+            if (currentIndex < fieldOrder.length - 1) {
+                targetIndex = currentIndex + 1;
+            } else {
+                // Last metadata field: jump to first table row's delta input
+                const firstRow = this.nmrTableBody.querySelector('tr');
+                if (firstRow) {
+                    const firstShiftInput = firstRow.querySelector('.shift-input');
+                    if (firstShiftInput) {
+                        firstShiftInput.focus();
+                    }
+                }
+                return;
+            }
+        }
+
+        const targetField = fieldOrder[targetIndex];
+        if (targetField) {
+            targetField.focus();
+        }
+    }
+
+/**
+     * Focus cell below/above in table (Enter/Shift+Enter navigation)
+     * @param {HTMLElement} currentInput - Current focused input
+     * @param {HTMLElement} currentRow - Current row
+     * @param {boolean} reverse - If true, focus cell above (Shift+Enter)
+     */
+    /**
+     * Focus cell below/above in table (Enter/Shift+Enter navigation)
+     * Skips disabled cells and finds next enabled cell
+     * @param {HTMLElement} currentInput - Current focused input
+     * @param {HTMLElement} currentRow - Current row
+     * @param {boolean} reverse - If true, focus cell above (Shift+Enter)
+     */
+    /**
+     * Focus cell below/above in table (Enter/Shift+Enter navigation)
+     * Skips disabled cells and finds next enabled cell
+     * @param {HTMLElement} currentInput - Current focused input
+     * @param {HTMLElement} currentRow - Current row
+     * @param {boolean} reverse - If true, focus cell above (Shift+Enter)
+     */
+    focusNextTableCell(currentInput, currentRow, reverse = false) {
+        const currentCell = currentInput.closest('td');
+        const cellIndex = Array.from(currentRow.children).indexOf(currentCell);
+        
+        if (reverse) {
+            // Shift+Enter: move to cell above in same column, skip disabled cells
+            let searchRow = currentRow.previousElementSibling;
+            while (searchRow) {
+                const targetCell = searchRow.children[cellIndex];
+                if (targetCell) {
+                    const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                    if (targetInput && !targetInput.disabled) {
+                        targetInput.focus();
+                        return;
+                    }
+                }
+                // This cell is disabled, try previous row
+                searchRow = searchRow.previousElementSibling;
+            }
+        } else {
+            // Enter: move to cell below in same column, skip disabled cells
+            let searchRow = currentRow.nextElementSibling;
+            while (searchRow) {
+                const targetCell = searchRow.children[cellIndex];
+                if (targetCell) {
+                    const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                    if (targetInput && !targetInput.disabled) {
+                        targetInput.focus();
+                        return;
+                    }
+                }
+                // This cell is disabled, try next row
+                searchRow = searchRow.nextElementSibling;
+            }
+            
+            // No enabled cell found below: add new row
+            this.addTableRow();
+            const newRow = this.nmrTableBody.lastElementChild;
+            
+            // Try to focus same column in new row
+            const targetCell = newRow.children[cellIndex];
+            if (targetCell) {
+                const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                if (targetInput && !targetInput.disabled) {
+                    targetInput.focus();
+                    return;
+                }
+            }
+            
+            // If same column is disabled, focus first enabled cell in new row
+            const allCells = Array.from(newRow.querySelectorAll('td:not(.checkbox-cell)'));
+            for (const cell of allCells) {
+                const input = cell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                if (input && !input.disabled) {
+                    input.focus();
+                    return;
+                }
+            }
+        }
     }
 
 initializeTable() {
@@ -390,6 +532,39 @@ initializeTable() {
 
         // Arrow key navigation and keyboard shortcuts for assignment field
         assignmentInput.addEventListener('keydown', (e) => {
+            // Prevent Enter (move to next row or add new row)
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    // Shift+Enter: move to previous row's assignment
+                    const prevRow = row.previousElementSibling;
+                    if (prevRow) {
+                        const prevAssignmentInput = prevRow.querySelector('.assignment-input');
+                        if (prevAssignmentInput) {
+                            prevAssignmentInput.focus();
+                        }
+                    }
+                } else {
+                    // Enter: move to next row's delta, or add new row if last
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow) {
+                        const nextShiftInput = nextRow.querySelector('.shift-input');
+                        if (nextShiftInput) {
+                            nextShiftInput.focus();
+                        }
+                    } else {
+                        // Last row: add new row and focus its delta
+                        this.addTableRow();
+                        const newRow = this.nmrTableBody.lastElementChild;
+                        const newShiftInput = newRow.querySelector('.shift-input');
+                        if (newShiftInput) {
+                            newShiftInput.focus();
+                        }
+                    }
+                }
+                return;
+            }
+
             // Keyboard shortcuts (Ctrl+B, Ctrl+I)
             if (e.ctrlKey || e.metaKey) {
                 if (e.key === 'b' || e.key === 'B') {
@@ -409,6 +584,11 @@ initializeTable() {
 
         // Arrow key navigation and error clearing for regular inputs
         shiftInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(shiftInput, row, e.shiftKey);
+                return;
+            }
             this.handleCellNavigation(e, shiftInput, row);
         });
         shiftInput.addEventListener('input', () => {
@@ -416,6 +596,11 @@ initializeTable() {
         });
 
         multInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(multInput, row, e.shiftKey);
+                return;
+            }
             this.handleCellNavigation(e, multInput, row);
         });
         multInput.addEventListener('input', () => {
@@ -423,6 +608,11 @@ initializeTable() {
         });
 
         intInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(intInput, row, e.shiftKey);
+                return;
+            }
             this.handleCellNavigation(e, intInput, row);
         });
         intInput.addEventListener('input', () => {
@@ -433,6 +623,11 @@ initializeTable() {
         const jInputs = row.querySelectorAll('.j-input');
         jInputs.forEach(jInput => {
             jInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.focusNextTableCell(jInput, row, e.shiftKey);
+                    return;
+                }
                 this.handleCellNavigation(e, jInput, row);
             });
             jInput.addEventListener('input', () => {
