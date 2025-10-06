@@ -1,0 +1,11 @@
+# Ignore documents and AI assistant data
+.claude/
+.serena/
+docs/
+.mcp.json
+CLAUDE.md
+
+# Ignore TS build output
+**/dist/**/*.d.ts
+**/dist/**/*.d.ts.map
+**/dist/**/*.js.map
