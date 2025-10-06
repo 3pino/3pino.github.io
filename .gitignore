@@ -4,6 +4,7 @@
 docs/
 .mcp.json
 CLAUDE.md
+playwright-config.json
 
 # Ignore TS build output
 **/dist/**/*.d.ts
