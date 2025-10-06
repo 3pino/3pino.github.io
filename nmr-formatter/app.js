@@ -811,16 +811,46 @@ class NMRFormatterApp {
                 intInput.classList.remove('error');
             }
 
-            // Validate J-values (only enabled inputs)
-            jInputs.forEach(jInput => {
-                const jValue = jInput.value.trim();
-                if (jValue === '' || isNaN(parseFloat(jValue))) {
-                    jInput.classList.add('error');
-                    hasErrors = true;
+            // Validate J-values (with optional J-value support for m/br/broad)
+            const isOptional = multiplicity && isJValuesOptional(multiplicity);
+            const actualJCount = Array.from(jInputs).filter(input => {
+                const val = input.value.trim();
+                return val !== '' && !isNaN(parseFloat(val));
+            }).length;
+            
+            // If optional: allow 0 or all J-values filled
+            // If not optional: all J-values must be filled
+            if (isOptional) {
+                // Optional: either all empty or all filled
+                if (actualJCount > 0 && actualJCount < jInputs.length) {
+                    // Partial fill - mark empties as errors
+                    jInputs.forEach(jInput => {
+                        const jValue = jInput.value.trim();
+                        if (jValue === '' || isNaN(parseFloat(jValue))) {
+                            jInput.classList.add('error');
+                            hasErrors = true;
+                        } else {
+                            jInput.classList.remove('error');
+                        }
+                    });
                 } else {
-                    jInput.classList.remove('error');
+                    // All empty or all filled - OK
+                    jInputs.forEach(jInput => {
+                        jInput.classList.remove('error');
+                    });
                 }
-            });
+            } else {
+                // Not optional: all must be filled
+                jInputs.forEach(jInput => {
+                    const jValue = jInput.value.trim();
+                    if (jValue === '' || isNaN(parseFloat(jValue))) {
+                        jInput.classList.add('error');
+                        hasErrors = true;
+                    } else {
+                        jInput.classList.remove('error');
+                    }
+                });
+            }
         });
 
         return hasErrors;

@@ -38,7 +38,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateRichTextContent = exports.validateNMRPeak = exports.validateNMRData = exports.multipletnumbers = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
+exports.validateRichTextContent = exports.validateNMRPeak = exports.validateNMRData = exports.isJValuesOptional = exports.multipletnumbers = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
 // Core types and constants
 __exportStar(require("./core/types"), exports);
 __exportStar(require("./core/logger"), exports);
@@ -83,6 +83,7 @@ Object.defineProperty(exports, "tableToData", { enumerable: true, get: function 
 Object.defineProperty(exports, "getMaxJValues", { enumerable: true, get: function () { return table_converter_1.getMaxJValues; } });
 var validators_1 = require("./utils/validators");
 Object.defineProperty(exports, "multipletnumbers", { enumerable: true, get: function () { return validators_1.multipletnumbers; } });
+Object.defineProperty(exports, "isJValuesOptional", { enumerable: true, get: function () { return validators_1.isJValuesOptional; } });
 Object.defineProperty(exports, "validateNMRData", { enumerable: true, get: function () { return validators_1.validateNMRData; } });
 Object.defineProperty(exports, "validateNMRPeak", { enumerable: true, get: function () { return validators_1.validateNMRPeak; } });
 Object.defineProperty(exports, "validateRichTextContent", { enumerable: true, get: function () { return validators_1.validateRichTextContent; } });
@@ -132,6 +133,7 @@ if (typeof window !== 'undefined') {
     w.getMaxJValues = TableConverter.getMaxJValues;
     // Validators
     w.multipletnumbers = Validators.multipletnumbers;
+    w.isJValuesOptional = Validators.isJValuesOptional;
     w.validateNMRData = Validators.validateNMRData;
     w.validateNMRPeak = Validators.validateNMRPeak;
     w.validateRichTextContent = Validators.validateRichTextContent;

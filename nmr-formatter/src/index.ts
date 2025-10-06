@@ -49,6 +49,7 @@ export {
 
 export {
     multipletnumbers,
+    isJValuesOptional,
     validateNMRData,
     validateNMRPeak,
     validateRichTextContent
@@ -108,6 +109,7 @@ if (typeof window !== 'undefined') {
 
     // Validators
     w.multipletnumbers = Validators.multipletnumbers;
+    w.isJValuesOptional = Validators.isJValuesOptional;
     w.validateNMRData = Validators.validateNMRData;
     w.validateNMRPeak = Validators.validateNMRPeak;
     w.validateRichTextContent = Validators.validateRichTextContent;

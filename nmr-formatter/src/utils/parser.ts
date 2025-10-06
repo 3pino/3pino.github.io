@@ -29,8 +29,8 @@ const NMR_PATTERNS = {
     chemicalShiftRange: /^(-?\d+(?:\.\d+)?)\s*[-–—ー]\s*(-?\d+(?:\.\d+)?)$/,
     chemicalShiftSingle: /^(-?\d+(?:\.\d+)?)$/,
 
-    // Multiplicity patterns - supports compound forms like "doublet of doublets" (dd, dt, ddd, etc.)
-    multiplicity: /^((d|t|q|quint)+|((doublet|triplet|quartet|quintet)\sof\s)*(singlets?|doublets?|triplets?|quartets?|quintets?)|s|m|br|singlets?|multiplets?|broad)$/i,
+    // Multiplicity patterns - relaxed to accept various formats (actual validation in multipletnumbers())
+    multiplicity: /^[a-zA-Z0-9\s\-]+$/,
 
     // Cleanup patterns (still needed for text cleaning)
     extraSpaces: /\s+/g,
