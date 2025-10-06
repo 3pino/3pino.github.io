@@ -318,6 +318,15 @@ class NMRFormatterApp {
             document.execCommand('insertHTML', false, filtered);
         });
 
+        // Clear placeholder state when empty
+        assignmentInput.addEventListener('input', () => {
+            this.clearErrorHighlight(assignmentInput);
+            // Ensure placeholder is shown when truly empty
+            if (assignmentInput.innerHTML.trim() === '' || assignmentInput.innerHTML === '<br>') {
+                assignmentInput.innerHTML = '';
+            }
+        });
+
         // Arrow key navigation and keyboard shortcuts for assignment field
         assignmentInput.addEventListener('keydown', (e) => {
             // Keyboard shortcuts (Ctrl+B, Ctrl+I)
@@ -652,8 +661,18 @@ class NMRFormatterApp {
             const multiplicityInput = multInput.value.trim();
             const multiplicity = this.convertMultiplicityToText(multiplicityInput);
             const integration = parseFloat(intInput.value) || 0;
+            
             // For contenteditable, use innerHTML to preserve formatting
-            const assignment = assignmentInput ? assignmentInput.innerHTML.trim() : "";
+            // But treat empty/whitespace-only content as empty string
+            let assignment = "";
+            if (assignmentInput) {
+                const htmlContent = assignmentInput.innerHTML.trim();
+                // Check if content is truly empty (excluding <br> tags and empty tags)
+                const textContent = assignmentInput.textContent.trim();
+                if (textContent !== '') {
+                    assignment = htmlContent;
+                }
+            }
 
             // Extract J-values (only from enabled inputs) and auto-correct
             const jValues = [];
