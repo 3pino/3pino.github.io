@@ -1,0 +1,15 @@
+{
+  "name": "nmr-formatter",
+  "version": "1.2.0",
+  "description": "Web-based tool to format NMR spectral data from free-text input into standardized academic paper format",
+  "scripts": {
+    "build": "tsc && node scripts/build-browser.js",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "echo \"Phase 1.2: Open tests/test-console-1-2.html in browser\""
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "private": true
+}
