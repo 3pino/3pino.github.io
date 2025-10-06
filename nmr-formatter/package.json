@@ -6,7 +6,7 @@
     "build": "tsc && node scripts/build-browser.js",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "test": "echo \"Phase 1.2: Open tests/test-console-1-2.html in browser\""
+    "test": "echo \"Open tests/test-console-1-2.html in browser\""
   },
   "devDependencies": {
     "typescript": "^5.9.2"

@@ -1,4 +1,4 @@
-// NMR Formatter Application - Phase 4.2 & 5
+// NMR Formatter Application
 // Unidirectional conversion: Metadata + Table → Rich Text
 
 class NMRFormatterApp {
@@ -1517,5 +1517,5 @@ const nmrData = new NMRData(peaks, metadata);
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new NMRFormatterApp();
-    console.log('NMR Formatter App initialized (Phase 4.2)');
+    console.log('NMR Formatter App initialized');
 });

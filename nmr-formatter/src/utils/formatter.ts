@@ -1,4 +1,4 @@
-// NMR Formatter - Phase 2.1
+// NMR Formatter
 // Converts structured NMRData objects into HTML-formatted academic text
 
 import { NMRPeak } from '../models/NMRPeak';
