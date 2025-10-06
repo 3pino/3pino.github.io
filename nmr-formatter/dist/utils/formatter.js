@@ -31,8 +31,9 @@ function formatIntegration(integration, decimalPlaces = 1, nuclei = "1H") {
     if (integration === 0 || integration === "" || integration === null || integration === undefined) {
         return "";
     }
-    // Extract the atom symbol from nuclei (e.g., "1H" -> "H", "13C" -> "C")
-    const atomSymbol = nuclei.replace(/^\d+/, "") || "H";
+    // Extract the atom symbol from nuclei (e.g., "1H" -> "H", "13C" -> "C", "<sup>1</sup>H" -> "H")
+    const nucleiText = nuclei.replace(/<[^>]+>/g, ""); // Remove HTML tags
+    const atomSymbol = nucleiText.replace(/\d+/g, "") || "H"; // Remove all numbers
     // Handle string integration values
     if (typeof integration === "string") {
         const trimmed = integration.trim();
