@@ -47,13 +47,9 @@ export {
     getMaxJValues
 } from './utils/table-converter';
 
-export {
-    multipletnumbers,
-    isJValuesOptional,
-    validateNMRData,
-    validateNMRPeak,
-    validateRichTextContent
-} from './utils/validators';
+// Re-export validation functions for backward compatibility
+export const multipletnumbers = NMRPeak.multipletnumbers;
+export const isJValuesOptional = NMRPeak.isJValuesOptional;
 
 // Browser compatibility: Export to window object for non-module environments
 import { LogLevel, Logger } from './core/logger';
@@ -64,7 +60,6 @@ import { NMRData } from './models/NMRData';
 import * as Parser from './utils/parser';
 import * as Formatter from './utils/formatter';
 import * as TableConverter from './utils/table-converter';
-import * as Validators from './utils/validators';
 
 if (typeof window !== 'undefined') {
     const w = window as any;
@@ -107,10 +102,7 @@ if (typeof window !== 'undefined') {
     w.tableToData = TableConverter.tableToData;
     w.getMaxJValues = TableConverter.getMaxJValues;
 
-    // Validators
-    w.multipletnumbers = Validators.multipletnumbers;
-    w.isJValuesOptional = Validators.isJValuesOptional;
-    w.validateNMRData = Validators.validateNMRData;
-    w.validateNMRPeak = Validators.validateNMRPeak;
-    w.validateRichTextContent = Validators.validateRichTextContent;
+    // Validators (from NMRPeak static methods)
+    w.multipletnumbers = NMRPeak.multipletnumbers;
+    w.isJValuesOptional = NMRPeak.isJValuesOptional;
 }

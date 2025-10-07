@@ -1,6 +1,8 @@
 // Test suite for multipletnumbers() and isJValuesOptional() functions
 
-import { multipletnumbers, isJValuesOptional } from './utils/validators';
+import { NMRPeak } from './models/NMRPeak';
+const multipletnumbers = NMRPeak.multipletnumbers;
+const isJValuesOptional = NMRPeak.isJValuesOptional;
 
 interface TestCase {
     input: string;

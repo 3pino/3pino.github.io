@@ -19,6 +19,24 @@ class NMRData {
     updateMetadata(key, value) {
         this.metadata[key] = value;
     }
+    /**
+     * Validate all peaks in this NMR data
+     */
+    validate() {
+        const errors = [];
+        if (!this.peaks) {
+            return [];
+        }
+        // Validate each peak (only J-value and multiplicity consistency)
+        this.peaks.forEach((peak, index) => {
+            const peakErrors = peak.validate();
+            // Update index in errors
+            peakErrors.forEach(error => {
+                errors.push(Object.assign(Object.assign({}, error), { index }));
+            });
+        });
+        return errors;
+    }
 }
 exports.NMRData = NMRData;
 //# sourceMappingURL=NMRData.js.map

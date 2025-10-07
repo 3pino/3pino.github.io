@@ -17,7 +17,9 @@ const constantsCode = fs.readFileSync(path.join(distDir, 'core', 'constants.js')
 const metadataCode = fs.readFileSync(path.join(distDir, 'models', 'Metadata.js'), 'utf8');
 const nmrPeakCode = fs.readFileSync(path.join(distDir, 'models', 'NMRPeak.js'), 'utf8');
 const nmrDataCode = fs.readFileSync(path.join(distDir, 'models', 'NMRData.js'), 'utf8');
-const validatorsCode = fs.readFileSync(path.join(distDir, 'utils', 'validators.js'), 'utf8');
+const conversionCode = fs.readFileSync(path.join(distDir, 'utils', 'conversion.js'), 'utf8');
+const sortingCode = fs.readFileSync(path.join(distDir, 'utils', 'sorting.js'), 'utf8');
+const formValidationCode = fs.readFileSync(path.join(distDir, 'utils', 'form-validation.js'), 'utf8');
 const formatterCode = fs.readFileSync(path.join(distDir, 'utils', 'formatter.js'), 'utf8');
 
 // Read State Management files
@@ -102,7 +104,11 @@ ${convertToBrowserCode(nmrPeakCode)}
 
 ${convertToBrowserCode(nmrDataCode)}
 
-${convertToBrowserCode(validatorsCode)}
+${convertToBrowserCode(conversionCode)}
+
+${convertToBrowserCode(sortingCode)}
+
+${convertToBrowserCode(formValidationCode)}
 
 ${convertToBrowserCode(formatterCode)}
 
@@ -148,7 +154,7 @@ window.isValidSolventType = isValidSolventType;
 window.Metadata = Metadata;
 window.NMRPeak = NMRPeak;
 window.NMRData = NMRData;
-window.multipletnumbers = multipletnumbers;
+window.multipletnumbers = NMRPeak.multipletnumbers;
 window.formatChemicalShift = formatChemicalShift;
 window.formatJValues = formatJValues;
 window.formatIntegration = formatIntegration;
@@ -157,7 +163,7 @@ window.formatAssignment = formatAssignment;
 window.formatSinglePeak = formatSinglePeak;
 window.formatMetadata = formatMetadata;
 window.generateFormattedText = generateFormattedText;
-window.isJValuesOptional = isJValuesOptional;
+window.isJValuesOptional = NMRPeak.isJValuesOptional;
 
 // Export new classes (State Management & UI)
 window.MetadataState = MetadataState;

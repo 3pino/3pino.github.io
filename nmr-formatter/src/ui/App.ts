@@ -9,6 +9,9 @@ import { NMRTable } from './components/NMRTable';
 import { RichTextEditor } from './components/RichTextEditor';
 import { Toolbar } from './components/Toolbar';
 import { FocusManager } from './navigation/FocusManager';
+import { parseChemicalShift, convertMultiplicityToText } from '../utils/conversion';
+import { sortPeaksByShift } from '../utils/sorting';
+import { validateMetadata, validateTableRows } from '../utils/form-validation';
 
 // Import from existing modules
 import { Metadata } from '../models/Metadata';
@@ -112,8 +115,8 @@ export class NMRFormatterApp {
             const peaks: NMRPeak[] = [];
 
             tableRows.forEach(row => {
-                const shift = this.parseChemicalShift(row.shift);
-                const multiplicity = this.convertMultiplicityToText(row.multiplicity);
+                const shift = parseChemicalShift(row.shift);
+                const multiplicity = convertMultiplicityToText(row.multiplicity);
 
                 if (shift !== null) {
                     const peak = new NMRPeak(
@@ -133,7 +136,7 @@ export class NMRFormatterApp {
             }
 
             // Sort peaks by chemical shift
-            this.sortPeaksByShift(peaks, metadataData.sortOrder);
+            sortPeaksByShift(peaks, metadataData.sortOrder);
 
             const nmrData = new NMRData(peaks, metadata);
 
@@ -162,179 +165,27 @@ export class NMRFormatterApp {
 
         // Validate metadata
         const metadataData = this.appState.metadata.getData();
-
-        if (!metadataData.nuclei || metadataData.nuclei.trim() === '') {
-            this.appState.validation.setError('nuclei', 'Nuclei is required');
-            hasErrors = true;
-        }
-
-        if (!metadataData.solvent || metadataData.solvent.trim() === '') {
-            this.appState.validation.setError('solvent', 'Solvent is required');
-            hasErrors = true;
-        }
-
-        if (!metadataData.frequency || metadataData.frequency === 0) {
-            this.appState.validation.setError('frequency', 'Frequency is required');
-            hasErrors = true;
-        }
+        hasErrors = validateMetadata(
+            {
+                nuclei: metadataData.nuclei,
+                solvent: metadataData.solvent,
+                frequency: metadataData.frequency
+            },
+            this.appState.validation
+        );
 
         // Validate table rows
         const tableRows = this.appState.table.getRows();
         const is1HNMR = metadataData.nuclei.includes('1') && metadataData.nuclei.includes('H');
-
-        tableRows.forEach(row => {
-            const rowId = row.id;
-
-            // Validate chemical shift
-            const shift = this.parseChemicalShift(row.shift);
-            if (shift === null || row.shift.trim() === '') {
-                this.appState.validation.setError(`shift-${rowId}`, 'Invalid chemical shift');
-                hasErrors = true;
-            }
-
-            // Validate multiplicity (for 1H NMR)
-            if (is1HNMR) {
-                const multiplicity = this.convertMultiplicityToText(row.multiplicity);
-
-                if (row.multiplicity.trim() === '') {
-                    this.appState.validation.setError(`mult-${rowId}`, 'Multiplicity is required for 1H NMR');
-                    hasErrors = true;
-                } else {
-                    try {
-                        const multipletnumbers = (window as any).multipletnumbers;
-                        multipletnumbers(multiplicity);
-                    } catch (error) {
-                        this.appState.validation.setError(`mult-${rowId}`, 'Invalid multiplicity');
-                        hasErrors = true;
-                    }
-                }
-
-                // Validate integration (for 1H NMR)
-                if (!row.integration || row.integration === 0) {
-                    this.appState.validation.setError(`int-${rowId}`, 'Integration is required for 1H NMR');
-                    hasErrors = true;
-                }
-            }
-
-            // Validate J-values
-            const multiplicity = this.convertMultiplicityToText(row.multiplicity);
-            const isJValuesOptional = (window as any).isJValuesOptional;
-            const isOptional = multiplicity && isJValuesOptional(multiplicity);
-
-            const requiredJCount = this.calculateRequiredJColumns(multiplicity);
-            const actualJCount = row.jValues.filter(j => !isNaN(j) && j !== 0).length;
-
-            if (isOptional) {
-                // Optional: either all empty or all filled
-                if (actualJCount > 0 && actualJCount < requiredJCount) {
-                    for (let i = 0; i < requiredJCount; i++) {
-                        if (!row.jValues[i] || row.jValues[i] === 0) {
-                            this.appState.validation.setError(`j${i}-${rowId}`, 'All J-values must be filled');
-                            hasErrors = true;
-                        }
-                    }
-                }
-            } else {
-                // Not optional: all must be filled
-                for (let i = 0; i < requiredJCount; i++) {
-                    if (!row.jValues[i] || row.jValues[i] === 0) {
-                        this.appState.validation.setError(`j${i}-${rowId}`, 'J-value is required');
-                        hasErrors = true;
-                    }
-                }
-            }
-        });
+        
+        if (validateTableRows(tableRows, is1HNMR, this.appState.validation)) {
+            hasErrors = true;
+        }
 
         return hasErrors;
     }
 
-    private parseChemicalShift(value: string): number | [number, number] | null {
-        if (!value || value.trim() === '') return null;
 
-        const trimmed = value.trim();
-
-        // Check for range format (supports both hyphen and en-dash)
-        const rangeMatch = trimmed.match(/^([\d.]+)\s*[-–]\s*([\d.]+)$/);
-        if (rangeMatch) {
-            const num1 = parseFloat(rangeMatch[1]);
-            const num2 = parseFloat(rangeMatch[2]);
-            if (!isNaN(num1) && !isNaN(num2)) {
-                return [num1, num2];
-            }
-        }
-
-        // Single value
-        const num = parseFloat(trimmed);
-        if (!isNaN(num)) {
-            return num;
-        }
-
-        return null;
-    }
-
-    private convertMultiplicityToText(input: string): string {
-        if (!input || input.trim() === '') return '';
-
-        const trimmed = input.trim();
-
-        // Check if input is purely numeric
-        if (/^\d+$/.test(trimmed)) {
-            const digitMap: { [key: string]: string } = {
-                '1': 's',
-                '2': 'd',
-                '3': 't',
-                '4': 'q',
-                '5': 'quint'
-            };
-
-            let result = '';
-            for (const digit of trimmed) {
-                if (digit >= '1' && digit <= '5') {
-                    result += digitMap[digit];
-                }
-            }
-            return result;
-        }
-
-        return trimmed;
-    }
-
-    private calculateRequiredJColumns(multiplicity: string): number {
-        if (!multiplicity || multiplicity.trim() === '') {
-            return 0;
-        }
-
-        try {
-            const multipletnumbers = (window as any).multipletnumbers;
-            const jCounts = multipletnumbers(multiplicity);
-            if (jCounts === null) {
-                return 0;
-            }
-            return jCounts.length;
-        } catch {
-            return 0;
-        }
-    }
-
-    private sortPeaksByShift(peaks: NMRPeak[], order: 'asc' | 'desc'): void {
-        peaks.sort((a, b) => {
-            const aValue = this.getShiftValue(a.chemicalShift);
-            const bValue = this.getShiftValue(b.chemicalShift);
-
-            if (order === 'asc') {
-                return aValue - bValue;
-            } else {
-                return bValue - aValue;
-            }
-        });
-    }
-
-    private getShiftValue(shift: number | [number, number]): number {
-        if (Array.isArray(shift)) {
-            return (shift[0] + shift[1]) / 2;
-        }
-        return shift;
-    }
 
     private copyFormattedText(): void {
         const richTextContent = this.richTextEditor.getContent();

@@ -1,7 +1,9 @@
 "use strict";
 // Test suite for multipletnumbers() and isJValuesOptional() functions
 Object.defineProperty(exports, "__esModule", { value: true });
-const validators_1 = require("./utils/validators");
+const NMRPeak_1 = require("./models/NMRPeak");
+const multipletnumbers = NMRPeak_1.NMRPeak.multipletnumbers;
+const isJValuesOptional = NMRPeak_1.NMRPeak.isJValuesOptional;
 const testCases = [
     // Basic single multiplicities
     { input: 's', expected: null, description: 'singlet (abbreviation)' },
@@ -83,7 +85,7 @@ function runTests() {
     let failed = 0;
     testCases.forEach((testCase, index) => {
         try {
-            const result = (0, validators_1.multipletnumbers)(testCase.input);
+            const result = multipletnumbers(testCase.input);
             const resultStr = result === null ? 'null' : `[${result.join(', ')}]`;
             const expectedStr = testCase.expected === null ? 'null' : `[${testCase.expected.join(', ')}]`;
             const isMatch = JSON.stringify(result) === JSON.stringify(testCase.expected);
@@ -120,7 +122,7 @@ function runErrorTests() {
     let failed = 0;
     errorTestCases.forEach((testCase, index) => {
         try {
-            const result = (0, validators_1.multipletnumbers)(testCase.input);
+            const result = multipletnumbers(testCase.input);
             // If we get here, it means no error was thrown - test failed
             const resultStr = result === null ? 'null' : `[${result.join(', ')}]`;
             console.log(`❌ Test ${index + 1}: FAIL - "${testCase.input}"`);
@@ -170,7 +172,7 @@ function runOptionalTests() {
     let failed = 0;
     optionalTestCases.forEach((testCase, index) => {
         try {
-            const result = (0, validators_1.isJValuesOptional)(testCase.input);
+            const result = isJValuesOptional(testCase.input);
             const resultStr = result ? 'optional' : 'required';
             const expectedStr = testCase.expectedOptional ? 'optional' : 'required';
             const isMatch = result === testCase.expectedOptional;

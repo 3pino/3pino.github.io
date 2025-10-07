@@ -177,6 +177,142 @@ class NMRPeak {
     set shift(value) {
         this.chemicalShift = value;
     }
+    /**
+     * Get expected number of J-values based on multiplicity
+     * Returns null for singlet(s), multiplet(m), or broad(br)
+     * Returns array of expected J-value counts for compound multiplicities (e.g., dt -> [2,3])
+     */
+    static multipletnumbers(multiplicityText) {
+        const clean = multiplicityText.toLowerCase().trim();
+        let normalized = clean;
+        const replacementMap = [
+            [/\s+of\s+/g, ' '],
+            [/[\s\-–()]+/g, ' '],
+            [/broad\s*/g, ''],
+            [/br\s*/g, ''],
+            // Full words - keep s and m
+            [/nonets?/g, '9'],
+            [/octets?/g, '8'],
+            [/septets?/g, '7'],
+            [/sextets?/g, '6'],
+            [/quintets?/g, '5'],
+            [/quartets?/g, '4'],
+            [/triplets?/g, '3'],
+            [/doublets?/g, '2'],
+            [/singlets?/g, 's'],
+            [/multiplets?/g, 'm'],
+            // Abbreviations - keep s and m
+            [/non(?!et)/g, '9'],
+            [/oct(?!et)/g, '8'],
+            [/sept(?!et)/g, '7'],
+            [/sext(?!et)/g, '6'],
+            [/quint(?!et)/g, '5'],
+            [/q(?!u)/g, '4'],
+            [/t(?!r|e)/g, '3'],
+            [/d(?!o)/g, '2'],
+            [/s(?!i)/g, 's'],
+            [/m(?!u)/g, 'm'],
+            [/b(?!r|o)/g, ''],
+            [/\s+/g, ''],
+        ];
+        replacementMap.forEach(([pattern, replacement]) => {
+            normalized = normalized.replace(pattern, replacement);
+        });
+        normalized = normalized.trim();
+        // Validate s/m combinations
+        if (/s/.test(normalized) || /m/.test(normalized)) {
+            // Check for invalid s patterns
+            if (/[sm][sm]/.test(normalized)) {
+                throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (multiple s / m)`);
+            }
+            if (/s\d|\ds/.test(normalized)) {
+                throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (s cannot combine with other multiplicities)`);
+            }
+            // Check for invalid m patterns
+            if (/\dm/.test(normalized)) {
+                throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (m must be at the beginning)`);
+            }
+            // Single s or m is OK
+            if (normalized === 's' || normalized === 'm') {
+                return null;
+            }
+            // m + digits is OK (e.g., "m23" from "m(dt)")
+            if (/^m\d+$/.test(normalized)) {
+                const digits = normalized.match(/\d/g);
+                if (digits && digits.length > 0) {
+                    return digits.map(d => parseInt(d, 10));
+                }
+            }
+            // If we reach here, it's an invalid s/m combination
+            throw new Error(`Invalid multiplicity combination: "${multiplicityText}"`);
+        }
+        if (normalized === '')
+            return null;
+        const digits = normalized.match(/\d/g);
+        if (digits && digits.length > 0) {
+            return digits.map(d => parseInt(d, 10));
+        }
+        throw new Error(`Unhandled multiplicity format: "${multiplicityText}"`);
+    }
+    /**
+     * Check if J-values are optional for a given multiplicity
+     * Returns true if multiplicity contains 'm', 'br', or 'broad' (e.g., "m(tt)", "br d", "bs")
+     */
+    static isJValuesOptional(multiplicityText) {
+        const clean = multiplicityText.toLowerCase().trim();
+        // Check if contains m/br/broad
+        const hasBroadOrMultiplet = /\b(m|multiplet|br|broad)\b|^b/.test(clean);
+        if (!hasBroadOrMultiplet) {
+            return false; // No m/br/broad → not optional
+        }
+        // If it's ONLY m/br/broad (no other multiplicity), return false
+        // because J-values must be 0 (handled by multipletnumbers returning null)
+        const jCounts = NMRPeak.multipletnumbers(multiplicityText);
+        if (jCounts === null) {
+            return false; // Only m/br/broad → J-values must be 0, not optional
+        }
+        // Has both m/br/broad AND other multiplicity → optional
+        return true;
+    }
+    /**
+     * Validate this peak's J-value count against multiplicity
+     */
+    validate() {
+        const errors = [];
+        if (this.multiplicity) {
+            try {
+                const expectedJCounts = NMRPeak.multipletnumbers(this.multiplicity);
+                if (expectedJCounts !== null) {
+                    const actualJCount = this.jValues.filter((j) => !isNaN(j) && j > 0).length;
+                    const expectedTotal = expectedJCounts.length;
+                    // Check if J-values are optional (e.g., "m(tt)", "br d")
+                    const isOptional = NMRPeak.isJValuesOptional(this.multiplicity);
+                    // If optional: allow 0 or expectedTotal J-values
+                    // If not optional: must have exactly expectedTotal J-values
+                    if (!isOptional && actualJCount !== expectedTotal) {
+                        errors.push({
+                            type: 'peak',
+                            index: 0,
+                            field: 'jcount',
+                            message: `Multiplicity "${this.multiplicity}" expects ${expectedTotal} J-values, but found ${actualJCount}`
+                        });
+                    }
+                    else if (isOptional && actualJCount !== 0 && actualJCount !== expectedTotal) {
+                        errors.push({
+                            type: 'peak',
+                            index: 0,
+                            field: 'jcount',
+                            message: `Multiplicity "${this.multiplicity}" expects 0 or ${expectedTotal} J-values, but found ${actualJCount}`
+                        });
+                    }
+                }
+            }
+            catch (error) {
+                // Invalid multiplicity format - ignore as it's not our concern
+            }
+        }
+        return errors;
+    }
 }
 
 // NMR Data model
@@ -196,167 +332,227 @@ class NMRData {
     updateMetadata(key, value) {
         this.metadata[key] = value;
     }
+    /**
+     * Validate all peaks in this NMR data
+     */
+    validate() {
+        const errors = [];
+        if (!this.peaks) {
+            return [];
+        }
+        // Validate each peak (only J-value and multiplicity consistency)
+        this.peaks.forEach((peak, index) => {
+            const peakErrors = peak.validate();
+            // Update index in errors
+            peakErrors.forEach(error => {
+                errors.push(Object.assign(Object.assign({}, error), { index }));
+            });
+        });
+        return errors;
+    }
 }
 
-// Validation functions for NMR data
-// Regular expression pattern for multiplicity validation
-const MULTIPLICITY_PATTERN = /^[a-zA-Z0-9\s\-]+$/;
-// Function to get expected number of J-values based on multiplicity
-// Returns null for singlet(s), multiplet(m), or broad(br)
-// Returns array of expected J-value counts for compound multiplicities (e.g., dt -> [2,3])
-function multipletnumbers(multiplicityText) {
-    const clean = multiplicityText.toLowerCase().trim();
-    let normalized = clean;
-    const replacementMap = [
-        [/\s+of\s+/g, ' '],
-        [/[\s\-–()]+/g, ' '],
-        [/broad\s*/g, ''],
-        [/br\s*/g, ''],
-        // Full words - keep s and m
-        [/nonets?/g, '9'],
-        [/octets?/g, '8'],
-        [/septets?/g, '7'],
-        [/sextets?/g, '6'],
-        [/quintets?/g, '5'],
-        [/quartets?/g, '4'],
-        [/triplets?/g, '3'],
-        [/doublets?/g, '2'],
-        [/singlets?/g, 's'],
-        [/multiplets?/g, 'm'],
-        // Abbreviations - keep s and m
-        [/non(?!et)/g, '9'],
-        [/oct(?!et)/g, '8'],
-        [/sept(?!et)/g, '7'],
-        [/sext(?!et)/g, '6'],
-        [/quint(?!et)/g, '5'],
-        [/q(?!u)/g, '4'],
-        [/t(?!r|e)/g, '3'],
-        [/d(?!o)/g, '2'],
-        [/s(?!i)/g, 's'],
-        [/m(?!u)/g, 'm'],
-        [/b(?!r|o)/g, ''],
-        [/\s+/g, ''],
-    ];
-    replacementMap.forEach(([pattern, replacement]) => {
-        normalized = normalized.replace(pattern, replacement);
-    });
-    normalized = normalized.trim();
-    // Validate s/m combinations
-    if (/s/.test(normalized) || /m/.test(normalized)) {
-        // Check for invalid s patterns
-        if (/[sm][sm]/.test(normalized)) {
-            throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (multiple s / m)`);
-        }
-        if (/s\d|\ds/.test(normalized)) {
-            throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (s cannot combine with other multiplicities)`);
-        }
-        // Check for invalid m patterns
-        if (/\dm/.test(normalized)) {
-            throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (m must be at the beginning)`);
-        }
-        // Single s or m is OK
-        if (normalized === 's' || normalized === 'm') {
-            return null;
-        }
-        // m + digits is OK (e.g., "m23" from "m(dt)")
-        if (/^m\d+$/.test(normalized)) {
-            const digits = normalized.match(/\d/g);
-            if (digits && digits.length > 0) {
-                return digits.map(d => parseInt(d, 10));
-            }
-        }
-        // If we reach here, it's an invalid s/m combination
-        throw new Error(`Invalid multiplicity combination: "${multiplicityText}"`);
-    }
-    if (normalized === '')
+/**
+ * Utility functions for data parsing and conversion
+ */
+/**
+ * Parse chemical shift string to number or range
+ * Supports formats: "7.53", "7.53-7.50", "7.53–7.50"
+ */
+function parseChemicalShift(value) {
+    if (!value || value.trim() === '')
         return null;
-    const digits = normalized.match(/\d/g);
-    if (digits && digits.length > 0) {
-        return digits.map(d => parseInt(d, 10));
+    const trimmed = value.trim();
+    // Check for range format (supports both hyphen and en-dash)
+    const rangeMatch = trimmed.match(/^([\d.]+)\s*[-–]\s*([\d.]+)$/);
+    if (rangeMatch) {
+        const num1 = parseFloat(rangeMatch[1]);
+        const num2 = parseFloat(rangeMatch[2]);
+        if (!isNaN(num1) && !isNaN(num2)) {
+            return [num1, num2];
+        }
     }
-    throw new Error(`Unhandled multiplicity format: "${multiplicityText}"`);
+    // Single value
+    const num = parseFloat(trimmed);
+    if (!isNaN(num)) {
+        return num;
+    }
+    return null;
 }
 /**
- * Check if J-values are optional for a given multiplicity
- * Returns true if multiplicity contains 'm', 'br', or 'broad' (e.g., "m(tt)", "br d", "bs")
- * @param {string} multiplicityText - Multiplicity string
- * @returns {boolean} - True if J-values are optional
+ * Convert multiplicity input to text format
+ * Supports numeric shorthand: "1" -> "s", "23" -> "dt", etc.
  */
-function isJValuesOptional(multiplicityText) {
-    const clean = multiplicityText.toLowerCase().trim();
-    // Check if contains m/br/broad
-    const hasBroadOrMultiplet = /\b(m|multiplet|br|broad)\b|^b/.test(clean);
-    if (!hasBroadOrMultiplet) {
-        return false; // No m/br/broad → not optional
+function convertMultiplicityToText(input) {
+    if (!input || input.trim() === '')
+        return '';
+    const trimmed = input.trim();
+    // Check if input is purely numeric
+    if (/^\d+$/.test(trimmed)) {
+        const digitMap = {
+            '1': 's',
+            '2': 'd',
+            '3': 't',
+            '4': 'q',
+            '5': 'quint'
+        };
+        let result = '';
+        for (const digit of trimmed) {
+            if (digit >= '1' && digit <= '5') {
+                result += digitMap[digit];
+            }
+        }
+        return result;
     }
-    // If it's ONLY m/br/broad (no other multiplicity), return false
-    // because J-values must be 0 (handled by multipletnumbers returning null)
-    const jCounts = multipletnumbers(multiplicityText);
-    if (jCounts === null) {
-        return false; // Only m/br/broad → J-values must be 0, not optional
-    }
-    // Has both m/br/broad AND other multiplicity → optional
-    return true;
+    return trimmed;
 }
-// Validation functions using existing patterns - only J-value and multiplicity consistency
-function validateNMRPeak(peak, index) {
-    const errors = [];
-    // Only validate J-value count against multiplicity
-    if (peak.multiplicity) {
-        try {
-            const expectedJCounts = multipletnumbers(peak.multiplicity);
-            if (expectedJCounts !== null) {
-                const actualJCount = peak.jValues.filter(j => !isNaN(j) && j > 0).length;
-                const expectedTotal = expectedJCounts.length;
-                // Check if J-values are optional (e.g., "m(tt)", "br d")
-                const isOptional = isJValuesOptional(peak.multiplicity);
-                // If optional: allow 0 or expectedTotal J-values
-                // If not optional: must have exactly expectedTotal J-values
-                if (!isOptional && actualJCount !== expectedTotal) {
-                    errors.push({
-                        type: 'peak',
-                        index,
-                        field: 'jcount',
-                        message: `Multiplicity "${peak.multiplicity}" expects ${expectedTotal} J-values, but found ${actualJCount}`
-                    });
-                }
-                else if (isOptional && actualJCount !== 0 && actualJCount !== expectedTotal) {
-                    errors.push({
-                        type: 'peak',
-                        index,
-                        field: 'jcount',
-                        message: `Multiplicity "${peak.multiplicity}" expects 0 or ${expectedTotal} J-values, but found ${actualJCount}`
-                    });
+/**
+ * Calculate required J-value columns based on multiplicity
+ */
+function calculateRequiredJColumns(multiplicity) {
+    if (!multiplicity || multiplicity.trim() === '') {
+        return 0;
+    }
+    try {
+        const multipletnumbers = window.multipletnumbers;
+        const jCounts = multipletnumbers(multiplicity);
+        if (jCounts === null) {
+            return 0;
+        }
+        return jCounts.length;
+    }
+    catch (_a) {
+        return 0;
+    }
+}
+
+/**
+ * Utility functions for sorting NMR data
+ */
+/**
+ * Sort peaks array by chemical shift value
+ */
+function sortPeaksByShift(peaks, order) {
+    peaks.sort((a, b) => {
+        const aValue = getShiftValue(a.chemicalShift);
+        const bValue = getShiftValue(b.chemicalShift);
+        if (order === 'asc') {
+            return aValue - bValue;
+        }
+        else {
+            return bValue - aValue;
+        }
+    });
+}
+/**
+ * Get numeric value from chemical shift (average for ranges)
+ */
+function getShiftValue(shift) {
+    if (Array.isArray(shift)) {
+        return (shift[0] + shift[1]) / 2;
+    }
+    return shift;
+}
+
+/**
+ * Utility functions for validating NMR data
+ */
+/**
+ * Validate metadata fields
+ * @returns true if there are errors
+ */
+function validateMetadata(metadata, validationState) {
+    let hasErrors = false;
+    if (!metadata.nuclei || metadata.nuclei.trim() === '') {
+        validationState.setError('nuclei', 'Nuclei is required');
+        hasErrors = true;
+    }
+    if (!metadata.solvent || metadata.solvent.trim() === '') {
+        validationState.setError('solvent', 'Solvent is required');
+        hasErrors = true;
+    }
+    if (!metadata.frequency || metadata.frequency === 0) {
+        validationState.setError('frequency', 'Frequency is required');
+        hasErrors = true;
+    }
+    return hasErrors;
+}
+/**
+ * Validate a single table row
+ * @returns true if there are errors
+ */
+function validateTableRow(row, is1HNMR, validationState) {
+    let hasErrors = false;
+    const rowId = row.id;
+    // Validate chemical shift
+    const shift = parseChemicalShift(row.shift);
+    if (shift === null || row.shift.trim() === '') {
+        validationState.setError(`shift-${rowId}`, 'Invalid chemical shift');
+        hasErrors = true;
+    }
+    // Validate multiplicity (for 1H NMR)
+    if (is1HNMR) {
+        const multiplicity = convertMultiplicityToText(row.multiplicity);
+        if (row.multiplicity.trim() === '') {
+            validationState.setError(`mult-${rowId}`, 'Multiplicity is required for 1H NMR');
+            hasErrors = true;
+        }
+        else {
+            try {
+                const multipletnumbers = window.multipletnumbers;
+                multipletnumbers(multiplicity);
+            }
+            catch (error) {
+                validationState.setError(`mult-${rowId}`, 'Invalid multiplicity');
+                hasErrors = true;
+            }
+        }
+        // Validate integration (for 1H NMR)
+        if (!row.integration || row.integration === 0) {
+            validationState.setError(`int-${rowId}`, 'Integration is required for 1H NMR');
+            hasErrors = true;
+        }
+    }
+    // Validate J-values
+    const multiplicity = convertMultiplicityToText(row.multiplicity);
+    const isJValuesOptional = window.isJValuesOptional;
+    const isOptional = multiplicity && isJValuesOptional(multiplicity);
+    const requiredJCount = calculateRequiredJColumns(multiplicity);
+    const actualJCount = row.jValues.filter((j) => !isNaN(j) && j !== 0).length;
+    if (isOptional) {
+        // Optional: either all empty or all filled
+        if (actualJCount > 0 && actualJCount < requiredJCount) {
+            for (let i = 0; i < requiredJCount; i++) {
+                if (!row.jValues[i] || row.jValues[i] === 0) {
+                    validationState.setError(`j${i}-${rowId}`, 'All J-values must be filled');
+                    hasErrors = true;
                 }
             }
         }
-        catch (error) {
-            // Invalid multiplicity format - ignore as it's not our concern
+    }
+    else {
+        // Not optional: all must be filled
+        for (let i = 0; i < requiredJCount; i++) {
+            if (!row.jValues[i] || row.jValues[i] === 0) {
+                validationState.setError(`j${i}-${rowId}`, 'J-value is required');
+                hasErrors = true;
+            }
         }
     }
-    return errors;
+    return hasErrors;
 }
-function validateNMRData(nmrData) {
-    const errors = [];
-    if (!nmrData || !nmrData.peaks) {
-        return [];
-    }
-    // Validate each peak (only J-value and multiplicity consistency)
-    nmrData.peaks.forEach((peak, index) => {
-        const peakErrors = validateNMRPeak(peak, index);
-        errors.push(...peakErrors);
+/**
+ * Validate all table rows
+ * @returns true if there are errors
+ */
+function validateTableRows(rows, is1HNMR, validationState) {
+    let hasErrors = false;
+    rows.forEach(row => {
+        if (validateTableRow(row, is1HNMR, validationState)) {
+            hasErrors = true;
+        }
     });
-    return errors;
-}
-function validateRichTextContent(textContent, parseFunction) {
-    try {
-        const parsedData = parseFunction(textContent);
-        return validateNMRData(parsedData);
-    }
-    catch (error) {
-        // Parse errors are not validation errors - allow parsing to proceed
-        return [];
-    }
+    return hasErrors;
 }
 
 // NMR Formatter
@@ -1847,8 +2043,8 @@ class NMRFormatterApp {
             const tableRows = this.appState.table.getRows();
             const peaks = [];
             tableRows.forEach(row => {
-                const shift = this.parseChemicalShift(row.shift);
-                const multiplicity = this.convertMultiplicityToText(row.multiplicity);
+                const shift = parseChemicalShift(row.shift);
+                const multiplicity = convertMultiplicityToText(row.multiplicity);
                 if (shift !== null) {
                     const peak = new NMRPeak(shift, multiplicity, row.jValues, row.integration, row.assignment);
                     peaks.push(peak);
@@ -1859,7 +2055,7 @@ class NMRFormatterApp {
                 return;
             }
             // Sort peaks by chemical shift
-            this.sortPeaksByShift(peaks, metadataData.sortOrder);
+            sortPeaksByShift(peaks, metadataData.sortOrder);
             const nmrData = new NMRData(peaks, metadata);
             // Generate formatted text
             const generateFormattedText = window.generateFormattedText;
@@ -1878,157 +2074,18 @@ class NMRFormatterApp {
         let hasErrors = false;
         // Validate metadata
         const metadataData = this.appState.metadata.getData();
-        if (!metadataData.nuclei || metadataData.nuclei.trim() === '') {
-            this.appState.validation.setError('nuclei', 'Nuclei is required');
-            hasErrors = true;
-        }
-        if (!metadataData.solvent || metadataData.solvent.trim() === '') {
-            this.appState.validation.setError('solvent', 'Solvent is required');
-            hasErrors = true;
-        }
-        if (!metadataData.frequency || metadataData.frequency === 0) {
-            this.appState.validation.setError('frequency', 'Frequency is required');
-            hasErrors = true;
-        }
+        hasErrors = validateMetadata({
+            nuclei: metadataData.nuclei,
+            solvent: metadataData.solvent,
+            frequency: metadataData.frequency
+        }, this.appState.validation);
         // Validate table rows
         const tableRows = this.appState.table.getRows();
         const is1HNMR = metadataData.nuclei.includes('1') && metadataData.nuclei.includes('H');
-        tableRows.forEach(row => {
-            const rowId = row.id;
-            // Validate chemical shift
-            const shift = this.parseChemicalShift(row.shift);
-            if (shift === null || row.shift.trim() === '') {
-                this.appState.validation.setError(`shift-${rowId}`, 'Invalid chemical shift');
-                hasErrors = true;
-            }
-            // Validate multiplicity (for 1H NMR)
-            if (is1HNMR) {
-                const multiplicity = this.convertMultiplicityToText(row.multiplicity);
-                if (row.multiplicity.trim() === '') {
-                    this.appState.validation.setError(`mult-${rowId}`, 'Multiplicity is required for 1H NMR');
-                    hasErrors = true;
-                }
-                else {
-                    try {
-                        const multipletnumbers = window.multipletnumbers;
-                        multipletnumbers(multiplicity);
-                    }
-                    catch (error) {
-                        this.appState.validation.setError(`mult-${rowId}`, 'Invalid multiplicity');
-                        hasErrors = true;
-                    }
-                }
-                // Validate integration (for 1H NMR)
-                if (!row.integration || row.integration === 0) {
-                    this.appState.validation.setError(`int-${rowId}`, 'Integration is required for 1H NMR');
-                    hasErrors = true;
-                }
-            }
-            // Validate J-values
-            const multiplicity = this.convertMultiplicityToText(row.multiplicity);
-            const isJValuesOptional = window.isJValuesOptional;
-            const isOptional = multiplicity && isJValuesOptional(multiplicity);
-            const requiredJCount = this.calculateRequiredJColumns(multiplicity);
-            const actualJCount = row.jValues.filter(j => !isNaN(j) && j !== 0).length;
-            if (isOptional) {
-                // Optional: either all empty or all filled
-                if (actualJCount > 0 && actualJCount < requiredJCount) {
-                    for (let i = 0; i < requiredJCount; i++) {
-                        if (!row.jValues[i] || row.jValues[i] === 0) {
-                            this.appState.validation.setError(`j${i}-${rowId}`, 'All J-values must be filled');
-                            hasErrors = true;
-                        }
-                    }
-                }
-            }
-            else {
-                // Not optional: all must be filled
-                for (let i = 0; i < requiredJCount; i++) {
-                    if (!row.jValues[i] || row.jValues[i] === 0) {
-                        this.appState.validation.setError(`j${i}-${rowId}`, 'J-value is required');
-                        hasErrors = true;
-                    }
-                }
-            }
-        });
+        if (validateTableRows(tableRows, is1HNMR, this.appState.validation)) {
+            hasErrors = true;
+        }
         return hasErrors;
-    }
-    parseChemicalShift(value) {
-        if (!value || value.trim() === '')
-            return null;
-        const trimmed = value.trim();
-        // Check for range format (supports both hyphen and en-dash)
-        const rangeMatch = trimmed.match(/^([\d.]+)\s*[-–]\s*([\d.]+)$/);
-        if (rangeMatch) {
-            const num1 = parseFloat(rangeMatch[1]);
-            const num2 = parseFloat(rangeMatch[2]);
-            if (!isNaN(num1) && !isNaN(num2)) {
-                return [num1, num2];
-            }
-        }
-        // Single value
-        const num = parseFloat(trimmed);
-        if (!isNaN(num)) {
-            return num;
-        }
-        return null;
-    }
-    convertMultiplicityToText(input) {
-        if (!input || input.trim() === '')
-            return '';
-        const trimmed = input.trim();
-        // Check if input is purely numeric
-        if (/^\d+$/.test(trimmed)) {
-            const digitMap = {
-                '1': 's',
-                '2': 'd',
-                '3': 't',
-                '4': 'q',
-                '5': 'quint'
-            };
-            let result = '';
-            for (const digit of trimmed) {
-                if (digit >= '1' && digit <= '5') {
-                    result += digitMap[digit];
-                }
-            }
-            return result;
-        }
-        return trimmed;
-    }
-    calculateRequiredJColumns(multiplicity) {
-        if (!multiplicity || multiplicity.trim() === '') {
-            return 0;
-        }
-        try {
-            const multipletnumbers = window.multipletnumbers;
-            const jCounts = multipletnumbers(multiplicity);
-            if (jCounts === null) {
-                return 0;
-            }
-            return jCounts.length;
-        }
-        catch (_a) {
-            return 0;
-        }
-    }
-    sortPeaksByShift(peaks, order) {
-        peaks.sort((a, b) => {
-            const aValue = this.getShiftValue(a.chemicalShift);
-            const bValue = this.getShiftValue(b.chemicalShift);
-            if (order === 'asc') {
-                return aValue - bValue;
-            }
-            else {
-                return bValue - aValue;
-            }
-        });
-    }
-    getShiftValue(shift) {
-        if (Array.isArray(shift)) {
-            return (shift[0] + shift[1]) / 2;
-        }
-        return shift;
     }
     copyFormattedText() {
         const richTextContent = this.richTextEditor.getContent();
@@ -2096,7 +2153,7 @@ window.isValidSolventType = isValidSolventType;
 window.Metadata = Metadata;
 window.NMRPeak = NMRPeak;
 window.NMRData = NMRData;
-window.multipletnumbers = multipletnumbers;
+window.multipletnumbers = NMRPeak.multipletnumbers;
 window.formatChemicalShift = formatChemicalShift;
 window.formatJValues = formatJValues;
 window.formatIntegration = formatIntegration;
@@ -2105,7 +2162,7 @@ window.formatAssignment = formatAssignment;
 window.formatSinglePeak = formatSinglePeak;
 window.formatMetadata = formatMetadata;
 window.generateFormattedText = generateFormattedText;
-window.isJValuesOptional = isJValuesOptional;
+window.isJValuesOptional = NMRPeak.isJValuesOptional;
 
 // Export new classes (State Management & UI)
 window.MetadataState = MetadataState;

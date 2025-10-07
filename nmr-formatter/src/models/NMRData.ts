@@ -2,6 +2,7 @@
 
 import { NMRPeak } from './NMRPeak';
 import { Metadata } from './Metadata';
+import { ValidationError } from '../core/types';
 
 export class NMRData {
     peaks: NMRPeak[];
@@ -24,5 +25,27 @@ export class NMRData {
 
     updateMetadata(key: keyof Metadata, value: string | number): void {
         this.metadata[key] = value;
+    }
+
+    /**
+     * Validate all peaks in this NMR data
+     */
+    validate(): ValidationError[] {
+        const errors: ValidationError[] = [];
+
+        if (!this.peaks) {
+            return [];
+        }
+
+        // Validate each peak (only J-value and multiplicity consistency)
+        this.peaks.forEach((peak, index) => {
+            const peakErrors = peak.validate();
+            // Update index in errors
+            peakErrors.forEach(error => {
+                errors.push({ ...error, index });
+            });
+        });
+
+        return errors;
     }
 }
