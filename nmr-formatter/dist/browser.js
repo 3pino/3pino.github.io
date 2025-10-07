@@ -829,6 +829,13 @@ class MetadataForm {
                 }
             }
         });
+        // Ensure placeholder shows when field is empty on blur
+        element.addEventListener('blur', () => {
+            const html = element.innerHTML.trim();
+            if (html === '' || html === '<br>') {
+                element.innerHTML = '';
+            }
+        });
     }
     setupNumberField(element, onChange, min, max, onNavigateNext) {
         // Enter key navigation
