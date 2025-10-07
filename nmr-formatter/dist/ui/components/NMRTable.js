@@ -68,8 +68,8 @@ class NMRTable {
             this.rowElements.set(rowData.id, tr);
             this.tableBody.appendChild(tr);
         });
-        // Update table header
-        this.updateTableHeader();
+        // Update J column visibility to preserve table state
+        this.updateJColumnVisibility();
     }
     createTableRow(rowData) {
         const row = document.createElement('tr');
@@ -180,14 +180,21 @@ class NMRTable {
                 const value = parseFloat(input.value);
                 if (!isNaN(value)) {
                     jValues[index] = Math.abs(value); // Auto-correct to absolute
-                    // Auto-sort J-values in descending order
-                    jValues.sort((a, b) => b - a);
+                    // Don't sort during input - only update state
                     this.tableState.updateRow(rowId, { jValues });
-                    // Update all J inputs with sorted values
-                    this.updateJInputsForRow(row, jValues);
                 }
             }
             this.validationState.clearError(`j${index}-${rowId}`);
+        });
+        input.addEventListener('blur', () => {
+            const rowData = this.tableState.getRow(rowId);
+            if (rowData && rowData.jValues.length > 0) {
+                // Sort J-values in descending order when focus is lost
+                const jValues = [...rowData.jValues].sort((a, b) => b - a);
+                this.tableState.updateRow(rowId, { jValues });
+                // Update all J inputs with sorted values
+                this.updateJInputsForRow(row, jValues);
+            }
         });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
