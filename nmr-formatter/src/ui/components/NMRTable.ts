@@ -34,8 +34,15 @@ export class NMRTable {
 
         // Listen to state changes
         this.tableState.onChange((rows, maxJ) => {
-            this.maxJColumns = maxJ;
-            this.renderTable();
+            // Only re-render if rows were added/removed
+            // For updates to existing rows, the DOM is already updated via event handlers
+            const currentRowCount = this.rowElements.size;
+            const newRowCount = rows.length;
+
+            if (currentRowCount !== newRowCount) {
+                this.maxJColumns = maxJ;
+                this.renderTable();
+            }
         });
     }
 
