@@ -436,8 +436,8 @@ initializeTable() {
         this.metadataInputs.nuclei.innerHTML = '<sup>1</sup>H';
 
         // Set default precision values
-        this.metadataInputs.shiftPrecision.textContent = '2';
-        this.metadataInputs.jPrecision.textContent = '1';
+        this.metadataInputs.shiftPrecision.textContent = '3';
+        this.metadataInputs.jPrecision.textContent = '2';
 
         // Add initial empty row
         this.addTableRow();

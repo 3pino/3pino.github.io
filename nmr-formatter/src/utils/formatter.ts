@@ -6,20 +6,33 @@ import { NMRData } from '../models/NMRData';
 import { Metadata } from '../models/Metadata';
 import { Logger } from '../core/logger';
 
-// Helper function to format chemical shift values
-function formatChemicalShift(shift: number | [number, number], decimalPlaces: number = 2): string {
+// Helper function to format chemical shift values with significant figures
+function formatChemicalShift(shift: number | [number, number], significantFigures: number = 3): string {
     if (Array.isArray(shift)) {
         // Range format with en-dash
-        return `${shift[0].toFixed(decimalPlaces)}–${shift[1].toFixed(decimalPlaces)}`;
+        return `${formatSignificantFigures(shift[0], significantFigures)}–${formatSignificantFigures(shift[1], significantFigures)}`;
     }
-    return shift.toFixed(decimalPlaces);
+    return formatSignificantFigures(shift, significantFigures);
 }
 
-// Helper function to format J-values with italics
-function formatJValues(jValues: number[], decimalPlaces: number = 2): string {
+// Helper function to format number with significant figures
+function formatSignificantFigures(num: number, sigFigs: number): string {
+    if (num === 0) return '0';
+    
+    // Get the magnitude (order of 10)
+    const magnitude = Math.floor(Math.log10(Math.abs(num)));
+    
+    // Calculate decimal places needed for the significant figures
+    const decimalPlaces = Math.max(0, sigFigs - magnitude - 1);
+    
+    return num.toFixed(decimalPlaces);
+}
+
+// Helper function to format J-values with italics and significant figures
+function formatJValues(jValues: number[], significantFigures: number = 2): string {
     if (jValues.length === 0) return "";
 
-    const jString = jValues.map(j => j.toFixed(decimalPlaces)).join(", ");
+    const jString = jValues.map(j => formatSignificantFigures(j, significantFigures)).join(", ");
     return ` <I>J</I> = ${jString} Hz`;
 }
 
@@ -75,10 +88,10 @@ function formatAssignment(assignment: string): string {
 }
 
 // Helper function to format a single peak
-function formatSinglePeak(peak: NMRPeak, shiftDecimalPlaces: number = 2, jValueDecimalPlaces: number = 1, integrationDecimalPlaces: number = 0, nuclei: string = "1H"): string {
-    const shift = formatChemicalShift(peak.chemicalShift, shiftDecimalPlaces);
+function formatSinglePeak(peak: NMRPeak, shiftSigFigs: number = 3, jValueSigFigs: number = 2, integrationDecimalPlaces: number = 0, nuclei: string = "1H"): string {
+    const shift = formatChemicalShift(peak.chemicalShift, shiftSigFigs);
     const mult = formatMultiplicity(peak.multiplicity);
-    const jValues = formatJValues(peak.jValues, jValueDecimalPlaces);
+    const jValues = formatJValues(peak.jValues, jValueSigFigs);
     const integration = formatIntegration(peak.integration as any, integrationDecimalPlaces, nuclei);
     const assignment = formatAssignment(peak.assignment);
 
@@ -138,7 +151,7 @@ function formatMetadata(metadata: Metadata): string {
 }
 
 // Main formatting function
-export function generateFormattedText(data: NMRData, shiftDecimalPlaces: number = 2, jValueDecimalPlaces: number = 1, integrationDecimalPlaces: number = 0): string {
+export function generateFormattedText(data: NMRData, shiftSigFigs: number = 3, jValueSigFigs: number = 2, integrationDecimalPlaces: number = 0): string {
     if (!data || !data.peaks || data.peaks.length === 0) {
         return "";
     }
@@ -155,7 +168,7 @@ export function generateFormattedText(data: NMRData, shiftDecimalPlaces: number 
 
     // Add delta symbol and peaks
     const nuclei = data.metadata?.nuclei || "1H";
-    const peakStrings = data.peaks.map(peak => formatSinglePeak(peak, shiftDecimalPlaces, jValueDecimalPlaces, integrationDecimalPlaces, nuclei));
+    const peakStrings = data.peaks.map(peak => formatSinglePeak(peak, shiftSigFigs, jValueSigFigs, integrationDecimalPlaces, nuclei));
     const peaksSection = "δ " + peakStrings.join(", ");
     result.push(peaksSection);
 

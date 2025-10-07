@@ -1,5 +1,5 @@
 "use strict";
-// NMR Table Converter - Phase 2.2
+// NMR Table Converter
 // Bidirectional conversion between NMRData and table structure (array of arrays)
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.dataToTable = dataToTable;

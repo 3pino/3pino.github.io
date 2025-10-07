@@ -1,5 +1,5 @@
 "use strict";
-// NMR Text Parser - Phase 1.2
+// NMR Text Parser
 // Parses free-text NMR data into structured NMRData objects
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = void 0;
