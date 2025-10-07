@@ -1,0 +1,452 @@
+"use strict";
+/**
+ * NMR Table Component
+ * Manages the table UI for NMR peak data
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NMRTable = void 0;
+class NMRTable {
+    constructor(tableState, validationState, onMultiplicityChange, onNavigateToMetadata) {
+        this.maxJColumns = 0;
+        // Row ID to TR element mapping
+        this.rowElements = new Map();
+        this.tableState = tableState;
+        this.validationState = validationState;
+        this.tableBody = document.getElementById('nmr-table-body');
+        this.tableElement = document.getElementById('nmr-table');
+        this.selectAllCheckbox = document.getElementById('select-all-checkbox');
+        this.initializeEventListeners(onMultiplicityChange, onNavigateToMetadata);
+        this.renderTable();
+        // Listen to state changes
+        this.tableState.onChange((rows, maxJ) => {
+            this.maxJColumns = maxJ;
+            this.renderTable();
+        });
+    }
+    initializeEventListeners(onMultiplicityChange, onNavigateToMetadata) {
+        var _a, _b;
+        // Select all checkbox
+        this.selectAllCheckbox.addEventListener('change', (e) => {
+            const checkboxes = this.tableBody.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = this.selectAllCheckbox.checked;
+            });
+        });
+        // Add peak button
+        (_a = document.getElementById('add-peak-btn')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => {
+            this.tableState.addRow();
+        });
+        // Remove peak button
+        (_b = document.getElementById('remove-peak-btn')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', () => {
+            const selectedIds = [];
+            this.rowElements.forEach((tr, id) => {
+                const checkbox = tr.querySelector('.row-checkbox');
+                if (checkbox === null || checkbox === void 0 ? void 0 : checkbox.checked) {
+                    selectedIds.push(id);
+                }
+            });
+            if (selectedIds.length > 0) {
+                this.tableState.removeRows(selectedIds);
+                this.selectAllCheckbox.checked = false;
+            }
+        });
+    }
+    renderTable() {
+        const rows = this.tableState.getRows();
+        // Clear existing rows
+        this.tableBody.innerHTML = '';
+        this.rowElements.clear();
+        // Render each row
+        rows.forEach(rowData => {
+            const tr = this.createTableRow(rowData);
+            this.rowElements.set(rowData.id, tr);
+            this.tableBody.appendChild(tr);
+        });
+        // Update table header
+        this.updateTableHeader();
+    }
+    createTableRow(rowData) {
+        const row = document.createElement('tr');
+        row.setAttribute('data-row-id', rowData.id);
+        // Checkbox cell
+        const checkboxCell = document.createElement('td');
+        checkboxCell.className = 'checkbox-cell';
+        checkboxCell.innerHTML = '<input type="checkbox" class="row-checkbox">';
+        row.appendChild(checkboxCell);
+        // Chemical shift cell
+        const shiftCell = document.createElement('td');
+        const shiftInput = document.createElement('input');
+        shiftInput.type = 'text';
+        shiftInput.className = 'shift-input';
+        shiftInput.placeholder = '0.00 or 7.53–7.50';
+        shiftInput.value = rowData.shift;
+        shiftCell.appendChild(shiftInput);
+        this.setupShiftInput(shiftInput, rowData.id, row);
+        row.appendChild(shiftCell);
+        // Multiplicity cell
+        const multCell = document.createElement('td');
+        const multInput = document.createElement('input');
+        multInput.type = 'text';
+        multInput.className = 'mult-input';
+        multInput.placeholder = 's, d, t...';
+        multInput.value = rowData.multiplicity;
+        multCell.appendChild(multInput);
+        this.setupMultiplicityInput(multInput, rowData.id, row);
+        row.appendChild(multCell);
+        // J-value cells (10 max, dynamically shown/hidden)
+        const MAX_J_CELLS = 10;
+        for (let i = 0; i < MAX_J_CELLS; i++) {
+            const jCell = document.createElement('td');
+            jCell.className = 'j-input-cell';
+            const jInput = document.createElement('input');
+            jInput.type = 'number';
+            jInput.step = '0.1';
+            jInput.className = 'j-input';
+            jInput.setAttribute('data-j-index', i.toString());
+            jInput.placeholder = '0.0';
+            if (i < rowData.jValues.length) {
+                jInput.value = rowData.jValues[i].toString();
+            }
+            jCell.appendChild(jInput);
+            this.setupJInput(jInput, rowData.id, i, row);
+            // Initially hide all J cells
+            jCell.style.display = 'none';
+            row.appendChild(jCell);
+        }
+        // Integration cell
+        const intCell = document.createElement('td');
+        intCell.className = 'int-cell';
+        const intInput = document.createElement('input');
+        intInput.type = 'number';
+        intInput.step = '1';
+        intInput.className = 'int-input';
+        intInput.placeholder = '1';
+        if (rowData.integration) {
+            intInput.value = rowData.integration.toString();
+        }
+        intCell.appendChild(intInput);
+        this.setupIntegrationInput(intInput, rowData.id, row);
+        row.appendChild(intCell);
+        // Assignment cell
+        const assignmentCell = document.createElement('td');
+        assignmentCell.className = 'assignment-cell';
+        const assignmentInput = document.createElement('div');
+        assignmentInput.className = 'assignment-input';
+        assignmentInput.setAttribute('contenteditable', 'true');
+        assignmentInput.setAttribute('data-placeholder', 'e.g., H-8');
+        assignmentInput.innerHTML = rowData.assignment;
+        assignmentCell.appendChild(assignmentInput);
+        this.setupAssignmentInput(assignmentInput, rowData.id, row);
+        row.appendChild(assignmentCell);
+        return row;
+    }
+    setupShiftInput(input, rowId, row) {
+        input.addEventListener('input', () => {
+            this.tableState.updateRow(rowId, { shift: input.value });
+            this.validationState.clearError(`shift-${rowId}`);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(input, row, e.shiftKey);
+            }
+        });
+    }
+    setupMultiplicityInput(input, rowId, row) {
+        input.addEventListener('input', () => {
+            this.tableState.updateRow(rowId, { multiplicity: input.value });
+            this.validationState.clearError(`mult-${rowId}`);
+            // Recalculate J columns when multiplicity changes
+            this.updateJColumnVisibility();
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(input, row, e.shiftKey);
+            }
+        });
+    }
+    setupJInput(input, rowId, index, row) {
+        input.addEventListener('input', () => {
+            const rowData = this.tableState.getRow(rowId);
+            if (rowData) {
+                const jValues = [...rowData.jValues];
+                const value = parseFloat(input.value);
+                if (!isNaN(value)) {
+                    jValues[index] = Math.abs(value); // Auto-correct to absolute
+                    // Auto-sort J-values in descending order
+                    jValues.sort((a, b) => b - a);
+                    this.tableState.updateRow(rowId, { jValues });
+                    // Update all J inputs with sorted values
+                    this.updateJInputsForRow(row, jValues);
+                }
+            }
+            this.validationState.clearError(`j${index}-${rowId}`);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(input, row, e.shiftKey);
+            }
+        });
+    }
+    setupIntegrationInput(input, rowId, row) {
+        input.addEventListener('input', () => {
+            const value = parseFloat(input.value);
+            this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
+            this.validationState.clearError(`int-${rowId}`);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.focusNextTableCell(input, row, e.shiftKey);
+            }
+        });
+    }
+    setupAssignmentInput(input, rowId, row) {
+        // Paste filtering
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const clipboardData = e.clipboardData;
+            const text = (clipboardData === null || clipboardData === void 0 ? void 0 : clipboardData.getData('text/html')) || (clipboardData === null || clipboardData === void 0 ? void 0 : clipboardData.getData('text/plain')) || '';
+            const temp = document.createElement('div');
+            temp.innerHTML = text;
+            const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
+            document.execCommand('insertHTML', false, filtered);
+        });
+        input.addEventListener('input', () => {
+            const html = input.innerHTML.trim() === '' || input.innerHTML === '<br>' ? '' : input.innerHTML;
+            this.tableState.updateRow(rowId, { assignment: html });
+            this.validationState.clearError(`assignment-${rowId}`);
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    const prevRow = row.previousElementSibling;
+                    if (prevRow) {
+                        const prevAssignment = prevRow.querySelector('.assignment-input');
+                        prevAssignment === null || prevAssignment === void 0 ? void 0 : prevAssignment.focus();
+                    }
+                }
+                else {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow) {
+                        const nextShift = nextRow.querySelector('.shift-input');
+                        nextShift === null || nextShift === void 0 ? void 0 : nextShift.focus();
+                    }
+                    else {
+                        // Last row: add new row
+                        const newId = this.tableState.addRow();
+                        setTimeout(() => {
+                            const newRow = this.rowElements.get(newId);
+                            if (newRow) {
+                                const firstInput = newRow.querySelector('.shift-input');
+                                firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
+                            }
+                        }, 50);
+                    }
+                }
+            }
+            // Keyboard shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'b' || e.key === 'B') {
+                    e.preventDefault();
+                    document.execCommand('bold');
+                }
+                else if (e.key === 'i' || e.key === 'I') {
+                    e.preventDefault();
+                    document.execCommand('italic');
+                }
+            }
+        });
+    }
+    focusNextTableCell(currentInput, currentRow, reverse) {
+        const currentCell = currentInput.closest('td');
+        if (!currentCell)
+            return;
+        const cellIndex = Array.from(currentRow.children).indexOf(currentCell);
+        if (reverse) {
+            // Move up
+            let searchRow = currentRow.previousElementSibling;
+            while (searchRow) {
+                const targetCell = searchRow.children[cellIndex];
+                if (targetCell) {
+                    const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                    if (targetInput && !targetInput.disabled) {
+                        targetInput.focus();
+                        return;
+                    }
+                }
+                searchRow = searchRow.previousElementSibling;
+            }
+        }
+        else {
+            // Move down
+            let searchRow = currentRow.nextElementSibling;
+            while (searchRow) {
+                const targetCell = searchRow.children[cellIndex];
+                if (targetCell) {
+                    const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                    if (targetInput && !targetInput.disabled) {
+                        targetInput.focus();
+                        return;
+                    }
+                }
+                searchRow = searchRow.nextElementSibling;
+            }
+            // No cell below: add new row
+            const newId = this.tableState.addRow();
+            setTimeout(() => {
+                const newRow = this.rowElements.get(newId);
+                if (newRow) {
+                    const targetCell = newRow.children[cellIndex];
+                    const targetInput = targetCell === null || targetCell === void 0 ? void 0 : targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                    if (targetInput && !targetInput.disabled) {
+                        targetInput.focus();
+                    }
+                    else {
+                        // Find first enabled input
+                        const firstInput = newRow.querySelector('input:not([disabled]), [contenteditable="true"]');
+                        firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
+                    }
+                }
+            }, 50);
+        }
+    }
+    updateJInputsForRow(row, jValues) {
+        const jInputs = row.querySelectorAll('.j-input:not([disabled])');
+        jInputs.forEach((input, index) => {
+            if (index < jValues.length) {
+                input.value = jValues[index].toString();
+            }
+        });
+    }
+    updateJColumnVisibility() {
+        const rows = this.tableState.getRows();
+        // Calculate required J columns for each row
+        const rowRequirements = [];
+        rows.forEach(rowData => {
+            const required = this.calculateRequiredJColumns(rowData.multiplicity);
+            rowRequirements.push(required);
+        });
+        // Determine table-wide maximum
+        const tableMaxJ = Math.max(0, ...rowRequirements);
+        this.maxJColumns = tableMaxJ;
+        // Update visibility for all rows
+        this.rowElements.forEach((tr, rowId) => {
+            const rowData = rows.find(r => r.id === rowId);
+            if (!rowData)
+                return;
+            const jCells = tr.querySelectorAll('.j-input-cell');
+            const requiredForRow = this.calculateRequiredJColumns(rowData.multiplicity);
+            jCells.forEach((cell, cellIndex) => {
+                const input = cell.querySelector('.j-input');
+                if (cellIndex < requiredForRow) {
+                    // Active cell
+                    cell.style.display = '';
+                    cell.classList.remove('disabled');
+                    if (input)
+                        input.disabled = false;
+                }
+                else if (cellIndex < tableMaxJ) {
+                    // Placeholder cell
+                    cell.style.display = '';
+                    cell.classList.add('disabled');
+                    if (input)
+                        input.disabled = true;
+                }
+                else {
+                    // Hidden cell
+                    cell.style.display = 'none';
+                    if (input)
+                        input.disabled = true;
+                }
+            });
+        });
+        this.updateTableHeader();
+    }
+    calculateRequiredJColumns(multiplicity) {
+        if (!multiplicity || multiplicity.trim() === '') {
+            return 0;
+        }
+        const multiplicityText = this.convertMultiplicityToText(multiplicity.trim());
+        try {
+            const jCounts = window.multipletnumbers(multiplicityText);
+            if (jCounts === null) {
+                return 0;
+            }
+            return jCounts.length;
+        }
+        catch (_a) {
+            return 0;
+        }
+    }
+    convertMultiplicityToText(input) {
+        if (!input || input.trim() === '')
+            return '';
+        const trimmed = input.trim();
+        if (/^\d+$/.test(trimmed)) {
+            const digitMap = {
+                '1': 's',
+                '2': 'd',
+                '3': 't',
+                '4': 'q',
+                '5': 'quint'
+            };
+            let result = '';
+            for (const digit of trimmed) {
+                if (digit >= '1' && digit <= '5') {
+                    result += digitMap[digit];
+                }
+            }
+            return result;
+        }
+        return trimmed;
+    }
+    updateTableHeader() {
+        const thead = this.tableElement.querySelector('thead tr');
+        if (!thead)
+            return;
+        // Remove existing J headers
+        const existingJHeaders = thead.querySelectorAll('.j-header');
+        existingJHeaders.forEach(header => header.remove());
+        // Add J headers before Integration
+        const intHeader = thead.querySelector('.integration-header');
+        if (intHeader) {
+            for (let i = 0; i < this.maxJColumns; i++) {
+                const jHeader = document.createElement('th');
+                jHeader.className = 'j-header';
+                jHeader.textContent = `J${i + 1} (Hz)`;
+                intHeader.insertAdjacentElement('beforebegin', jHeader);
+            }
+        }
+    }
+    filterHTMLTags(element, allowedTags) {
+        let result = '';
+        element.childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                result += node.textContent;
+            }
+            else if (node.nodeType === Node.ELEMENT_NODE) {
+                const tagName = node.tagName.toUpperCase();
+                if (allowedTags.includes(tagName)) {
+                    result += `<${tagName.toLowerCase()}>${this.filterHTMLTags(node, allowedTags)}</${tagName.toLowerCase()}>`;
+                }
+                else {
+                    result += this.filterHTMLTags(node, allowedTags);
+                }
+            }
+        });
+        return result;
+    }
+    getFirstInput() {
+        const firstRow = this.tableBody.querySelector('tr');
+        if (firstRow) {
+            return firstRow.querySelector('.shift-input');
+        }
+        return null;
+    }
+}
+exports.NMRTable = NMRTable;
+//# sourceMappingURL=NMRTable.js.map
