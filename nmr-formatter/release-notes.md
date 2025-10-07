@@ -1,5 +1,19 @@
 # NMR Formatter Release Notes
 
+## ver 1.2 (2025-10-07)
+
+### Precision and Input Handling Improvements
+
+**Significant Figures:**
+- Changed from fixed precision to significant figures for chemical shift and J-values
+- More accurate representation of measurement precision
+- Updated UI labels to reflect "Shift Sig. Figs." and "J Sig. Figs."
+
+**UI/UX Enhancements:**
+- Improved metadata input field behavior
+- Fixed Enter key behavior to prevent unwanted line breaks in input fields
+- Fixed empty value handling in assignment field (removes placeholder, prevents extra commas/newlines)
+
 ## ver 1.1 (2025-10-06)
 
 ### Enhanced Multiplicity Support
