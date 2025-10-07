@@ -225,6 +225,9 @@ export class MetadataForm {
 
         if (!input || !dropdown) return;
 
+        // Prevent dropdown from receiving focus
+        dropdown.setAttribute('tabindex', '-1');
+
         // Populate dropdown
         dropdown.innerHTML = '';
         presets.forEach(preset => {

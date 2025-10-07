@@ -896,6 +896,8 @@ class MetadataForm {
         const dropdown = this.dropdowns[field];
         if (!input || !dropdown)
             return;
+        // Prevent dropdown from receiving focus
+        dropdown.setAttribute('tabindex', '-1');
         // Populate dropdown
         dropdown.innerHTML = '';
         presets.forEach(preset => {
