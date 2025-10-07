@@ -266,6 +266,13 @@ class NMRTable {
                 }
             }
         });
+        // Ensure placeholder shows when field is empty on blur
+        input.addEventListener('blur', () => {
+            const html = input.innerHTML.trim();
+            if (html === '' || html === '<br>') {
+                input.innerHTML = '';
+            }
+        });
     }
     focusNextTableCell(currentInput, currentRow, reverse) {
         const currentCell = currentInput.closest('td');

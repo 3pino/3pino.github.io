@@ -53,7 +53,7 @@ export class MetadataForm {
         const data = this.metadataState.getData();
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
-        this.elements.frequency.textContent = data.frequency.toString();
+        this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
         this.elements.shiftPrecision.textContent = data.shiftPrecision.toString();
         this.elements.jPrecision.textContent = data.jPrecision.toString();
         this.elements.sortOrder.value = data.sortOrder;
@@ -77,11 +77,11 @@ export class MetadataForm {
 
         this.setupNumberField(this.elements.shiftPrecision, (value) => {
             this.metadataState.setShiftPrecision(value);
-        }, 0, 10, onNavigateNext);
+        }, 1, 10, onNavigateNext);
 
         this.setupNumberField(this.elements.jPrecision, (value) => {
             this.metadataState.setJPrecision(value);
-        }, 0, 10, onNavigateNext);
+        }, 1, 10, onNavigateNext);
 
         // Sort order
         this.elements.sortOrder.addEventListener('change', () => {
@@ -195,6 +195,14 @@ export class MetadataForm {
         // Clear error on focus
         element.addEventListener('focus', () => {
             this.validationState.clearError(element.id);
+        });
+
+        // Ensure placeholder shows when field is empty on blur
+        element.addEventListener('blur', () => {
+            const text = element.textContent || '';
+            if (text.trim() === '') {
+                element.textContent = '';
+            }
         });
     }
 

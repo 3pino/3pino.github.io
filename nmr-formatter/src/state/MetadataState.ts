@@ -20,7 +20,7 @@ export class MetadataState {
         this.data = {
             nuclei: '<sup>1</sup>H',
             solvent: '',
-            frequency: 0,
+            frequency: NaN,
             shiftPrecision: 3,
             jPrecision: 2,
             sortOrder: 'desc',

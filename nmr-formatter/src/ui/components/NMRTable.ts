@@ -317,6 +317,14 @@ export class NMRTable {
                 }
             }
         });
+
+        // Ensure placeholder shows when field is empty on blur
+        input.addEventListener('blur', () => {
+            const html = input.innerHTML.trim();
+            if (html === '' || html === '<br>') {
+                input.innerHTML = '';
+            }
+        });
     }
 
     private focusNextTableCell(currentInput: HTMLElement, currentRow: HTMLTableRowElement, reverse: boolean): void {

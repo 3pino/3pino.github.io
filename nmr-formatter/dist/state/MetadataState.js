@@ -8,7 +8,7 @@ exports.MetadataState = void 0;
 class MetadataState {
     constructor(initialData) {
         this.changeListeners = [];
-        this.data = Object.assign({ nuclei: '<sup>1</sup>H', solvent: '', frequency: 0, shiftPrecision: 3, jPrecision: 2, sortOrder: 'desc' }, initialData);
+        this.data = Object.assign({ nuclei: '<sup>1</sup>H', solvent: '', frequency: NaN, shiftPrecision: 3, jPrecision: 2, sortOrder: 'desc' }, initialData);
     }
     getData() {
         return Object.assign({}, this.data);
