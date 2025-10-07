@@ -104,6 +104,9 @@ export class NMRFormatterApp {
                 metadataData.frequency
             );
 
+            // Remove empty rows from table
+            this.appState.table.removeEmptyRows();
+
             // Get peaks from table state
             const tableRows = this.appState.table.getRows();
             const peaks: NMRPeak[] = [];

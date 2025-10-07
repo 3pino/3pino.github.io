@@ -80,6 +80,22 @@ export class TableState {
         }
     }
 
+    removeEmptyRows(): void {
+        const emptyRowIds = this.rows
+            .filter(row => {
+                return row.shift.trim() === '' && 
+                       row.multiplicity.trim() === '' && 
+                       row.jValues.every(j => j === 0) &&
+                       row.integration === 0 &&
+                       row.assignment.trim() === '';
+            })
+            .map(row => row.id);
+
+        if (emptyRowIds.length > 0) {
+            this.removeRows(emptyRowIds);
+        }
+    }
+
     getRow(id: string): TableRowData | undefined {
         const row = this.rows.find(r => r.id === id);
         return row ? { ...row } : undefined;

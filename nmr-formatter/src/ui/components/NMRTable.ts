@@ -11,7 +11,7 @@ export class NMRTable {
     private validationState: ValidationState;
     private tableBody: HTMLElement;
     private tableElement: HTMLElement;
-    private selectAllCheckbox: HTMLInputElement;
+    
     private maxJColumns: number = 0;
 
     // Row ID to TR element mapping
@@ -27,8 +27,6 @@ export class NMRTable {
         this.validationState = validationState;
         this.tableBody = document.getElementById('nmr-table-body')!;
         this.tableElement = document.getElementById('nmr-table')!;
-        this.selectAllCheckbox = document.getElementById('select-all-checkbox') as HTMLInputElement;
-
         this.initializeEventListeners(onMultiplicityChange, onNavigateToMetadata);
         this.renderTable();
 
@@ -50,34 +48,12 @@ export class NMRTable {
         onMultiplicityChange: () => void,
         onNavigateToMetadata: (reverse: boolean) => void
     ): void {
-        // Select all checkbox
-        this.selectAllCheckbox.addEventListener('change', (e) => {
-            const checkboxes = this.tableBody.querySelectorAll('.row-checkbox') as NodeListOf<HTMLInputElement>;
-            checkboxes.forEach(cb => {
-                cb.checked = this.selectAllCheckbox.checked;
-            });
-        });
-
         // Add peak button
         document.getElementById('add-peak-btn')?.addEventListener('click', () => {
             this.tableState.addRow();
         });
 
-        // Remove peak button
-        document.getElementById('remove-peak-btn')?.addEventListener('click', () => {
-            const selectedIds: string[] = [];
-            this.rowElements.forEach((tr, id) => {
-                const checkbox = tr.querySelector('.row-checkbox') as HTMLInputElement;
-                if (checkbox?.checked) {
-                    selectedIds.push(id);
-                }
-            });
 
-            if (selectedIds.length > 0) {
-                this.tableState.removeRows(selectedIds);
-                this.selectAllCheckbox.checked = false;
-            }
-        });
     }
 
     private renderTable(): void {
@@ -102,11 +78,16 @@ export class NMRTable {
         const row = document.createElement('tr');
         row.setAttribute('data-row-id', rowData.id);
 
-        // Checkbox cell
-        const checkboxCell = document.createElement('td');
-        checkboxCell.className = 'checkbox-cell';
-        checkboxCell.innerHTML = '<input type="checkbox" class="row-checkbox">';
-        row.appendChild(checkboxCell);
+        // Delete button cell
+        const deleteCell = document.createElement('td');
+        deleteCell.className = 'delete-cell';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-row-btn';
+        deleteBtn.textContent = '×';
+        deleteBtn.title = 'Delete this row';
+        deleteCell.appendChild(deleteBtn);
+        this.setupDeleteButton(deleteBtn, rowData.id);
+        row.appendChild(deleteCell);
 
         // Chemical shift cell
         const shiftCell = document.createElement('td');
@@ -330,6 +311,13 @@ export class NMRTable {
             if (html === '' || html === '<br>') {
                 input.innerHTML = '';
             }
+        });
+    }
+
+    private setupDeleteButton(button: HTMLButtonElement, rowId: string): void {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.tableState.removeRows([rowId]);
         });
     }
 

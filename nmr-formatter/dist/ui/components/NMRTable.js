@@ -14,7 +14,6 @@ class NMRTable {
         this.validationState = validationState;
         this.tableBody = document.getElementById('nmr-table-body');
         this.tableElement = document.getElementById('nmr-table');
-        this.selectAllCheckbox = document.getElementById('select-all-checkbox');
         this.initializeEventListeners(onMultiplicityChange, onNavigateToMetadata);
         this.renderTable();
         // Listen to state changes
@@ -30,31 +29,10 @@ class NMRTable {
         });
     }
     initializeEventListeners(onMultiplicityChange, onNavigateToMetadata) {
-        var _a, _b;
-        // Select all checkbox
-        this.selectAllCheckbox.addEventListener('change', (e) => {
-            const checkboxes = this.tableBody.querySelectorAll('.row-checkbox');
-            checkboxes.forEach(cb => {
-                cb.checked = this.selectAllCheckbox.checked;
-            });
-        });
+        var _a;
         // Add peak button
         (_a = document.getElementById('add-peak-btn')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => {
             this.tableState.addRow();
-        });
-        // Remove peak button
-        (_b = document.getElementById('remove-peak-btn')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', () => {
-            const selectedIds = [];
-            this.rowElements.forEach((tr, id) => {
-                const checkbox = tr.querySelector('.row-checkbox');
-                if (checkbox === null || checkbox === void 0 ? void 0 : checkbox.checked) {
-                    selectedIds.push(id);
-                }
-            });
-            if (selectedIds.length > 0) {
-                this.tableState.removeRows(selectedIds);
-                this.selectAllCheckbox.checked = false;
-            }
         });
     }
     renderTable() {
@@ -74,11 +52,16 @@ class NMRTable {
     createTableRow(rowData) {
         const row = document.createElement('tr');
         row.setAttribute('data-row-id', rowData.id);
-        // Checkbox cell
-        const checkboxCell = document.createElement('td');
-        checkboxCell.className = 'checkbox-cell';
-        checkboxCell.innerHTML = '<input type="checkbox" class="row-checkbox">';
-        row.appendChild(checkboxCell);
+        // Delete button cell
+        const deleteCell = document.createElement('td');
+        deleteCell.className = 'delete-cell';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-row-btn';
+        deleteBtn.textContent = '×';
+        deleteBtn.title = 'Delete this row';
+        deleteCell.appendChild(deleteBtn);
+        this.setupDeleteButton(deleteBtn, rowData.id);
+        row.appendChild(deleteCell);
         // Chemical shift cell
         const shiftCell = document.createElement('td');
         const shiftInput = document.createElement('input');
@@ -279,6 +262,12 @@ class NMRTable {
             if (html === '' || html === '<br>') {
                 input.innerHTML = '';
             }
+        });
+    }
+    setupDeleteButton(button, rowId) {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.tableState.removeRows([rowId]);
         });
     }
     focusNextTableCell(currentInput, currentRow, reverse) {

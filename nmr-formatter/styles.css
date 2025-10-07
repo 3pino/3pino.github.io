@@ -266,7 +266,7 @@ body {
     min-width: 80px;
 }
 
-.nmr-table th.checkbox-header {
+.nmr-table th.delete-header {
     min-width: 40px;
     width: 40px;
     border: none;
@@ -280,13 +280,40 @@ body {
     min-width: 80px;
 }
 
-.nmr-table td.checkbox-cell {
+.nmr-table td.delete-cell {
     min-width: 40px;
     width: 40px;
     max-width: 40px;
     text-align: center;
     border: none;
     background: transparent;
+    vertical-align: middle;
+}
+
+.delete-row-btn {
+    background: transparent;
+    border: none;
+    color: #dc3545;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.delete-row-btn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-row-btn:active {
+    transform: scale(0.95);
 }
 
 /* Column width constraints - fixed widths */

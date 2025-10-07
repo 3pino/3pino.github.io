@@ -72,6 +72,8 @@ class NMRFormatterApp {
             const metadata = new Metadata_1.Metadata(metadataData.nuclei, // HTML content as nuclei type
             metadataData.solvent, // HTML content as solvent type
             metadataData.frequency);
+            // Remove empty rows from table
+            this.appState.table.removeEmptyRows();
             // Get peaks from table state
             const tableRows = this.appState.table.getRows();
             const peaks = [];
