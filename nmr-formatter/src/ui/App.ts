@@ -107,6 +107,9 @@ export class NMRFormatterApp {
                 metadataData.frequency
             );
 
+            // Sort all J-values in descending order
+            this.appState.table.sortAllJValues();
+
             // Remove empty rows from table
             this.appState.table.removeEmptyRows();
 

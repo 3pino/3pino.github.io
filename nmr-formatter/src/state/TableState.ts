@@ -96,6 +96,15 @@ export class TableState {
         }
     }
 
+    sortAllJValues(): void {
+        this.rows.forEach(row => {
+            if (row.jValues.length > 0) {
+                row.jValues = [...row.jValues].sort((a, b) => b - a);
+            }
+        });
+        this.notifyChange();
+    }
+
     getRow(id: string): TableRowData | undefined {
         const row = this.rows.find(r => r.id === id);
         return row ? { ...row } : undefined;
