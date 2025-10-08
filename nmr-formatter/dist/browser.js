@@ -832,6 +832,14 @@ class TableState {
             this.removeRows(emptyRowIds);
         }
     }
+    sortAllJValues() {
+        this.rows.forEach(row => {
+            if (row.jValues.length > 0) {
+                row.jValues = [...row.jValues].sort((a, b) => b - a);
+            }
+        });
+        this.notifyChange();
+    }
     getRow(id) {
         const row = this.rows.find(r => r.id === id);
         return row ? Object.assign({}, row) : undefined;
@@ -1700,16 +1708,7 @@ class NMRTable {
             }
             this.validationState.clearError(`j${index}-${rowId}`);
         });
-        input.addEventListener('blur', () => {
-            const rowData = this.tableState.getRow(rowId);
-            if (rowData && rowData.jValues.length > 0) {
-                // Sort J-values in descending order when focus is lost
-                const jValues = [...rowData.jValues].sort((a, b) => b - a);
-                this.tableState.updateRow(rowId, { jValues });
-                // Update all J inputs with sorted values
-                this.updateJInputsForRow(row, jValues);
-            }
-        });
+        // J-value sorting removed - will be handled when Generate Text is clicked
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -2514,6 +2513,8 @@ class NMRFormatterApp {
             const metadata = new Metadata(metadataData.nuclei, // HTML content as nuclei type
             metadataData.solvent, // HTML content as solvent type
             metadataData.frequency);
+            // Sort all J-values in descending order
+            this.appState.table.sortAllJValues();
             // Remove empty rows from table
             this.appState.table.removeEmptyRows();
             // Get peaks from table state

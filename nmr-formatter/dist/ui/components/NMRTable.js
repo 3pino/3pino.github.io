@@ -224,16 +224,7 @@ class NMRTable {
             }
             this.validationState.clearError(`j${index}-${rowId}`);
         });
-        input.addEventListener('blur', () => {
-            const rowData = this.tableState.getRow(rowId);
-            if (rowData && rowData.jValues.length > 0) {
-                // Sort J-values in descending order when focus is lost
-                const jValues = [...rowData.jValues].sort((a, b) => b - a);
-                this.tableState.updateRow(rowId, { jValues });
-                // Update all J inputs with sorted values
-                this.updateJInputsForRow(row, jValues);
-            }
-        });
+        // J-value sorting removed - will be handled when Generate Text is clicked
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
