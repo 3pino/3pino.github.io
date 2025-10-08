@@ -5,12 +5,14 @@
 
 import { TableState, TableRowData } from '../../state/TableState';
 import { ValidationState } from '../../state/ValidationState';
+import { KeyboardNav } from '../navigation/KeyboardNav';
 
 export class NMRTable {
     private tableState: TableState;
     private validationState: ValidationState;
     private tableBody: HTMLElement;
     private tableElement: HTMLElement;
+    private keyboardNav: KeyboardNav;
     
     private maxJColumns: number = 0;
 
@@ -27,6 +29,7 @@ export class NMRTable {
         this.validationState = validationState;
         this.tableBody = document.getElementById('nmr-table-body')!;
         this.tableElement = document.getElementById('nmr-table')!;
+        this.keyboardNav = new KeyboardNav();
         this.initializeEventListeners(onMultiplicityChange, onNavigateToMetadata);
         this.renderTable();
 
@@ -85,6 +88,7 @@ export class NMRTable {
         deleteBtn.className = 'delete-row-btn';
         deleteBtn.textContent = '×';
         deleteBtn.title = 'Delete this row';
+        deleteBtn.tabIndex = -1;
         deleteCell.appendChild(deleteBtn);
         this.setupDeleteButton(deleteBtn, rowData.id);
         row.appendChild(deleteCell);
@@ -118,10 +122,10 @@ export class NMRTable {
             jCell.className = 'j-input-cell';
 
             const jInput = document.createElement('input');
-            jInput.type = 'number';
-            jInput.step = '0.1';
+            jInput.type = 'text';
             jInput.className = 'j-input';
             jInput.setAttribute('data-j-index', i.toString());
+            jInput.setAttribute('inputmode', 'decimal');
             jInput.placeholder = '0.0';
 
             if (i < rowData.jValues.length) {
@@ -140,9 +144,9 @@ export class NMRTable {
         const intCell = document.createElement('td');
         intCell.className = 'int-cell';
         const intInput = document.createElement('input');
-        intInput.type = 'number';
-        intInput.step = '1';
+        intInput.type = 'text';
         intInput.className = 'int-input';
+        intInput.setAttribute('inputmode', 'decimal');
         intInput.placeholder = '1';
         if (rowData.integration) {
             intInput.value = rowData.integration.toString();
@@ -176,6 +180,27 @@ export class NMRTable {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.focusNextTableCell(input, row, e.shiftKey);
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                // Check if ArrowDown at last row
+                if (e.key === 'ArrowDown') {
+                    const isLastRow = !row.nextElementSibling;
+                    if (isLastRow) {
+                        e.preventDefault();
+                        const newId = this.tableState.addRow();
+                        setTimeout(() => {
+                            const newRow = this.rowElements.get(newId);
+                            if (newRow) {
+                                const targetInput = newRow.querySelector('.shift-input') as HTMLInputElement;
+                                targetInput?.focus();
+                            }
+                        }, 50);
+                        return;
+                    }
+                }
+
+                this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
+                    this.keyboardNav.navigateToCell(row, input, direction);
+                });
             }
         });
     }
@@ -193,12 +218,46 @@ export class NMRTable {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.focusNextTableCell(input, row, e.shiftKey);
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                // Check if ArrowDown at last row
+                if (e.key === 'ArrowDown') {
+                    const isLastRow = !row.nextElementSibling;
+                    if (isLastRow) {
+                        e.preventDefault();
+                        const newId = this.tableState.addRow();
+                        setTimeout(() => {
+                            const newRow = this.rowElements.get(newId);
+                            if (newRow) {
+                                const targetInput = newRow.querySelector('.mult-input') as HTMLInputElement;
+                                targetInput?.focus();
+                            }
+                        }, 50);
+                        return;
+                    }
+                }
+
+                this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
+                    this.keyboardNav.navigateToCell(row, input, direction);
+                });
             }
         });
     }
 
     private setupJInput(input: HTMLInputElement, rowId: string, index: number, row: HTMLTableRowElement): void {
         input.addEventListener('input', () => {
+            // Filter to allow only numbers and ONE decimal point
+            let filtered = input.value.replace(/[^0-9.]/g, '');
+            
+            // Allow only one decimal point
+            const parts = filtered.split('.');
+            if (parts.length > 2) {
+                filtered = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            if (filtered !== input.value) {
+                input.value = filtered;
+            }
+
             const rowData = this.tableState.getRow(rowId);
             if (rowData) {
                 const jValues = [...rowData.jValues];
@@ -228,12 +287,48 @@ export class NMRTable {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.focusNextTableCell(input, row, e.shiftKey);
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                // Check if ArrowDown at last row
+                if (e.key === 'ArrowDown') {
+                    const isLastRow = !row.nextElementSibling;
+                    if (isLastRow) {
+                        e.preventDefault();
+                        const newId = this.tableState.addRow();
+                        setTimeout(() => {
+                            const newRow = this.rowElements.get(newId);
+                            if (newRow) {
+                                const cellIndex = Array.from(row.children).indexOf(input.closest('td')!);
+                                const targetCell = newRow.children[cellIndex] as HTMLTableCellElement;
+                                const targetInput = targetCell?.querySelector('input') as HTMLInputElement;
+                                targetInput?.focus();
+                            }
+                        }, 50);
+                        return;
+                    }
+                }
+
+                this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
+                    this.keyboardNav.navigateToCell(row, input, direction);
+                });
             }
         });
     }
 
     private setupIntegrationInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
         input.addEventListener('input', () => {
+            // Filter to allow only numbers and ONE decimal point
+            let filtered = input.value.replace(/[^0-9.]/g, '');
+            
+            // Allow only one decimal point
+            const parts = filtered.split('.');
+            if (parts.length > 2) {
+                filtered = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            if (filtered !== input.value) {
+                input.value = filtered;
+            }
+
             const value = parseFloat(input.value);
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
             this.validationState.clearError(`int-${rowId}`);
@@ -243,6 +338,27 @@ export class NMRTable {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 this.focusNextTableCell(input, row, e.shiftKey);
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                // Check if ArrowDown at last row
+                if (e.key === 'ArrowDown') {
+                    const isLastRow = !row.nextElementSibling;
+                    if (isLastRow) {
+                        e.preventDefault();
+                        const newId = this.tableState.addRow();
+                        setTimeout(() => {
+                            const newRow = this.rowElements.get(newId);
+                            if (newRow) {
+                                const targetInput = newRow.querySelector('.int-input') as HTMLInputElement;
+                                targetInput?.focus();
+                            }
+                        }, 50);
+                        return;
+                    }
+                }
+
+                this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
+                    this.keyboardNav.navigateToCell(row, input, direction);
+                });
             }
         });
     }
@@ -277,20 +393,70 @@ export class NMRTable {
                 } else {
                     const nextRow = row.nextElementSibling as HTMLTableRowElement | null;
                     if (nextRow) {
-                        const nextShift = nextRow.querySelector('.shift-input') as HTMLInputElement;
-                        nextShift?.focus();
+                        const nextAssignment = nextRow.querySelector('.assignment-input') as HTMLElement;
+                        nextAssignment?.focus();
                     } else {
                         // Last row: add new row
                         const newId = this.tableState.addRow();
                         setTimeout(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
-                                const firstInput = newRow.querySelector('.shift-input') as HTMLInputElement;
-                                firstInput?.focus();
+                                const newAssignment = newRow.querySelector('.assignment-input') as HTMLElement;
+                                newAssignment?.focus();
                             }
                         }, 50);
                     }
                 }
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                // Check if ArrowDown at last row
+                if (e.key === 'ArrowDown') {
+                    const isLastRow = !row.nextElementSibling;
+                    if (isLastRow) {
+                        e.preventDefault();
+                        const newId = this.tableState.addRow();
+                        setTimeout(() => {
+                            const newRow = this.rowElements.get(newId);
+                            if (newRow) {
+                                const nextAssignment = newRow.querySelector('.assignment-input') as HTMLElement;
+                                nextAssignment?.focus();
+                            }
+                        }, 50);
+                        return;
+                    }
+                }
+
+                // Check if ArrowRight at end of text
+                if (e.key === 'ArrowRight') {
+                    const selection = window.getSelection();
+                    if (selection && selection.rangeCount > 0) {
+                        const isAtEnd = this.isCaretAtEnd(input);
+                        
+                        if (isAtEnd) {
+                            e.preventDefault();
+                            const nextRow = row.nextElementSibling as HTMLTableRowElement | null;
+                            if (nextRow) {
+                                const nextShift = nextRow.querySelector('.shift-input') as HTMLInputElement;
+                                nextShift?.focus();
+                            } else {
+                                // Last row: add new row
+                                const newId = this.tableState.addRow();
+                                setTimeout(() => {
+                                    const newRow = this.rowElements.get(newId);
+                                    if (newRow) {
+                                        const firstInput = newRow.querySelector('.shift-input') as HTMLInputElement;
+                                        firstInput?.focus();
+                                    }
+                                }, 50);
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                // Handle arrow key navigation for contenteditable
+                this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
+                    this.keyboardNav.navigateToCell(row, input, direction);
+                });
             }
 
             // Keyboard shortcuts
@@ -492,6 +658,24 @@ export class NMRTable {
                 intHeader.insertAdjacentElement('beforebegin', jHeader);
             }
         }
+    }
+
+    private isCaretAtEnd(element: HTMLElement): boolean {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return false;
+
+        const range = selection.getRangeAt(0);
+        
+        // Check if selection is collapsed (cursor, not selection)
+        if (!range.collapsed) return false;
+        
+        // Create a range from current position to end of element
+        const testRange = document.createRange();
+        testRange.selectNodeContents(element);
+        testRange.setStart(range.endContainer, range.endOffset);
+        
+        // If range is empty, we're at the end
+        return testRange.toString().length === 0;
     }
 
     private filterHTMLTags(element: Element, allowedTags: string[]): string {
