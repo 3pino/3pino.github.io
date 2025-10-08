@@ -28,7 +28,7 @@ export class NMRTable {
         this.tableState = tableState;
         this.validationState = validationState;
         this.tableBody = document.getElementById('nmr-table-body')!;
-        this.tableElement = document.getElementById('nmr-table')!;
+        this.tableElement = document.getElementById('nmr-table')!
         this.keyboardNav = new KeyboardNav();
         this.initializeEventListeners(onMultiplicityChange, onNavigateToMetadata);
         this.renderTable();
@@ -51,12 +51,47 @@ export class NMRTable {
         onMultiplicityChange: () => void,
         onNavigateToMetadata: (reverse: boolean) => void
     ): void {
-        // Add peak button
-        document.getElementById('add-peak-btn')?.addEventListener('click', () => {
-            this.tableState.addRow();
+        // Add row footer cell
+        this.renderAddRowFooter();
+    }
+
+    private renderAddRowFooter(): void {
+        // Remove existing add-row if present
+        const existingAddRow = this.tableBody.querySelector('.add-row-footer');
+        if (existingAddRow) {
+            existingAddRow.remove();
+        }
+        
+        const addRow = document.createElement('tr');
+        addRow.className = 'add-row-footer';
+        
+        // Empty delete cell
+        const deleteCell = document.createElement('td');
+        deleteCell.className = 'delete-cell';
+        addRow.appendChild(deleteCell);
+        
+        // Calculate remaining columns (shift + mult + J columns + integration + assignment)
+        const remainingColumns = 4 + this.maxJColumns;
+        
+        const addCell = document.createElement('td');
+        addCell.className = 'add-row-cell';
+        addCell.colSpan = remainingColumns;
+        addCell.innerHTML = '<button class="add-row-btn" title="Add new row">+</button>';
+        
+        const addButton = addCell.querySelector('.add-row-btn') as HTMLButtonElement;
+        addButton.addEventListener('click', () => {
+            const newId = this.tableState.addRow();
+            setTimeout(() => {
+                const newRow = this.rowElements.get(newId);
+                if (newRow) {
+                    const firstInput = newRow.querySelector('.shift-input') as HTMLInputElement;
+                    firstInput?.focus();
+                }
+            }, 50);
         });
-
-
+        
+        addRow.appendChild(addCell);
+        this.tableBody.appendChild(addRow);
     }
 
     private renderTable(): void {
@@ -75,6 +110,9 @@ export class NMRTable {
 
         // Update J column visibility to preserve table state
         this.updateJColumnVisibility();
+        
+        // Re-render footer to update column span
+        this.renderAddRowFooter();
     }
 
     private createTableRow(rowData: TableRowData): HTMLTableRowElement {

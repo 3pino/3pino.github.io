@@ -119,7 +119,7 @@ export class TableHelper {
 
   constructor(page: Page) {
     this.page = page;
-    this.addPeakBtn = page.locator('#add-peak-btn');
+    this.addPeakBtn = page.locator('.add-row-btn');
     this.tableBody = page.locator('#nmr-table-body');
     this.generateTextBtn = page.locator('#convert-down-btn');
 
@@ -141,10 +141,10 @@ export class TableHelper {
   }
 
   /**
-   * Get a specific row by index (0-based)
+   * Get a specific row by index (0-based, excluding the add-row footer)
    */
   getRow(index: number): Locator {
-    return this.tableBody.locator('tr').nth(index);
+    return this.tableBody.locator('tr:not(.add-row-footer)').nth(index);
   }
 
   /**
@@ -190,7 +190,7 @@ export class TableHelper {
   }
 
   /**
-   * Click "Add Peak" button to add a new row
+   * Click "+" cell to add a new row
    */
   async addRow(): Promise<void> {
     await this.addPeakBtn.click();
@@ -204,10 +204,10 @@ export class TableHelper {
   }
 
   /**
-   * Get the total number of rows in the table
+   * Get the total number of rows in the table (excluding the add-row footer)
    */
   async getRowCount(): Promise<number> {
-    return await this.tableBody.locator('tr').count();
+    return await this.tableBody.locator('tr:not(.add-row-footer)').count();
   }
 
   /**

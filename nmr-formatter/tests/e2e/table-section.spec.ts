@@ -263,7 +263,7 @@ test.describe('Table Section - Data Input & Validation', () => {
   });
 
   test.describe('Row Management', () => {
-    test('should add a new row when "Add Peak" is clicked', async () => {
+    test('should add a new row when "+" cell is clicked', async () => {
       const initialCount = await helper.getRowCount();
 
       await helper.addRow();

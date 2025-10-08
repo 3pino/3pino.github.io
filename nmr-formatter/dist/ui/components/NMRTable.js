@@ -31,11 +31,40 @@ class NMRTable {
         });
     }
     initializeEventListeners(onMultiplicityChange, onNavigateToMetadata) {
-        var _a;
-        // Add peak button
-        (_a = document.getElementById('add-peak-btn')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', () => {
-            this.tableState.addRow();
+        // Add row footer cell
+        this.renderAddRowFooter();
+    }
+    renderAddRowFooter() {
+        // Remove existing add-row if present
+        const existingAddRow = this.tableBody.querySelector('.add-row-footer');
+        if (existingAddRow) {
+            existingAddRow.remove();
+        }
+        const addRow = document.createElement('tr');
+        addRow.className = 'add-row-footer';
+        // Empty delete cell
+        const deleteCell = document.createElement('td');
+        deleteCell.className = 'delete-cell';
+        addRow.appendChild(deleteCell);
+        // Calculate remaining columns (shift + mult + J columns + integration + assignment)
+        const remainingColumns = 4 + this.maxJColumns;
+        const addCell = document.createElement('td');
+        addCell.className = 'add-row-cell';
+        addCell.colSpan = remainingColumns;
+        addCell.innerHTML = '<button class="add-row-btn" title="Add new row">+</button>';
+        const addButton = addCell.querySelector('.add-row-btn');
+        addButton.addEventListener('click', () => {
+            const newId = this.tableState.addRow();
+            setTimeout(() => {
+                const newRow = this.rowElements.get(newId);
+                if (newRow) {
+                    const firstInput = newRow.querySelector('.shift-input');
+                    firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
+                }
+            }, 50);
         });
+        addRow.appendChild(addCell);
+        this.tableBody.appendChild(addRow);
     }
     renderTable() {
         const rows = this.tableState.getRows();
@@ -50,6 +79,8 @@ class NMRTable {
         });
         // Update J column visibility to preserve table state
         this.updateJColumnVisibility();
+        // Re-render footer to update column span
+        this.renderAddRowFooter();
     }
     createTableRow(rowData) {
         const row = document.createElement('tr');
