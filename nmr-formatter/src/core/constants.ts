@@ -37,6 +37,12 @@ export const SOLVENT_PRESETS: PresetConfig[] = [
     { id: "THF-d8", displayHTML: "THF–<i>d</i><sub>8</sub>", pattern: /(THF|tetrahydrofuran)/i }
 ];
 
+// Sort order preset configurations
+export const SORT_ORDER_PRESETS: PresetConfig[] = [
+    { id: "desc", displayHTML: "Descending (High → Low)", pattern: /desc/i },
+    { id: "asc", displayHTML: "Ascending (Low → High)", pattern: /asc/i }
+];
+
 // Legacy Record-based configurations (for backward compatibility)
 export const NUCLEI_CONFIG: Record<NucleiType, RegExp | null> = {
     "1H": /(¹H|protone?|1H\s+NMR|NMR\s+1H)/i,

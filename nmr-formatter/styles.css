@@ -98,6 +98,16 @@ body {
     -moz-appearance: auto;
 }
 
+/* Read-only dropdown field (sort-order) - no text selection, no cursor */
+#sort-order {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    caret-color: transparent; /* Hide cursor */
+}
+
 .metadata-editable:empty:before,
 .metadata-number:empty:before {
     content: attr(data-placeholder);

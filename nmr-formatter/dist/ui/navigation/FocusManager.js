@@ -39,6 +39,8 @@ class FocusManager {
         const targetField = this.metadataFields[targetIndex];
         if (targetField) {
             targetField.focus();
+            // Select all content on Tab navigation
+            this.selectAll(targetField);
         }
     }
     /**
@@ -73,6 +75,16 @@ class FocusManager {
             sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
             sel === null || sel === void 0 ? void 0 : sel.addRange(range);
         }
+    }
+    /**
+     * Select all content in contenteditable element
+     */
+    selectAll(element) {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(element);
+        sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
+        sel === null || sel === void 0 ? void 0 : sel.addRange(range);
     }
 }
 exports.FocusManager = FocusManager;

@@ -15,11 +15,12 @@ export class MetadataForm {
         frequency: HTMLElement;
         shiftPrecision: HTMLElement;
         jPrecision: HTMLElement;
-        sortOrder: HTMLSelectElement;
+        sortOrder: HTMLElement;
     };
     private dropdowns: {
         nuclei: HTMLElement;
         solvent: HTMLElement;
+        sortOrder: HTMLElement;
     };
 
     constructor(
@@ -36,12 +37,13 @@ export class MetadataForm {
             frequency: document.getElementById('frequency')!,
             shiftPrecision: document.getElementById('shift-precision')!,
             jPrecision: document.getElementById('j-precision')!,
-            sortOrder: document.getElementById('sort-order') as HTMLSelectElement
+            sortOrder: document.getElementById('sort-order')!
         };
 
         this.dropdowns = {
             nuclei: document.getElementById('nuclei-dropdown')!,
-            solvent: document.getElementById('solvent-dropdown')!
+            solvent: document.getElementById('solvent-dropdown')!,
+            sortOrder: document.getElementById('sort-order-dropdown')!
         };
 
         this.initializeValues();
@@ -56,7 +58,10 @@ export class MetadataForm {
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
         this.elements.shiftPrecision.textContent = data.shiftPrecision.toString();
         this.elements.jPrecision.textContent = data.jPrecision.toString();
-        this.elements.sortOrder.value = data.sortOrder;
+        
+        // Set sort order display text (default: Descending)
+        const sortOrderPreset = (window as any).SORT_ORDER_PRESETS?.find((p: any) => p.id === data.sortOrder);
+        this.elements.sortOrder.innerHTML = sortOrderPreset?.displayHTML || 'Descending (High → Low)';
     }
 
     private initializeEventListeners(onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void): void {
@@ -83,10 +88,15 @@ export class MetadataForm {
             this.metadataState.setJPrecision(value);
         }, 1, 10, onNavigateNext);
 
-        // Sort order
-        this.elements.sortOrder.addEventListener('change', () => {
-            this.metadataState.setSortOrder(this.elements.sortOrder.value as 'asc' | 'desc');
-        });
+        // Sort order - read-only contenteditable with dropdown
+        this.setupReadOnlyDropdownField(this.elements.sortOrder, (value) => {
+            // Extract the sort order ID from the selected preset
+            const presets = (window as any).SORT_ORDER_PRESETS || [];
+            const preset = presets.find((p: any) => p.displayHTML === value);
+            if (preset) {
+                this.metadataState.setSortOrder(preset.id as 'asc' | 'desc');
+            }
+        }, onNavigateNext);
 
         // Validation error display
         this.validationState.onChange((errors) => {
@@ -124,9 +134,9 @@ export class MetadataForm {
             this.validationState.clearError(element.id);
         });
 
-        // Enter key navigation
+        // Enter and Tab key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
                 return;
@@ -162,9 +172,9 @@ export class MetadataForm {
         max: number | null,
         onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void
     ): void {
-        // Enter key navigation
+        // Enter and Tab key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
             }
@@ -219,9 +229,10 @@ export class MetadataForm {
     private initializeDropdowns(): void {
         this.setupDropdown('nuclei', (window as any).NUCLEI_PRESETS || []);
         this.setupDropdown('solvent', (window as any).SOLVENT_PRESETS || []);
+        this.setupDropdown('sortOrder', (window as any).SORT_ORDER_PRESETS || []);
     }
 
-    private setupDropdown(field: 'nuclei' | 'solvent', presets: any[]): void {
+    private setupDropdown(field: 'nuclei' | 'solvent' | 'sortOrder', presets: any[]): void {
         const input = this.elements[field];
         const dropdown = this.dropdowns[field];
 
@@ -259,11 +270,68 @@ export class MetadataForm {
                 input.innerHTML = value;
                 if (field === 'nuclei') {
                     this.metadataState.setNuclei(value);
-                } else {
+                } else if (field === 'solvent') {
                     this.metadataState.setSolvent(value);
+                } else if (field === 'sortOrder') {
+                    // Extract sort order ID from preset
+                    const presets = (window as any).SORT_ORDER_PRESETS || [];
+                    const preset = presets.find((p: any) => p.displayHTML === value);
+                    if (preset) {
+                        this.metadataState.setSortOrder(preset.id as 'asc' | 'desc');
+                    }
                 }
                 dropdown.classList.remove('active');
             });
+        });
+    }
+
+    /**
+     * Setup a read-only dropdown field (no text input, only dropdown selection)
+     */
+    private setupReadOnlyDropdownField(
+        element: HTMLElement,
+        onChange: (value: string) => void,
+        onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void
+    ): void {
+        // Prevent any text input
+        element.addEventListener('keydown', (e) => {
+            // Allow only navigation keys
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                onNavigateNext(element, e.shiftKey);
+                return;
+            }
+
+            // Prevent all other keys (no text input allowed)
+            e.preventDefault();
+        });
+
+        // Prevent paste
+        element.addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+
+        // Prevent direct editing
+        element.addEventListener('input', (e) => {
+            e.preventDefault();
+        });
+
+        // Show dropdown on focus
+        element.addEventListener('focus', () => {
+            const dropdown = this.dropdowns.sortOrder;
+            if (dropdown) {
+                dropdown.classList.add('active');
+            }
+        });
+
+        // Prevent text selection and cursor
+        element.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+        });
+
+        element.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            element.focus();
         });
     }
 

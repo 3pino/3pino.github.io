@@ -19,20 +19,24 @@ class MetadataForm {
         };
         this.dropdowns = {
             nuclei: document.getElementById('nuclei-dropdown'),
-            solvent: document.getElementById('solvent-dropdown')
+            solvent: document.getElementById('solvent-dropdown'),
+            sortOrder: document.getElementById('sort-order-dropdown')
         };
         this.initializeValues();
         this.initializeEventListeners(onNavigateNext);
         this.initializeDropdowns();
     }
     initializeValues() {
+        var _a;
         const data = this.metadataState.getData();
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
         this.elements.shiftPrecision.textContent = data.shiftPrecision.toString();
         this.elements.jPrecision.textContent = data.jPrecision.toString();
-        this.elements.sortOrder.value = data.sortOrder;
+        // Set sort order display text (default: Descending)
+        const sortOrderPreset = (_a = window.SORT_ORDER_PRESETS) === null || _a === void 0 ? void 0 : _a.find((p) => p.id === data.sortOrder);
+        this.elements.sortOrder.innerHTML = (sortOrderPreset === null || sortOrderPreset === void 0 ? void 0 : sortOrderPreset.displayHTML) || 'Descending (High → Low)';
     }
     initializeEventListeners(onNavigateNext) {
         // Nuclei input
@@ -53,10 +57,15 @@ class MetadataForm {
         this.setupNumberField(this.elements.jPrecision, (value) => {
             this.metadataState.setJPrecision(value);
         }, 1, 10, onNavigateNext);
-        // Sort order
-        this.elements.sortOrder.addEventListener('change', () => {
-            this.metadataState.setSortOrder(this.elements.sortOrder.value);
-        });
+        // Sort order - read-only contenteditable with dropdown
+        this.setupReadOnlyDropdownField(this.elements.sortOrder, (value) => {
+            // Extract the sort order ID from the selected preset
+            const presets = window.SORT_ORDER_PRESETS || [];
+            const preset = presets.find((p) => p.displayHTML === value);
+            if (preset) {
+                this.metadataState.setSortOrder(preset.id);
+            }
+        }, onNavigateNext);
         // Validation error display
         this.validationState.onChange((errors) => {
             Object.values(this.elements).forEach(el => {
@@ -88,9 +97,9 @@ class MetadataForm {
             onChange(element.innerHTML);
             this.validationState.clearError(element.id);
         });
-        // Enter key navigation
+        // Enter and Tab key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
                 return;
@@ -119,9 +128,9 @@ class MetadataForm {
         });
     }
     setupNumberField(element, onChange, min, max, onNavigateNext) {
-        // Enter key navigation
+        // Enter and Tab key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
             }
@@ -171,6 +180,7 @@ class MetadataForm {
     initializeDropdowns() {
         this.setupDropdown('nuclei', window.NUCLEI_PRESETS || []);
         this.setupDropdown('solvent', window.SOLVENT_PRESETS || []);
+        this.setupDropdown('sortOrder', window.SORT_ORDER_PRESETS || []);
     }
     setupDropdown(field, presets) {
         const input = this.elements[field];
@@ -206,11 +216,58 @@ class MetadataForm {
                 if (field === 'nuclei') {
                     this.metadataState.setNuclei(value);
                 }
-                else {
+                else if (field === 'solvent') {
                     this.metadataState.setSolvent(value);
+                }
+                else if (field === 'sortOrder') {
+                    // Extract sort order ID from preset
+                    const presets = window.SORT_ORDER_PRESETS || [];
+                    const preset = presets.find((p) => p.displayHTML === value);
+                    if (preset) {
+                        this.metadataState.setSortOrder(preset.id);
+                    }
                 }
                 dropdown.classList.remove('active');
             });
+        });
+    }
+    /**
+     * Setup a read-only dropdown field (no text input, only dropdown selection)
+     */
+    setupReadOnlyDropdownField(element, onChange, onNavigateNext) {
+        // Prevent any text input
+        element.addEventListener('keydown', (e) => {
+            // Allow only navigation keys
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                onNavigateNext(element, e.shiftKey);
+                return;
+            }
+            // Prevent all other keys (no text input allowed)
+            e.preventDefault();
+        });
+        // Prevent paste
+        element.addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+        // Prevent direct editing
+        element.addEventListener('input', (e) => {
+            e.preventDefault();
+        });
+        // Show dropdown on focus
+        element.addEventListener('focus', () => {
+            const dropdown = this.dropdowns.sortOrder;
+            if (dropdown) {
+                dropdown.classList.add('active');
+            }
+        });
+        // Prevent text selection and cursor
+        element.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+        });
+        element.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            element.focus();
         });
     }
     filterHTMLTags(element, allowedTags) {

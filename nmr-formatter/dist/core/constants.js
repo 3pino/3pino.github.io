@@ -1,7 +1,7 @@
 "use strict";
 // Configuration constants for nuclei and solvents
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = exports.SOLVENT_PRESETS = exports.NUCLEI_PRESETS = void 0;
+exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = exports.SORT_ORDER_PRESETS = exports.SOLVENT_PRESETS = exports.NUCLEI_PRESETS = void 0;
 exports.getNucleiPatterns = getNucleiPatterns;
 exports.getSolventPatterns = getSolventPatterns;
 exports.extractNucleiFromText = extractNucleiFromText;
@@ -33,6 +33,11 @@ exports.SOLVENT_PRESETS = [
     { id: "CDCl3", displayHTML: "CDCl<sub>3</sub>", pattern: /(C[DH]Cl[3₃]|ch?loroform)/i },
     { id: "CD2Cl2", displayHTML: "CD<sub>2</sub>Cl<sub>2</sub>", pattern: /(C[DH][2₂]Cl[2₂]|dich?loromethane?)/i },
     { id: "THF-d8", displayHTML: "THF–<i>d</i><sub>8</sub>", pattern: /(THF|tetrahydrofuran)/i }
+];
+// Sort order preset configurations
+exports.SORT_ORDER_PRESETS = [
+    { id: "desc", displayHTML: "Descending (High → Low)", pattern: /desc/i },
+    { id: "asc", displayHTML: "Ascending (Low → High)", pattern: /asc/i }
 ];
 // Legacy Record-based configurations (for backward compatibility)
 exports.NUCLEI_CONFIG = {

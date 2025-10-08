@@ -40,6 +40,8 @@ export class FocusManager {
         const targetField = this.metadataFields[targetIndex];
         if (targetField) {
             targetField.focus();
+            // Select all content on Tab navigation
+            this.selectAll(targetField);
         }
     }
 
@@ -76,5 +78,17 @@ export class FocusManager {
             sel?.removeAllRanges();
             sel?.addRange(range);
         }
+    }
+
+    /**
+     * Select all content in contenteditable element
+     */
+    selectAll(element: HTMLElement): void {
+        const range = document.createRange();
+        const sel = window.getSelection();
+
+        range.selectNodeContents(element);
+        sel?.removeAllRanges();
+        sel?.addRange(range);
     }
 }

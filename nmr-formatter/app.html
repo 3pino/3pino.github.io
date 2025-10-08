@@ -40,10 +40,10 @@
                 </div>
                 <div class="metadata-group">
                     <label for="sort-order">Sort Order:</label>
-                    <select id="sort-order" class="metadata-input metadata-select">
-                        <option value="desc">Descending (High → Low)</option>
-                        <option value="asc">Ascending (Low → High)</option>
-                    </select>
+                    <div id="sort-order" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="Select sort order"></div>
+                    <div class="metadata-dropdown" id="sort-order-dropdown">
+                        <!-- Dropdown items will be dynamically generated from SORT_ORDER_PRESETS -->
+                    </div>
                 </div>
             </div>
         </section>

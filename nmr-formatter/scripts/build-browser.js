@@ -143,6 +143,7 @@ window.Logger = Logger;
 window.LogLevel = LogLevel;
 window.NUCLEI_PRESETS = NUCLEI_PRESETS;
 window.SOLVENT_PRESETS = SOLVENT_PRESETS;
+window.SORT_ORDER_PRESETS = SORT_ORDER_PRESETS;
 window.NUCLEI_CONFIG = NUCLEI_CONFIG;
 window.SOLVENT_CONFIG = SOLVENT_CONFIG;
 window.getNucleiPatterns = getNucleiPatterns;
