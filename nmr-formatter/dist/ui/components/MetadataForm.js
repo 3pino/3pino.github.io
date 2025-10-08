@@ -97,12 +97,66 @@ class MetadataForm {
             onChange(element.innerHTML);
             this.validationState.clearError(element.id);
         });
-        // Enter and Tab key navigation
+        // Enter, Tab, and Arrow key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === 'Tab') {
+            // Check if dropdown is active and has a highlighted item
+            const fieldId = element.id;
+            const dropdown = fieldId === 'nuclei' ? this.dropdowns.nuclei :
+                fieldId === 'solvent' ? this.dropdowns.solvent :
+                    fieldId === 'sort-order' ? this.dropdowns.sortOrder : null;
+            if (e.key === 'Enter') {
+                // If dropdown is active and has a highlighted item, let it handle Enter
+                if (dropdown && dropdown.classList.contains('active')) {
+                    const highlightedItem = dropdown.querySelector('.dropdown-item.highlighted');
+                    if (highlightedItem) {
+                        // Don't navigate, let dropdown handler select the item
+                        return;
+                    }
+                }
+                // Otherwise, navigate to next field
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
                 return;
+            }
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                onNavigateNext(element, e.shiftKey);
+                return;
+            }
+            // Smart left/right arrow navigation at boundaries
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0)
+                    return;
+                const range = selection.getRangeAt(0);
+                const text = element.textContent || '';
+                // Check if there's a selection
+                const hasSelection = !range.collapsed;
+                if (!hasSelection) {
+                    const cursorPosition = this.getCursorPosition(element);
+                    if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
+                        // At right boundary, move to next field
+                        e.preventDefault();
+                        const fieldIndex = this.getFieldOrder().indexOf(element);
+                        if (fieldIndex < this.getFieldOrder().length - 1) {
+                            const nextField = this.getFieldOrder()[fieldIndex + 1];
+                            nextField.focus();
+                            this.moveCursorToStart(nextField);
+                        }
+                        return;
+                    }
+                    else if (e.key === 'ArrowLeft' && cursorPosition === 0) {
+                        // At left boundary, move to previous field
+                        e.preventDefault();
+                        const fieldIndex = this.getFieldOrder().indexOf(element);
+                        if (fieldIndex > 0) {
+                            const prevField = this.getFieldOrder()[fieldIndex - 1];
+                            prevField.focus();
+                            this.moveCursorToEnd(prevField);
+                        }
+                        return;
+                    }
+                }
             }
             // Keyboard shortcuts (Ctrl+B, Ctrl+I)
             if (e.ctrlKey || e.metaKey) {
@@ -128,11 +182,47 @@ class MetadataForm {
         });
     }
     setupNumberField(element, onChange, min, max, onNavigateNext) {
-        // Enter and Tab key navigation
+        // Enter, Tab, and Arrow key navigation
         element.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
+                return;
+            }
+            // Smart left/right arrow navigation at boundaries
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                const selection = window.getSelection();
+                if (!selection || selection.rangeCount === 0)
+                    return;
+                const range = selection.getRangeAt(0);
+                const text = element.textContent || '';
+                // Check if there's a selection
+                const hasSelection = !range.collapsed;
+                if (!hasSelection) {
+                    const cursorPosition = this.getCursorPosition(element);
+                    if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
+                        // At right boundary, move to next field
+                        e.preventDefault();
+                        const fieldIndex = this.getFieldOrder().indexOf(element);
+                        if (fieldIndex < this.getFieldOrder().length - 1) {
+                            const nextField = this.getFieldOrder()[fieldIndex + 1];
+                            nextField.focus();
+                            this.moveCursorToStart(nextField);
+                        }
+                        return;
+                    }
+                    else if (e.key === 'ArrowLeft' && cursorPosition === 0) {
+                        // At left boundary, move to previous field
+                        e.preventDefault();
+                        const fieldIndex = this.getFieldOrder().indexOf(element);
+                        if (fieldIndex > 0) {
+                            const prevField = this.getFieldOrder()[fieldIndex - 1];
+                            prevField.focus();
+                            this.moveCursorToEnd(prevField);
+                        }
+                        return;
+                    }
+                }
             }
         });
         // Input validation
@@ -198,14 +288,49 @@ class MetadataForm {
             item.innerHTML = preset.displayHTML;
             dropdown.appendChild(item);
         });
+        // Track selected index for keyboard navigation
+        let selectedIndex = -1;
         // Show/hide dropdown
         input.addEventListener('focus', () => {
             dropdown.classList.add('active');
+            selectedIndex = -1; // Reset selection on focus
         });
         input.addEventListener('blur', () => {
             setTimeout(() => {
                 dropdown.classList.remove('active');
+                // Clear highlight
+                dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.classList.remove('highlighted');
+                });
             }, 200);
+        });
+        // Keyboard navigation for dropdown
+        input.addEventListener('keydown', (e) => {
+            if (!dropdown.classList.contains('active'))
+                return;
+            const items = Array.from(dropdown.querySelectorAll('.dropdown-item'));
+            if (items.length === 0)
+                return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                this.highlightDropdownItem(items, selectedIndex);
+            }
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                this.highlightDropdownItem(items, selectedIndex);
+            }
+            else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault();
+                const value = items[selectedIndex].getAttribute('data-value') || '';
+                input.innerHTML = value;
+                this.handleDropdownSelection(field, value);
+                dropdown.classList.remove('active');
+                // Clear highlight
+                this.highlightDropdownItem(items, -1);
+                selectedIndex = -1;
+            }
         });
         // Handle selection
         dropdown.querySelectorAll('.dropdown-item').forEach(item => {
@@ -213,23 +338,69 @@ class MetadataForm {
                 e.preventDefault();
                 const value = item.getAttribute('data-value') || '';
                 input.innerHTML = value;
-                if (field === 'nuclei') {
-                    this.metadataState.setNuclei(value);
-                }
-                else if (field === 'solvent') {
-                    this.metadataState.setSolvent(value);
-                }
-                else if (field === 'sortOrder') {
-                    // Extract sort order ID from preset
-                    const presets = window.SORT_ORDER_PRESETS || [];
-                    const preset = presets.find((p) => p.displayHTML === value);
-                    if (preset) {
-                        this.metadataState.setSortOrder(preset.id);
-                    }
-                }
+                this.handleDropdownSelection(field, value);
                 dropdown.classList.remove('active');
             });
         });
+    }
+    /**
+     * Highlight the selected dropdown item
+     */
+    highlightDropdownItem(items, index) {
+        items.forEach((item, i) => {
+            if (i === index) {
+                item.classList.add('highlighted');
+                item.scrollIntoView({ block: 'nearest' });
+            }
+            else {
+                item.classList.remove('highlighted');
+            }
+        });
+    }
+    /**
+     * Handle dropdown selection for different fields
+     */
+    handleDropdownSelection(field, value) {
+        if (field === 'nuclei') {
+            this.metadataState.setNuclei(value);
+        }
+        else if (field === 'solvent') {
+            this.metadataState.setSolvent(value);
+        }
+        else if (field === 'sortOrder') {
+            // Extract sort order ID from preset
+            const presets = window.SORT_ORDER_PRESETS || [];
+            const preset = presets.find((p) => p.displayHTML === value);
+            if (preset) {
+                this.metadataState.setSortOrder(preset.id);
+            }
+        }
+    }
+    /**
+     * Get cursor position in contenteditable element
+     */
+    getCursorPosition(element) {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0)
+            return 0;
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        return preCaretRange.toString().length;
+    }
+    /**
+     * Move cursor to start of element
+     */
+    moveCursorToStart(element) {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        if (element.childNodes.length > 0) {
+            range.setStart(element.childNodes[0], 0);
+            range.collapse(true);
+            sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
+            sel === null || sel === void 0 ? void 0 : sel.addRange(range);
+        }
     }
     /**
      * Setup a read-only dropdown field (no text input, only dropdown selection)
@@ -237,10 +408,31 @@ class MetadataForm {
     setupReadOnlyDropdownField(element, onChange, onNavigateNext) {
         // Prevent any text input
         element.addEventListener('keydown', (e) => {
-            // Allow only navigation keys
+            // Allow navigation keys
             if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
+                return;
+            }
+            // Allow arrow keys for dropdown navigation and field navigation
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                // Let dropdown handler manage this
+                return;
+            }
+            // ArrowLeft should navigate to previous field
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const fieldIndex = this.getFieldOrder().indexOf(element);
+                if (fieldIndex > 0) {
+                    const prevField = this.getFieldOrder()[fieldIndex - 1];
+                    prevField.focus();
+                    this.moveCursorToEnd(prevField);
+                }
+                return;
+            }
+            // ArrowRight should do nothing (last field)
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
                 return;
             }
             // Prevent all other keys (no text input allowed)
@@ -293,9 +485,21 @@ class MetadataForm {
         const range = document.createRange();
         const sel = window.getSelection();
         if (element.childNodes.length > 0) {
-            const textNode = element.childNodes[0];
-            const length = ((_a = textNode.textContent) === null || _a === void 0 ? void 0 : _a.length) || 0;
-            range.setStart(textNode, length);
+            // Find the last node (could be text or element)
+            const lastNode = element.childNodes[element.childNodes.length - 1];
+            if (lastNode.nodeType === Node.TEXT_NODE) {
+                // Text node: set cursor at end
+                const length = ((_a = lastNode.textContent) === null || _a === void 0 ? void 0 : _a.length) || 0;
+                range.setStart(lastNode, length);
+            }
+            else if (lastNode.nodeType === Node.ELEMENT_NODE) {
+                // Element node: set cursor after it
+                range.setStartAfter(lastNode);
+            }
+            else {
+                // Fallback: set after last node
+                range.setStartAfter(lastNode);
+            }
             range.collapse(true);
             sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
             sel === null || sel === void 0 ? void 0 : sel.addRange(range);

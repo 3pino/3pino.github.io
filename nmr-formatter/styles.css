@@ -148,8 +148,12 @@ body {
     background-color: #e3f2fd;
 }
 
-.dropdown-item:active {
+.dropdown-item.highlighted {
     background-color: #bbdefb;
+}
+
+.dropdown-item:active {
+    background-color: #90caf9;
 }
 
 /* Table Section */
