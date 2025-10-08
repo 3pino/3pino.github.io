@@ -408,8 +408,24 @@ class MetadataForm {
     setupReadOnlyDropdownField(element, onChange, onNavigateNext) {
         // Prevent any text input
         element.addEventListener('keydown', (e) => {
+            // Check if dropdown is active and has a highlighted item
+            const dropdown = this.dropdowns.sortOrder;
             // Allow navigation keys
-            if (e.key === 'Enter' || e.key === 'Tab') {
+            if (e.key === 'Enter') {
+                // If dropdown is active and has a highlighted item, let it handle Enter
+                if (dropdown && dropdown.classList.contains('active')) {
+                    const highlightedItem = dropdown.querySelector('.dropdown-item.highlighted');
+                    if (highlightedItem) {
+                        // Don't navigate, let dropdown handler select the item
+                        return;
+                    }
+                }
+                // Otherwise, navigate to next field
+                e.preventDefault();
+                onNavigateNext(element, e.shiftKey);
+                return;
+            }
+            if (e.key === 'Tab') {
                 e.preventDefault();
                 onNavigateNext(element, e.shiftKey);
                 return;

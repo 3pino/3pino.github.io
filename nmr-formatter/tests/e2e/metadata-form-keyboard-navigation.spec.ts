@@ -190,6 +190,123 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
     });
 
 
+    test('nuclei dropdown: Enter with highlighted item should NOT move focus to next field', async () => {
+      const field = helper.nuclei;
+      await field.click();
+
+      const dropdown = helper.page.locator('#nuclei-dropdown');
+      await expect(dropdown).toHaveClass(/active/);
+
+      // Navigate with ArrowDown
+      await field.press('ArrowDown');
+      await field.press('ArrowDown');
+
+      // Press Enter to select
+      await field.press('Enter');
+
+      // Dropdown should close
+      await expect(dropdown).not.toHaveClass(/active/);
+
+      // Should still be focused on nuclei (NOT moved to solvent)
+      await expect(field).toBeFocused();
+    });
+
+    test('solvent dropdown: Enter with highlighted item should NOT move focus to next field', async () => {
+      const field = helper.solvent;
+      await helper.clearField(field);
+      await field.click();
+
+      const dropdown = helper.page.locator('#solvent-dropdown');
+      await expect(dropdown).toHaveClass(/active/);
+
+      // Navigate with ArrowDown
+      await field.press('ArrowDown');
+      await field.press('ArrowDown');
+
+      // Press Enter to select
+      await field.press('Enter');
+
+      // Dropdown should close
+      await expect(dropdown).not.toHaveClass(/active/);
+
+      // Should still be focused on solvent (NOT moved to frequency)
+      await expect(field).toBeFocused();
+    });
+
+    test('sort-order dropdown: Enter with highlighted item should NOT move focus to table', async () => {
+      const field = helper.sortOrder;
+      await field.click();
+
+      const dropdown = helper.page.locator('#sort-order-dropdown');
+      await expect(dropdown).toHaveClass(/active/);
+
+      // Navigate with ArrowDown
+      await field.press('ArrowDown');
+
+      // Press Enter to select
+      await field.press('Enter');
+
+      // Dropdown should close
+      await expect(dropdown).not.toHaveClass(/active/);
+
+      // Should still be focused on sort-order (NOT moved away)
+      await expect(field).toBeFocused();
+    });
+
+    test('nuclei dropdown: Enter without highlighted item should move to next field', async () => {
+      const field = helper.nuclei;
+      await field.click();
+
+      const dropdown = helper.page.locator('#nuclei-dropdown');
+      await expect(dropdown).toHaveClass(/active/);
+
+      // Don't highlight anything, just press Enter
+      await field.press('Enter');
+
+      // Should move to solvent
+      await expect(helper.solvent).toBeFocused();
+    });
+
+    test('solvent dropdown: Enter without highlighted item should move to next field', async () => {
+      const field = helper.solvent;
+      await helper.clearField(field);
+      await field.click();
+
+      const dropdown = helper.page.locator('#solvent-dropdown');
+      await expect(dropdown).toHaveClass(/active/);
+
+      // Don't highlight anything, just press Enter
+      await field.press('Enter');
+
+      // Should move to frequency
+      await expect(helper.frequency).toBeFocused();
+    });
+
+    test('sort-order dropdown: Enter without highlighted item should move to next field', async () => {
+      const field = helper.sortOrder;
+      await field.click();
+
+      const dropdown = helper.page.locator('#sort-order-dropdown');
+      await expect(dropdown).toHaveClass(/active/);
+
+      // Close dropdown first by blurring
+      await helper.jPrecision.click();
+      await field.click();
+
+      // Press Escape to close dropdown without selection (or wait for it to be inactive)
+      await field.press('Escape');
+      
+      // Wait for dropdown to close
+      await expect(dropdown).not.toHaveClass(/active/);
+
+      // Now press Enter - should move to next focusable element (table)
+      await field.press('Enter');
+
+      // Should have moved away from sort-order
+      await expect(field).not.toBeFocused();
+    });
+
+
   });
 
   test.describe('Smart Left/Right Arrow Navigation at Field Boundaries', () => {
