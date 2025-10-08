@@ -1041,9 +1041,12 @@ class MetadataForm {
         });
         // Ensure placeholder shows when field is empty on blur
         element.addEventListener('blur', () => {
-            const html = element.innerHTML.trim();
-            if (html === '' || html === '<br>') {
+            const cleaned = this.cleanupEmptyTags(element.innerHTML);
+            if (cleaned === '' || cleaned === '<br>') {
                 element.innerHTML = '';
+            }
+            else if (cleaned !== element.innerHTML) {
+                element.innerHTML = cleaned;
             }
         });
     }
@@ -1172,6 +1175,30 @@ class MetadataForm {
             sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
             sel === null || sel === void 0 ? void 0 : sel.addRange(range);
         }
+    }
+    /**
+     * Remove empty HTML tags (tags with no text content)
+     * @param html The HTML string to clean
+     * @returns Cleaned HTML string
+     */
+    cleanupEmptyTags(html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html.trim();
+        // Recursively remove empty elements
+        const removeEmptyElements = (element) => {
+            const children = Array.from(element.children);
+            children.forEach(child => {
+                var _a;
+                removeEmptyElements(child);
+                // Remove if element has no text content and no non-empty children
+                const textContent = ((_a = child.textContent) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+                if (textContent === '' && child.children.length === 0) {
+                    child.remove();
+                }
+            });
+        };
+        removeEmptyElements(temp);
+        return temp.innerHTML;
     }
     getFieldOrder() {
         return [

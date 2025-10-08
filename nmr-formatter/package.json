@@ -6,9 +6,14 @@
     "build": "tsc && node scripts/build-browser.js",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "test": "echo \"Open tests/test-console-1-2.html in browser\""
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.0",
     "typescript": "^5.9.2"
   },
   "private": true

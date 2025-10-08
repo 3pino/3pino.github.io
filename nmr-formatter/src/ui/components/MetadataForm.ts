@@ -146,9 +146,11 @@ export class MetadataForm {
 
         // Ensure placeholder shows when field is empty on blur
         element.addEventListener('blur', () => {
-            const html = element.innerHTML.trim();
-            if (html === '' || html === '<br>') {
+            const cleaned = this.cleanupEmptyTags(element.innerHTML);
+            if (cleaned === '' || cleaned === '<br>') {
                 element.innerHTML = '';
+            } else if (cleaned !== element.innerHTML) {
+                element.innerHTML = cleaned;
             }
         });
     }
@@ -293,6 +295,32 @@ export class MetadataForm {
             sel?.removeAllRanges();
             sel?.addRange(range);
         }
+    }
+
+    /**
+     * Remove empty HTML tags (tags with no text content)
+     * @param html The HTML string to clean
+     * @returns Cleaned HTML string
+     */
+    private cleanupEmptyTags(html: string): string {
+        const temp = document.createElement('div');
+        temp.innerHTML = html.trim();
+        
+        // Recursively remove empty elements
+        const removeEmptyElements = (element: Element): void => {
+            const children = Array.from(element.children);
+            children.forEach(child => {
+                removeEmptyElements(child);
+                // Remove if element has no text content and no non-empty children
+                const textContent = child.textContent?.trim() || '';
+                if (textContent === '' && child.children.length === 0) {
+                    child.remove();
+                }
+            });
+        };
+        
+        removeEmptyElements(temp);
+        return temp.innerHTML;
     }
 
     getFieldOrder(): HTMLElement[] {
