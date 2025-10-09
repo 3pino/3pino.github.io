@@ -577,4 +577,123 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(await helper.getInputValue(helper.getJInput(0, 2))).toBe('0.8');
     });
   });
+
+  test.describe('Add Row Footer ColSpan', () => {
+    test('should have correct colspan when no J-columns are visible', async () => {
+      // Initially no multiplicity, so no J-columns
+      const colSpan = await helper.getAddRowCellColSpan();
+      const expected = await helper.getExpectedAddRowColSpan();
+      
+      expect(colSpan).toBe(expected); // Should be 4 (shift + mult + int + assignment)
+    });
+
+    test('should update colspan when multiplicity is added', async () => {
+      const multInput = helper.getMultiplicityInput(0);
+
+      // Initially no J-columns
+      let colSpan = await helper.getAddRowCellColSpan();
+      let expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // 4
+
+      // Add 'dd' - 2 J-columns
+      await multInput.fill('dd');
+      await helper.page.waitForTimeout(100);
+
+      colSpan = await helper.getAddRowCellColSpan();
+      expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // Should be 6 (4 + 2)
+    });
+
+    test('should update colspan when multiplicity changes from dd to ddd', async () => {
+      const multInput = helper.getMultiplicityInput(0);
+
+      // Start with 'dd' - 2 J-columns
+      await multInput.fill('dd');
+      await helper.page.waitForTimeout(100);
+
+      let colSpan = await helper.getAddRowCellColSpan();
+      let expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // 6
+
+      // Change to 'ddd' - 3 J-columns
+      await multInput.fill('ddd');
+      await helper.page.waitForTimeout(100);
+
+      colSpan = await helper.getAddRowCellColSpan();
+      expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // Should be 7 (4 + 3)
+    });
+
+    test('should update colspan when multiplicity is removed', async () => {
+      const multInput = helper.getMultiplicityInput(0);
+
+      // Start with 'ddd' - 3 J-columns
+      await multInput.fill('ddd');
+      await helper.page.waitForTimeout(100);
+
+      let colSpan = await helper.getAddRowCellColSpan();
+      let expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // 7
+
+      // Clear multiplicity
+      await multInput.fill('');
+      await helper.page.waitForTimeout(100);
+
+      colSpan = await helper.getAddRowCellColSpan();
+      expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // Should be 4 (4 + 0)
+    });
+
+    test('should update colspan when row with max J-columns is deleted', async () => {
+      // Row 0: ddd (3 J-values)
+      await helper.getMultiplicityInput(0).fill('ddd');
+      await helper.page.waitForTimeout(100);
+
+      // Add Row 1: d (1 J-value)
+      await helper.addRow();
+      await helper.getMultiplicityInput(1).fill('d');
+      await helper.page.waitForTimeout(100);
+
+      // Should have 3 J-columns visible (max)
+      let colSpan = await helper.getAddRowCellColSpan();
+      let expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // 7 (4 + 3)
+
+      // Delete row 0 (which has ddd)
+      await helper.deleteRow(0);
+      await helper.page.waitForTimeout(100);
+
+      // Should now have 1 J-column visible (only row1 with 'd')
+      colSpan = await helper.getAddRowCellColSpan();
+      expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // Should be 5 (4 + 1)
+    });
+
+    test('should maintain correct colspan across multiple row additions', async () => {
+      // Row 0: dd (2 J-values)
+      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.page.waitForTimeout(100);
+
+      let colSpan = await helper.getAddRowCellColSpan();
+      let expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // 6
+
+      // Add Row 1: empty (0 J-values)
+      await helper.addRow();
+      await helper.page.waitForTimeout(100);
+
+      colSpan = await helper.getAddRowCellColSpan();
+      expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // Still 6 (max is still 2)
+
+      // Add Row 2: ddd (3 J-values)
+      await helper.addRow();
+      await helper.getMultiplicityInput(2).fill('ddd');
+      await helper.page.waitForTimeout(100);
+
+      colSpan = await helper.getAddRowCellColSpan();
+      expected = await helper.getExpectedAddRowColSpan();
+      expect(colSpan).toBe(expected); // Should be 7 (4 + 3)
+    });
+  });
 });

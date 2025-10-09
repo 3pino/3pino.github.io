@@ -554,6 +554,8 @@ class NMRTable {
             });
         });
         this.updateTableHeader();
+        // Re-render footer to update colspan based on new maxJColumns
+        this.renderAddRowFooter();
     }
     calculateRequiredJColumns(multiplicity) {
         if (!multiplicity || multiplicity.trim() === '') {

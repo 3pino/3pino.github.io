@@ -623,6 +623,9 @@ export class NMRTable {
         });
 
         this.updateTableHeader();
+        
+        // Re-render footer to update colspan based on new maxJColumns
+        this.renderAddRowFooter();
     }
 
     private calculateRequiredJColumns(multiplicity: string): number {

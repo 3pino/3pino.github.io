@@ -214,7 +214,7 @@ export class TableHelper {
    * Get the number of visible J-columns (by checking header)
    */
   async getVisibleJColumnCount(): Promise<number> {
-    const jHeaders = this.page.locator('#nmr-table thead th').filter({ hasText: /^J\d+$/ });
+    const jHeaders = this.page.locator('#nmr-table thead th.j-header');
     const count = await jHeaders.count();
     let visibleCount = 0;
 
@@ -227,6 +227,24 @@ export class TableHelper {
     }
 
     return visibleCount;
+  }
+
+  /**
+   * Get the colspan value of the add-row-cell footer
+   */
+  async getAddRowCellColSpan(): Promise<number> {
+    const addRowCell = this.page.locator('.add-row-cell');
+    const colSpanAttr = await addRowCell.getAttribute('colspan');
+    return colSpanAttr ? parseInt(colSpanAttr, 10) : 1;
+  }
+
+  /**
+   * Calculate expected colspan for add-row-cell
+   * Formula: 4 (shift + mult + integration + assignment) + number of visible J columns
+   */
+  async getExpectedAddRowColSpan(): Promise<number> {
+    const visibleJColumns = await this.getVisibleJColumnCount();
+    return 4 + visibleJColumns;
   }
 
   /**
