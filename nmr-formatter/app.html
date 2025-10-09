@@ -12,35 +12,35 @@
         <header class="title-bar">
             <h1>NMR Formatter</h1>
         </header>
-        <div class="table-controls">
-            <div class="formatting-toolbar">
-                <button id="format-bold-btn" class="format-btn" title="Bold (Ctrl+B)"><b>B</b></button>
-                <button id="format-italic-btn" class="format-btn" title="Italic (Ctrl+I)"><i>I</i></button>
-                <button id="format-sub-btn" class="format-btn" title="Subscript">x<sub>2</sub></button>
-                <button id="format-sup-btn" class="format-btn" title="Superscript">x<sup>2</sup></button>
-                <button id="insert-endash-btn" class="format-btn" title="Insert en-dash (–)">–</button>
-            </div>
-        </div>
-        <!-- Top Section: Metadata Editor -->
-        <section class="metadata-section">
-            <div class="metadata-grid">
-                <div class="metadata-group">
-                    <label for="nuclei">Nuclei:</label>
-                    <div id="nuclei" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., ¹H"></div>
-                    <div class="metadata-dropdown" id="nuclei-dropdown">
-                        <!-- Dropdown items will be dynamically generated from NUCLEI_PRESETS -->
-                    </div>
+        <!-- Toolbar and Metadata Section -->
+        <section class="toolbar-container-wrapper">
+            <div class="toolbar-container">
+                <div class="toolbar">
+                    <button id="format-bold-btn" class="format-btn" title="Bold (Ctrl+B)"><b>B</b></button>
+                    <button id="format-italic-btn" class="format-btn" title="Italic (Ctrl+I)"><i>I</i></button>
+                    <button id="format-sub-btn" class="format-btn" title="Subscript">x<sub>2</sub></button>
+                    <button id="format-sup-btn" class="format-btn" title="Superscript">x<sup>2</sup></button>
+                    <button id="insert-endash-btn" class="format-btn" title="Insert en-dash">–</button>
                 </div>
-                <div class="metadata-group">
-                    <label for="solvent">Solvent:</label>
-                    <div id="solvent" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., CDCl₃"></div>
-                    <div class="metadata-dropdown" id="solvent-dropdown">
-                        <!-- Dropdown items will be dynamically generated from SOLVENT_PRESETS -->
+                <div class="metadata">
+                    <div class="metadata-group">
+                        <label for="nuclei">Nuclei:</label>
+                        <div id="nuclei" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., ¹H"></div>
+                        <div class="metadata-dropdown" id="nuclei-dropdown">
+                            <!-- Dropdown items will be dynamically generated from NUCLEI_PRESETS -->
+                        </div>
                     </div>
-                </div>
-                <div class="metadata-group">
-                    <label for="frequency">Frequency (MHz):</label>
-                    <div id="frequency" class="metadata-input metadata-number" contenteditable="true" data-placeholder="e.g., 500" inputmode="numeric"></div>
+                    <div class="metadata-group">
+                        <label for="solvent">Solvent:</label>
+                        <div id="solvent" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., CDCl₃"></div>
+                        <div class="metadata-dropdown" id="solvent-dropdown">
+                            <!-- Dropdown items will be dynamically generated from SOLVENT_PRESETS -->
+                        </div>
+                    </div>
+                    <div class="metadata-group">
+                        <label for="frequency">Frequency (MHz):</label>
+                        <div id="frequency" class="metadata-input metadata-number" contenteditable="true" data-placeholder="e.g., 500" inputmode="numeric"></div>
+                    </div>
                 </div>
             </div>
         </section>
