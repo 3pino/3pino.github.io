@@ -152,15 +152,15 @@ export class MetadataForm {
                         return;
                     }
                 }
-                // Otherwise, navigate to next field
+                // Otherwise, navigate to next field within the same group
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
             
             if (e.key === 'Tab') {
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
 
@@ -179,21 +179,23 @@ export class MetadataForm {
                     const cursorPosition = this.getCursorPosition(element);
                     
                     if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
-                        // At right boundary, move to next field
+                        // At right boundary, move to next field within group
                         e.preventDefault();
-                        const fieldIndex = this.getFieldOrder().indexOf(element);
-                        if (fieldIndex < this.getFieldOrder().length - 1) {
-                            const nextField = this.getFieldOrder()[fieldIndex + 1];
+                        const fieldGroup = this.getFieldGroup(element);
+                        const fieldIndex = fieldGroup.indexOf(element);
+                        if (fieldIndex < fieldGroup.length - 1) {
+                            const nextField = fieldGroup[fieldIndex + 1];
                             nextField.focus();
                             this.moveCursorToStart(nextField);
                         }
                         return;
                     } else if (e.key === 'ArrowLeft' && cursorPosition === 0) {
-                        // At left boundary, move to previous field
+                        // At left boundary, move to previous field within group
                         e.preventDefault();
-                        const fieldIndex = this.getFieldOrder().indexOf(element);
+                        const fieldGroup = this.getFieldGroup(element);
+                        const fieldIndex = fieldGroup.indexOf(element);
                         if (fieldIndex > 0) {
-                            const prevField = this.getFieldOrder()[fieldIndex - 1];
+                            const prevField = fieldGroup[fieldIndex - 1];
                             prevField.focus();
                             this.moveCursorToEnd(prevField);
                         }
@@ -236,7 +238,7 @@ export class MetadataForm {
         element.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
 
@@ -255,21 +257,23 @@ export class MetadataForm {
                     const cursorPosition = this.getCursorPosition(element);
                     
                     if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
-                        // At right boundary, move to next field
+                        // At right boundary, move to next field within group
                         e.preventDefault();
-                        const fieldIndex = this.getFieldOrder().indexOf(element);
-                        if (fieldIndex < this.getFieldOrder().length - 1) {
-                            const nextField = this.getFieldOrder()[fieldIndex + 1];
+                        const fieldGroup = this.getFieldGroup(element);
+                        const fieldIndex = fieldGroup.indexOf(element);
+                        if (fieldIndex < fieldGroup.length - 1) {
+                            const nextField = fieldGroup[fieldIndex + 1];
                             nextField.focus();
                             this.moveCursorToStart(nextField);
                         }
                         return;
                     } else if (e.key === 'ArrowLeft' && cursorPosition === 0) {
-                        // At left boundary, move to previous field
+                        // At left boundary, move to previous field within group
                         e.preventDefault();
-                        const fieldIndex = this.getFieldOrder().indexOf(element);
+                        const fieldGroup = this.getFieldGroup(element);
+                        const fieldIndex = fieldGroup.indexOf(element);
                         if (fieldIndex > 0) {
-                            const prevField = this.getFieldOrder()[fieldIndex - 1];
+                            const prevField = fieldGroup[fieldIndex - 1];
                             prevField.focus();
                             this.moveCursorToEnd(prevField);
                         }
@@ -510,21 +514,29 @@ export class MetadataForm {
                 return;
             }
 
-            // ArrowLeft should navigate to previous field
+            // ArrowLeft should navigate to previous field within group
             if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                const fieldIndex = this.getFieldOrder().indexOf(element);
+                const fieldGroup = this.getFieldGroup(element);
+                const fieldIndex = fieldGroup.indexOf(element);
                 if (fieldIndex > 0) {
-                    const prevField = this.getFieldOrder()[fieldIndex - 1];
+                    const prevField = fieldGroup[fieldIndex - 1];
                     prevField.focus();
                     this.moveCursorToEnd(prevField);
                 }
                 return;
             }
 
-            // ArrowRight should do nothing (last field)
+            // ArrowRight should navigate to next field within group
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
+                const fieldGroup = this.getFieldGroup(element);
+                const fieldIndex = fieldGroup.indexOf(element);
+                if (fieldIndex < fieldGroup.length - 1) {
+                    const nextField = fieldGroup[fieldIndex + 1];
+                    nextField.focus();
+                    this.moveCursorToStart(nextField);
+                }
                 return;
             }
 
@@ -631,6 +643,7 @@ export class MetadataForm {
     }
 
     getFieldOrder(): HTMLElement[] {
+        // Legacy method - returns all fields
         return [
             this.elements.nuclei,
             this.elements.solvent,
@@ -639,5 +652,85 @@ export class MetadataForm {
             this.elements.jPrecision,
             this.elements.sortOrder
         ];
+    }
+
+    /**
+     * Get metadata fields order (group 1: nuclei → solvent → frequency)
+     */
+    private getMetadataFieldOrder(): HTMLElement[] {
+        return [
+            this.elements.nuclei,
+            this.elements.solvent,
+            this.elements.frequency
+        ];
+    }
+
+    /**
+     * Get settings fields order (group 2: shift-precision → j-precision → sort-order)
+     */
+    private getSettingsFieldOrder(): HTMLElement[] {
+        return [
+            this.elements.shiftPrecision,
+            this.elements.jPrecision,
+            this.elements.sortOrder
+        ];
+    }
+
+    /**
+     * Get the appropriate field group for the given element
+     */
+    private getFieldGroup(element: HTMLElement): HTMLElement[] {
+        const metadataFields = this.getMetadataFieldOrder();
+        const settingsFields = this.getSettingsFieldOrder();
+        
+        if (metadataFields.includes(element)) {
+            return metadataFields;
+        } else if (settingsFields.includes(element)) {
+            return settingsFields;
+        }
+        return [];
+    }
+
+    /**
+     * Navigate to next/previous field within the same group
+     */
+    /**
+     * Navigate to next/previous field within the same group
+     */
+    private navigateWithinGroup(element: HTMLElement, reverse: boolean): void {
+        const fieldGroup = this.getFieldGroup(element);
+        if (fieldGroup.length === 0) return;
+
+        const currentIndex = fieldGroup.indexOf(element);
+        if (currentIndex === -1) return;
+
+        let targetIndex: number;
+        if (reverse) {
+            targetIndex = currentIndex - 1;
+            // Don't wrap - stay at first field
+            if (targetIndex < 0) return;
+        } else {
+            targetIndex = currentIndex + 1;
+            // Don't wrap - stay at last field
+            if (targetIndex >= fieldGroup.length) return;
+        }
+
+        const targetField = fieldGroup[targetIndex];
+        targetField.focus();
+        
+        // Select all text in the target field
+        this.selectAllText(targetField);
+    }
+
+    /**
+     * Select all text in a contenteditable element
+     */
+    private selectAllText(element: HTMLElement): void {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        
+        range.selectNodeContents(element);
+        sel?.removeAllRanges();
+        sel?.addRange(range);
     }
 }

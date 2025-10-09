@@ -373,7 +373,7 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       expect(cursorPos).toBe(text.length);
     });
 
-    test('ArrowRight at end of frequency field should move to shift-precision', async () => {
+    test('ArrowRight at end of frequency field should NOT move to shift-precision (different group)', async () => {
       const frequency = helper.frequency;
       const shiftPrecision = helper.shiftPrecision;
 
@@ -386,11 +386,11 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       // Press ArrowRight
       await frequency.press('ArrowRight');
 
-      // Should move to shift-precision
-      await expect(shiftPrecision).toBeFocused();
+      // Should NOT move to shift-precision (different group)
+      await expect(frequency).toBeFocused();
     });
 
-    test('ArrowLeft at start of shift-precision should move to frequency', async () => {
+    test('ArrowLeft at start of shift-precision should NOT move to frequency (different group)', async () => {
       const frequency = helper.frequency;
       const shiftPrecision = helper.shiftPrecision;
 
@@ -402,8 +402,8 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       // Press ArrowLeft
       await shiftPrecision.press('ArrowLeft');
 
-      // Should move to frequency
-      await expect(frequency).toBeFocused();
+      // Should NOT move to frequency (different group)
+      await expect(shiftPrecision).toBeFocused();
     });
 
     test('ArrowRight in middle of text should NOT navigate to next field', async () => {
@@ -507,8 +507,8 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await expect(nuclei).toBeFocused();
     });
 
-    test('should navigate through all fields with ArrowRight', async () => {
-      // Start at nuclei, navigate through all fields
+    test('should navigate through fields within groups with ArrowRight', async () => {
+      // Test Metadata group (nuclei → solvent → frequency)
       await helper.clearField(helper.nuclei);
       await helper.nuclei.click();
       await helper.nuclei.type('H');
@@ -522,11 +522,14 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await helper.solvent.press('ArrowRight');
       await expect(helper.frequency).toBeFocused();
 
+      // At end of Metadata group, should NOT move to Settings group
       await helper.frequency.type('5');
       await helper.frequency.press('End');
       await helper.frequency.press('ArrowRight');
-      await expect(helper.shiftPrecision).toBeFocused();
+      await expect(helper.frequency).toBeFocused();
 
+      // Test Settings group (shift-precision → j-precision → sort-order)
+      await helper.shiftPrecision.click();
       await helper.shiftPrecision.type('2');
       await helper.shiftPrecision.press('End');
       await helper.shiftPrecision.press('ArrowRight');
@@ -537,13 +540,13 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await helper.jPrecision.press('ArrowRight');
       await expect(helper.sortOrder).toBeFocused();
 
-      // At last field, ArrowRight should do nothing
+      // At last field of Settings group, ArrowRight should do nothing
       await helper.sortOrder.press('ArrowRight');
       await expect(helper.sortOrder).toBeFocused();
     });
 
-    test('should navigate backward through all fields with ArrowLeft', async () => {
-      // Start at sort-order, navigate backward
+    test('should navigate backward through fields within groups with ArrowLeft', async () => {
+      // Test Settings group backward (sort-order → j-precision → shift-precision)
       await helper.sortOrder.click();
       await helper.sortOrder.press('ArrowLeft');
       await expect(helper.jPrecision).toBeFocused();
@@ -552,10 +555,13 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await helper.jPrecision.press('ArrowLeft');
       await expect(helper.shiftPrecision).toBeFocused();
 
+      // At start of Settings group, should NOT move to Metadata group
       await helper.shiftPrecision.press('Home');
       await helper.shiftPrecision.press('ArrowLeft');
-      await expect(helper.frequency).toBeFocused();
+      await expect(helper.shiftPrecision).toBeFocused();
 
+      // Test Metadata group backward (frequency → solvent → nuclei)
+      await helper.frequency.click();
       await helper.frequency.press('Home');
       await helper.frequency.press('ArrowLeft');
       await expect(helper.solvent).toBeFocused();
@@ -677,56 +683,52 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
   });
 
   test.describe('Enter and Shift+Enter Navigation', () => {
-    test('Enter key should move to next field', async () => {
-      // Start at nuclei
+    test('Enter key should move to next field within group', async () => {
+      // Test Metadata group
       await helper.nuclei.click();
       await helper.nuclei.press('Enter');
-
-      // Should move to solvent
       await expect(helper.solvent).toBeFocused();
 
       await helper.solvent.press('Enter');
-
-      // Should move to frequency
       await expect(helper.frequency).toBeFocused();
 
+      // At end of Metadata group, should NOT move to Settings group
       await helper.frequency.press('Enter');
+      await expect(helper.frequency).toBeFocused();
 
-      // Should move to shift-precision
-      await expect(helper.shiftPrecision).toBeFocused();
-
+      // Test Settings group
+      await helper.shiftPrecision.click();
       await helper.shiftPrecision.press('Enter');
-
-      // Should move to j-precision
       await expect(helper.jPrecision).toBeFocused();
 
       await helper.jPrecision.press('Enter');
+      await expect(helper.sortOrder).toBeFocused();
 
-      // Should move to sort-order
+      // At end of Settings group, should NOT move
+      await helper.sortOrder.press('Enter');
       await expect(helper.sortOrder).toBeFocused();
     });
 
-    test('Shift+Enter should move to previous field', async () => {
-      // Start at j-precision (last contenteditable field)
+    test('Shift+Enter should move to previous field within group', async () => {
+      // Test Settings group backward
       await helper.jPrecision.click();
       await helper.jPrecision.press('Shift+Enter');
-
-      // Should move to shift-precision
       await expect(helper.shiftPrecision).toBeFocused();
 
+      // At start of Settings group, should NOT move to Metadata group
       await helper.shiftPrecision.press('Shift+Enter');
+      await expect(helper.shiftPrecision).toBeFocused();
 
-      // Should move to frequency
-      await expect(helper.frequency).toBeFocused();
-
+      // Test Metadata group backward
+      await helper.frequency.click();
       await helper.frequency.press('Shift+Enter');
-
-      // Should move to solvent
       await expect(helper.solvent).toBeFocused();
 
       await helper.solvent.press('Shift+Enter');
+      await expect(helper.nuclei).toBeFocused();
 
-      // Should move to nuclei
+      // At start of Metadata group, should NOT move
+      await helper.nuclei.press('Shift+Enter');
       await expect(helper.nuclei).toBeFocused();
     });
 
@@ -753,49 +755,72 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       expect(text).toBe('Test');
     });
 
-    test('Enter and Shift+Enter should work with numeric fields', async () => {
+    test('Enter and Shift+Enter should work with numeric fields within group', async () => {
       const field = helper.frequency;
 
       await field.click();
       await field.type('500');
 
-      // Enter should move to next field
+      // Enter should NOT move to next field (different group)
       await field.press('Enter');
-      await expect(helper.shiftPrecision).toBeFocused();
-
-      // Shift+Enter should move back
-      await helper.shiftPrecision.press('Shift+Enter');
       await expect(field).toBeFocused();
 
+      // Test within Settings group
+      await helper.shiftPrecision.click();
+      await helper.shiftPrecision.type('3');
+      await helper.shiftPrecision.press('Enter');
+      await expect(helper.jPrecision).toBeFocused();
+
+      // Shift+Enter should move back
+      await helper.jPrecision.press('Shift+Enter');
+      await expect(helper.shiftPrecision).toBeFocused();
+
       // Content should be preserved
-      const content = await helper.getTextContent(field);
-      expect(content).toBe('500');
+      const content = await helper.getTextContent(helper.shiftPrecision);
+      expect(content).toBe('3');
     });
   });
 
   test.describe('Tab Navigation', () => {
-    test('Tab key should navigate forward through fields', async () => {
+    test('Tab key should navigate forward through fields within groups', async () => {
+      // Test Metadata group
       await helper.nuclei.click();
       await helper.nuclei.press('Tab');
-
       await expect(helper.solvent).toBeFocused();
 
       await helper.solvent.press('Tab');
       await expect(helper.frequency).toBeFocused();
 
+      // At end of Metadata group, should NOT move to Settings group
       await helper.frequency.press('Tab');
-      await expect(helper.shiftPrecision).toBeFocused();
+      await expect(helper.frequency).toBeFocused();
+
+      // Test Settings group
+      await helper.shiftPrecision.click();
+      await helper.shiftPrecision.press('Tab');
+      await expect(helper.jPrecision).toBeFocused();
+
+      await helper.jPrecision.press('Tab');
+      await expect(helper.sortOrder).toBeFocused();
     });
 
-    test('Shift+Tab should navigate backward through fields', async () => {
-      // Start from j-precision
+    test('Shift+Tab should navigate backward through fields within groups', async () => {
+      // Test Settings group backward
       await helper.jPrecision.click();
       await helper.jPrecision.press('Shift+Tab');
-
       await expect(helper.shiftPrecision).toBeFocused();
 
+      // At start of Settings group, should NOT move to Metadata group
       await helper.shiftPrecision.press('Shift+Tab');
-      await expect(helper.frequency).toBeFocused();
+      await expect(helper.shiftPrecision).toBeFocused();
+
+      // Test Metadata group backward
+      await helper.frequency.click();
+      await helper.frequency.press('Shift+Tab');
+      await expect(helper.solvent).toBeFocused();
+
+      await helper.solvent.press('Shift+Tab');
+      await expect(helper.nuclei).toBeFocused();
     });
 
     test('Tab key should select all text in the target field', async () => {
@@ -816,17 +841,17 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
     });
 
     test('Tab key should select all text in numeric fields', async () => {
-      // Set a value in frequency field
-      await helper.frequency.click();
-      await helper.frequency.type('500');
+      // Set a value in shift-precision field
+      await helper.shiftPrecision.click();
+      await helper.shiftPrecision.type('2');
 
-      // Tab to shift-precision
-      await helper.frequency.press('Tab');
-      await expect(helper.shiftPrecision).toBeFocused();
+      // Tab to j-precision (within same group)
+      await helper.shiftPrecision.press('Tab');
+      await expect(helper.jPrecision).toBeFocused();
 
       // Type should replace the default value
-      await helper.shiftPrecision.type('3');
-      const content = await helper.getTextContent(helper.shiftPrecision);
+      await helper.jPrecision.type('3');
+      const content = await helper.getTextContent(helper.jPrecision);
       expect(content).toContain('3');
     });
 
