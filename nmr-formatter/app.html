@@ -4,13 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NMR Formatter</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
     <div class="app-container">
+        <!-- Title Bar -->
+        <header class="title-bar">
+            <h1>NMR Formatter</h1>
+        </header>
+        <div class="table-controls">
+            <div class="formatting-toolbar">
+                <span class="toolbar-label">Format:</span>
+                <button id="format-bold-btn" class="format-btn" title="Bold (Ctrl+B)"><b>B</b></button>
+                <button id="format-italic-btn" class="format-btn" title="Italic (Ctrl+I)"><i>I</i></button>
+                <button id="format-sub-btn" class="format-btn" title="Subscript">x<sub>2</sub></button>
+                <button id="format-sup-btn" class="format-btn" title="Superscript">x<sup>2</sup></button>
+                <button id="insert-endash-btn" class="format-btn" title="Insert en-dash (–)">–</button>
+            </div>
+        </div>
         <!-- Top Section: Metadata Editor -->
         <section class="metadata-section">
-            <h2>Metadata</h2>
             <div class="metadata-grid">
                 <div class="metadata-group">
                     <label for="nuclei">Nuclei:</label>
@@ -30,37 +43,11 @@
                     <label for="frequency">Frequency (MHz):</label>
                     <div id="frequency" class="metadata-input metadata-number" contenteditable="true" data-placeholder="e.g., 500" inputmode="numeric"></div>
                 </div>
-                <div class="metadata-group">
-                    <label for="shift-precision">Chemical Shift Sig Figs:</label>
-                    <div id="shift-precision" class="metadata-input metadata-number" contenteditable="true" data-placeholder="1-10" inputmode="numeric"></div>
-                </div>
-                <div class="metadata-group">
-                    <label for="j-precision">J-value Sig Figs:</label>
-                    <div id="j-precision" class="metadata-input metadata-number" contenteditable="true" data-placeholder="1-10" inputmode="numeric"></div>
-                </div>
-                <div class="metadata-group">
-                    <label for="sort-order">Sort Order:</label>
-                    <div id="sort-order" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="Select sort order"></div>
-                    <div class="metadata-dropdown" id="sort-order-dropdown">
-                        <!-- Dropdown items will be dynamically generated from SORT_ORDER_PRESETS -->
-                    </div>
-                </div>
             </div>
         </section>
 
         <!-- Middle Section: Table Editor -->
         <section class="table-section">
-            <h2>Peak Data</h2>
-            <div class="table-controls">
-                <div class="formatting-toolbar">
-                    <span class="toolbar-label">Format:</span>
-                    <button id="format-bold-btn" class="format-btn" title="Bold (Ctrl+B)"><b>B</b></button>
-                    <button id="format-italic-btn" class="format-btn" title="Italic (Ctrl+I)"><i>I</i></button>
-                    <button id="format-sub-btn" class="format-btn" title="Subscript">x<sub>2</sub></button>
-                    <button id="format-sup-btn" class="format-btn" title="Superscript">x<sup>2</sup></button>
-                    <button id="insert-endash-btn" class="format-btn" title="Insert en-dash (–)">–</button>
-                </div>
-            </div>
             <div class="table-container">
                 <table id="nmr-table" class="nmr-table">
                     <thead>
@@ -90,6 +77,23 @@
         <section class="rich-text-section">
             <div class="section-header">
                 <h2>Formatted Output</h2>
+                <div class="output-settings">
+                    <div class="setting-group">
+                        <label for="shift-precision">Shift Sig Figs:</label>
+                        <div id="shift-precision" class="setting-input metadata-number" contenteditable="true" data-placeholder="3" inputmode="numeric"></div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="j-precision">J-Value Sig Figs:</label>
+                        <div id="j-precision" class="setting-input metadata-number" contenteditable="true" data-placeholder="2" inputmode="numeric"></div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="sort-order">Sort:</label>
+                        <div id="sort-order" class="setting-input metadata-editable" contenteditable="true" data-placeholder="Sort order"></div>
+                        <div class="metadata-dropdown" id="sort-order-dropdown">
+                            <!-- Dropdown items will be dynamically generated from SORT_ORDER_PRESETS -->
+                        </div>
+                    </div>
+                </div>
                 <button id="copy-btn" class="copy-btn" title="Copy formatted text to clipboard">Copy</button>
             </div>
             <!--

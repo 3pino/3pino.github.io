@@ -68,8 +68,8 @@ const SOLVENT_PRESETS = [
 ];
 // Sort order preset configurations
 const SORT_ORDER_PRESETS = [
-    { id: "desc", displayHTML: "Descending (High → Low)", pattern: /desc/i },
-    { id: "asc", displayHTML: "Ascending (Low → High)", pattern: /asc/i }
+    { id: "desc", displayHTML: "Descending", pattern: /desc/i },
+    { id: "asc", displayHTML: "Ascending", pattern: /asc/i }
 ];
 // Legacy Record-based configurations (for backward compatibility)
 const NUCLEI_CONFIG = {

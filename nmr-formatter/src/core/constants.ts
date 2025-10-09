@@ -39,8 +39,8 @@ export const SOLVENT_PRESETS: PresetConfig[] = [
 
 // Sort order preset configurations
 export const SORT_ORDER_PRESETS: PresetConfig[] = [
-    { id: "desc", displayHTML: "Descending (High → Low)", pattern: /desc/i },
-    { id: "asc", displayHTML: "Ascending (Low → High)", pattern: /asc/i }
+    { id: "desc", displayHTML: "Descending", pattern: /desc/i },
+    { id: "asc", displayHTML: "Ascending", pattern: /asc/i }
 ];
 
 // Legacy Record-based configurations (for backward compatibility)

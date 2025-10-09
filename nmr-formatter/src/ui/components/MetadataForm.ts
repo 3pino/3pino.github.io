@@ -9,6 +9,7 @@ import { ValidationState } from '../../state/ValidationState';
 export class MetadataForm {
     private metadataState: MetadataState;
     private validationState: ValidationState;
+    // Note: shift-precision, j-precision, sort-order are now in .rich-text-section but IDs remain the same
     private elements: {
         nuclei: HTMLElement;
         solvent: HTMLElement;
