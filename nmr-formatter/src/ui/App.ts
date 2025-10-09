@@ -96,9 +96,6 @@ export class NMRFormatterApp {
 
     private generateFormattedText(): void {
         try {
-            // Validate and highlight errors
-            const hasErrors = this.validateAndHighlightTable();
-
             // Get metadata
             const metadataData = this.appState.metadata.getData();
             const metadata = new Metadata(
@@ -112,6 +109,9 @@ export class NMRFormatterApp {
 
             // Remove empty rows from table
             this.appState.table.removeEmptyRows();
+
+            // Validate and highlight errors (after removing empty rows)
+            const hasErrors = this.validateAndHighlightTable();
 
             // Get peaks from table state
             const tableRows = this.appState.table.getRows();

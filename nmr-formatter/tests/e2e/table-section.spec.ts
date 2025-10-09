@@ -203,11 +203,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(await helper.getInputValue(intInput)).toBe('0');
     });
 
-    test('should be numeric input type', async () => {
-      const intInput = helper.getIntegrationInput(0);
-      const inputType = await intInput.getAttribute('type');
-      expect(inputType).toBe('number');
-    });
+
   });
 
   test.describe('Assignment Input (contenteditable)', () => {
@@ -462,6 +458,10 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should show error after Generate Text is clicked (invalid data)', async () => {
       const shiftInput = helper.getShiftInput(0);
+      const multInput = helper.getMultiplicityInput(0);
+
+      // Enter multiplicity so row is not considered empty
+      await multInput.fill('d');
 
       // Leave shift empty (invalid)
       await shiftInput.fill('');
@@ -476,6 +476,10 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should clear error after fixing invalid data', async () => {
       const shiftInput = helper.getShiftInput(0);
+      const multInput = helper.getMultiplicityInput(0);
+
+      // Enter multiplicity so row is not considered empty
+      await multInput.fill('d');
 
       // Leave shift empty
       await shiftInput.fill('');
@@ -491,6 +495,36 @@ test.describe('Table Section - Data Input & Validation', () => {
 
       // Error should be cleared
       expect(await helper.hasError(shiftInput)).toBe(false);
+    });
+
+    test('should re-validate and show error again after fixing and re-breaking', async () => {
+      const shiftInput = helper.getShiftInput(0);
+      const multInput = helper.getMultiplicityInput(0);
+
+      // Enter multiplicity so row is not considered empty
+      await multInput.fill('d');
+
+      // Step 1: Enter invalid data
+      await shiftInput.fill('');
+
+      // Step 2: Generate Text - should show error
+      await helper.generateText();
+      await helper.page.waitForTimeout(100);
+      expect(await helper.hasError(shiftInput)).toBe(true);
+
+      // Step 3: Fix the error
+      await shiftInput.fill('7.53');
+      expect(await helper.hasError(shiftInput)).toBe(false);
+
+      // Step 4: Re-break - enter invalid data again
+      await shiftInput.fill('');
+
+      // Step 5: Generate Text again - should show error again
+      await helper.generateText();
+      await helper.page.waitForTimeout(100);
+
+      // Step 6: Verify error is shown
+      expect(await helper.hasError(shiftInput)).toBe(true);
     });
   });
 

@@ -289,12 +289,14 @@ export class TableHelper {
     const isDisabled = await jInput.isDisabled();
     if (!isDisabled) return false;
 
-    // Check visual styling (opacity or color)
-    const opacity = await jInput.evaluate((el) => window.getComputedStyle(el).opacity);
-    const color = await jInput.evaluate((el) => window.getComputedStyle(el).color);
+    // Check if parent cell has disabled class (which applies grey background)
+    const hasDisabledClass = await parentCell.evaluate((el) => el.classList.contains('disabled'));
+    if (hasDisabledClass) return true;
 
-    // Consider greyed out if opacity < 1 or color is grey-ish
-    return parseFloat(opacity) < 1 || color.includes('128') || color.includes('gray') || color.includes('grey');
+    // Fallback: Check background color
+    const backgroundColor = await parentCell.evaluate((el) => window.getComputedStyle(el).backgroundColor);
+    // #e0e0e0 is rgb(224, 224, 224)
+    return backgroundColor.includes('224') || backgroundColor === '#e0e0e0';
   }
 
   /**

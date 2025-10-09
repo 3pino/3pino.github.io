@@ -68,8 +68,6 @@ class NMRFormatterApp {
     }
     generateFormattedText() {
         try {
-            // Validate and highlight errors
-            const hasErrors = this.validateAndHighlightTable();
             // Get metadata
             const metadataData = this.appState.metadata.getData();
             const metadata = new Metadata_1.Metadata(metadataData.nuclei, // HTML content as nuclei type
@@ -79,6 +77,8 @@ class NMRFormatterApp {
             this.appState.table.sortAllJValues();
             // Remove empty rows from table
             this.appState.table.removeEmptyRows();
+            // Validate and highlight errors (after removing empty rows)
+            const hasErrors = this.validateAndHighlightTable();
             // Get peaks from table state
             const tableRows = this.appState.table.getRows();
             const peaks = [];

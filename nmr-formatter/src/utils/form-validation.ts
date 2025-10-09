@@ -57,6 +57,8 @@ export function validateTableRow(
     if (shift === null || row.shift.trim() === '') {
         validationState.setError(`shift-${rowId}`, 'Invalid chemical shift');
         hasErrors = true;
+    } else {
+        validationState.clearError(`shift-${rowId}`);
     }
 
     // Validate multiplicity (for 1H NMR)
@@ -70,6 +72,7 @@ export function validateTableRow(
             try {
                 const multipletnumbers = (window as any).multipletnumbers;
                 multipletnumbers(multiplicity);
+                validationState.clearError(`mult-${rowId}`);
             } catch (error) {
                 validationState.setError(`mult-${rowId}`, 'Invalid multiplicity');
                 hasErrors = true;
@@ -80,6 +83,8 @@ export function validateTableRow(
         if (!row.integration || row.integration === 0) {
             validationState.setError(`int-${rowId}`, 'Integration is required for 1H NMR');
             hasErrors = true;
+        } else {
+            validationState.clearError(`int-${rowId}`);
         }
     }
 
@@ -98,7 +103,14 @@ export function validateTableRow(
                 if (!row.jValues[i] || row.jValues[i] === 0) {
                     validationState.setError(`j${i}-${rowId}`, 'All J-values must be filled');
                     hasErrors = true;
+                } else {
+                    validationState.clearError(`j${i}-${rowId}`);
                 }
+            }
+        } else {
+            // All filled or all empty - clear all errors
+            for (let i = 0; i < requiredJCount; i++) {
+                validationState.clearError(`j${i}-${rowId}`);
             }
         }
     } else {
@@ -107,6 +119,8 @@ export function validateTableRow(
             if (!row.jValues[i] || row.jValues[i] === 0) {
                 validationState.setError(`j${i}-${rowId}`, 'J-value is required');
                 hasErrors = true;
+            } else {
+                validationState.clearError(`j${i}-${rowId}`);
             }
         }
     }

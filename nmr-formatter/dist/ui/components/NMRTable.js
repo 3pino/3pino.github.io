@@ -29,6 +29,61 @@ class NMRTable {
                 this.renderTable();
             }
         });
+        // Listen to validation state changes
+        this.validationState.onChange((errors) => {
+            this.rowElements.forEach((tr, rowId) => {
+                // Shift input
+                const shiftInput = tr.querySelector('.shift-input');
+                if (shiftInput) {
+                    if (errors.has(`shift-${rowId}`)) {
+                        shiftInput.classList.add('error');
+                    }
+                    else {
+                        shiftInput.classList.remove('error');
+                    }
+                }
+                // Multiplicity input
+                const multInput = tr.querySelector('.mult-input');
+                if (multInput) {
+                    if (errors.has(`mult-${rowId}`)) {
+                        multInput.classList.add('error');
+                    }
+                    else {
+                        multInput.classList.remove('error');
+                    }
+                }
+                // Integration input
+                const intInput = tr.querySelector('.int-input');
+                if (intInput) {
+                    if (errors.has(`int-${rowId}`)) {
+                        intInput.classList.add('error');
+                    }
+                    else {
+                        intInput.classList.remove('error');
+                    }
+                }
+                // J-value inputs
+                const jInputs = tr.querySelectorAll('.j-input');
+                jInputs.forEach((jInput, index) => {
+                    if (errors.has(`j${index}-${rowId}`)) {
+                        jInput.classList.add('error');
+                    }
+                    else {
+                        jInput.classList.remove('error');
+                    }
+                });
+                // Assignment input
+                const assignmentInput = tr.querySelector('.assignment-input');
+                if (assignmentInput) {
+                    if (errors.has(`assignment-${rowId}`)) {
+                        assignmentInput.classList.add('error');
+                    }
+                    else {
+                        assignmentInput.classList.remove('error');
+                    }
+                }
+            });
+        });
     }
     initializeEventListeners(onMultiplicityChange, onNavigateToMetadata) {
         // Add row footer cell
@@ -166,6 +221,7 @@ class NMRTable {
     setupShiftInput(input, rowId, row) {
         input.addEventListener('input', () => {
             this.tableState.updateRow(rowId, { shift: input.value });
+            // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
         });
         input.addEventListener('keydown', (e) => {
@@ -199,6 +255,7 @@ class NMRTable {
     setupMultiplicityInput(input, rowId, row) {
         input.addEventListener('input', () => {
             this.tableState.updateRow(rowId, { multiplicity: input.value });
+            // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`mult-${rowId}`);
             // Recalculate J columns when multiplicity changes
             this.updateJColumnVisibility();
@@ -253,6 +310,7 @@ class NMRTable {
                     this.tableState.updateRow(rowId, { jValues });
                 }
             }
+            // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`j${index}-${rowId}`);
         });
         // J-value sorting removed - will be handled when Generate Text is clicked
@@ -300,6 +358,7 @@ class NMRTable {
             }
             const value = parseFloat(input.value);
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
+            // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`int-${rowId}`);
         });
         input.addEventListener('keydown', (e) => {
@@ -344,6 +403,7 @@ class NMRTable {
         input.addEventListener('input', () => {
             const html = input.innerHTML.trim() === '' || input.innerHTML === '<br>' ? '' : input.innerHTML;
             this.tableState.updateRow(rowId, { assignment: html });
+            // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`assignment-${rowId}`);
         });
         input.addEventListener('keydown', (e) => {
@@ -438,8 +498,9 @@ class NMRTable {
         });
         // Ensure placeholder shows when field is empty on blur
         input.addEventListener('blur', () => {
-            const html = input.innerHTML.trim();
-            if (html === '' || html === '<br>') {
+            var _a;
+            const text = ((_a = input.textContent) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+            if (text === '') {
                 input.innerHTML = '';
             }
         });
