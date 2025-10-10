@@ -12,7 +12,7 @@
 .toolbar-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0px;
     padding: 10px 16px;
     background-color: #ddd;
     border-radius: 5px;
@@ -28,34 +28,28 @@
 
 .format-btn {
     padding: 4px 8px;
-    border: 1px solid #ccc;
-    background-color: white;
     color: #333;
     cursor: pointer;
     border-radius: 3px;
     font-size: 13px;
     transition: all 0.2s;
-    min-width: 32px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     user-select: none;
-}
-
-.format-btn i {
-    font-size: 16px;
-    display: block;
-}
-
-.format-btn:hover {
-    background-color: #e0e0e0;
-    border-color: #999;
-}
-
-.format-btn:active {
-    background-color: #d0d0d0;
+    & i{
+        font-size: 16px;
+        display: block;
+    }
+    &:hover{
+        background-color: #ccc;
+    }
+    &:active {
+        background-color: #bbb;
+    }
 }
 
 /* Metadata fields */
