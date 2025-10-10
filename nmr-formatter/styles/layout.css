@@ -16,7 +16,6 @@
 .title-bar {
     flex: 0 0 auto;
     padding: 0px 16px;
-    background-color: #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;

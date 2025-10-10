@@ -3,7 +3,6 @@
 /* Wrapper for the entire toolbar-metadata section */
 .toolbar-container-wrapper {
     flex: 0 0 auto;
-    background-color: #eee;
     border-bottom: 2px solid #e0e0e0;
     padding: 12px 12px;
 }
@@ -14,7 +13,7 @@
     flex-direction: column;
     gap: 0px;
     padding: 10px 16px;
-    background-color: #ddd;
+    background-color: #e6e6e6;
     border-radius: 5px;
 }
 
@@ -86,16 +85,16 @@
     height: 32px;
     line-height: 18px;
     box-sizing: border-box;
-}
 
-.metadata-input:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-}
+    &:focus {
+        outline: none;
+        border-color: #007acc;
+        box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+    }
 
-.metadata-input::placeholder {
-    color: #bbb;
+    &::placeholder {
+        color: #bbb;
+    }
 }
 
 /* Contenteditable metadata inputs */
