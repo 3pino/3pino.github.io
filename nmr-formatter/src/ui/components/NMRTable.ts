@@ -18,6 +18,9 @@ export class NMRTable {
 
     // Row ID to TR element mapping
     private rowElements: Map<string, HTMLTableRowElement> = new Map();
+    
+    // AbortController for cleaning up event listeners
+    private abortController: AbortController = new AbortController();
 
     constructor(
         tableState: TableState,
@@ -144,7 +147,7 @@ export class NMRTable {
                     firstInput?.focus();
                 }
             });
-        });
+        }, { signal: this.abortController.signal });
         
         addRow.appendChild(addCell);
         this.tableBody.appendChild(addRow);
@@ -269,7 +272,7 @@ export class NMRTable {
             this.tableState.updateRow(rowId, { shift: input.value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -282,13 +285,13 @@ export class NMRTable {
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                        requestAnimationFrame(() => {
+                            const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const targetInput = newRow.querySelector('.shift-input') as HTMLInputElement;
                                 targetInput?.focus();
                             }
-            });
+                        });
                         return;
                     }
                 }
@@ -297,7 +300,7 @@ export class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private setupMultiplicityInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
@@ -308,7 +311,7 @@ export class NMRTable {
 
             // Recalculate J columns when multiplicity changes
             this.updateJColumnVisibility();
-        });
+        }, { signal: this.abortController.signal });
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -321,13 +324,13 @@ export class NMRTable {
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                        requestAnimationFrame(() => {
+                            const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const targetInput = newRow.querySelector('.mult-input') as HTMLInputElement;
                                 targetInput?.focus();
                             }
-            });
+                        });
                         return;
                     }
                 }
@@ -336,7 +339,7 @@ export class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private setupJInput(input: HTMLInputElement, rowId: string, index: number, row: HTMLTableRowElement): void {
@@ -367,7 +370,7 @@ export class NMRTable {
             }
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`j${index}-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
 
         // J-value sorting removed - will be handled when Generate Text is clicked
 
@@ -382,15 +385,15 @@ export class NMRTable {
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                        requestAnimationFrame(() => {
+                            const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const cellIndex = Array.from(row.children).indexOf(input.closest('td')!);
                                 const targetCell = newRow.children[cellIndex] as HTMLTableCellElement;
                                 const targetInput = targetCell?.querySelector('input') as HTMLInputElement;
                                 targetInput?.focus();
                             }
-            });
+                        });
                         return;
                     }
                 }
@@ -399,7 +402,7 @@ export class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private setupIntegrationInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
@@ -421,7 +424,7 @@ export class NMRTable {
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`int-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -434,13 +437,13 @@ export class NMRTable {
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                        requestAnimationFrame(() => {
+                            const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const targetInput = newRow.querySelector('.int-input') as HTMLInputElement;
                                 targetInput?.focus();
                             }
-            });
+                        });
                         return;
                     }
                 }
@@ -449,7 +452,7 @@ export class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private setupAssignmentInput(input: HTMLElement, rowId: string, row: HTMLTableRowElement): void {
@@ -462,14 +465,14 @@ export class NMRTable {
             temp.innerHTML = text;
             const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
-        });
+        }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
             const html = input.innerHTML.trim() === '' || input.innerHTML === '<br>' ? '' : input.innerHTML;
             this.tableState.updateRow(rowId, { assignment: html });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`assignment-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
 
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -488,13 +491,13 @@ export class NMRTable {
                     } else {
                         // Last row: add new row
                         const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                        requestAnimationFrame(() => {
+                            const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const newAssignment = newRow.querySelector('.assignment-input') as HTMLElement;
                                 newAssignment?.focus();
                             }
-            });
+                        });
                     }
                 }
             } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -504,13 +507,13 @@ export class NMRTable {
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                        requestAnimationFrame(() => {
+                            const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const nextAssignment = newRow.querySelector('.assignment-input') as HTMLElement;
                                 nextAssignment?.focus();
                             }
-            });
+                        });
                         return;
                     }
                 }
@@ -530,13 +533,13 @@ export class NMRTable {
                             } else {
                                 // Last row: add new row
                                 const newId = this.tableState.addRow();
-            requestAnimationFrame(() => {
-                const newRow = this.rowElements.get(newId);
+                                requestAnimationFrame(() => {
+                                    const newRow = this.rowElements.get(newId);
                                     if (newRow) {
                                         const firstInput = newRow.querySelector('.shift-input') as HTMLInputElement;
                                         firstInput?.focus();
                                     }
-            });
+                                });
                             }
                             return;
                         }
@@ -559,7 +562,7 @@ export class NMRTable {
                     document.execCommand('italic');
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
 
         // Ensure placeholder shows when field is empty on blur
         input.addEventListener('blur', () => {
@@ -567,14 +570,14 @@ export class NMRTable {
             if (text === '') {
                 input.innerHTML = '';
             }
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private setupDeleteButton(button: HTMLButtonElement, rowId: string): void {
         button.addEventListener('click', (e) => {
             e.preventDefault();
             this.tableState.removeRows([rowId]);
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private focusNextTableCell(currentInput: HTMLElement, currentRow: HTMLTableRowElement, reverse: boolean): void {
@@ -769,5 +772,20 @@ export class NMRTable {
             return firstRow.querySelector('.shift-input');
         }
         return null;
+    }
+
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    public destroy(): void {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        
+        // Clear row elements map
+        this.rowElements.clear();
+        
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
     }
 }

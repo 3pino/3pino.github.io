@@ -70,13 +70,24 @@ export function calculateRequiredJColumns(multiplicity: string): number {
     }
 
     try {
-        const multipletnumbers = (window as any).multipletnumbers;
-        const jCounts = multipletnumbers(multiplicity);
-        if (jCounts === null) {
+        const w = window as unknown as import('../core/types').WindowWithNMRFunctions;
+        
+        // Type guard: ensure the function exists
+        if (typeof w.multipletnumbers !== 'function') {
+            console.warn('multipletnumbers function not found on window');
             return 0;
         }
+        
+        const jCounts = w.multipletnumbers(multiplicity);
+        
+        // Validate return value
+        if (jCounts === null || !Array.isArray(jCounts)) {
+            return 0;
+        }
+        
         return jCounts.length;
-    } catch {
+    } catch (error) {
+        console.error('Error calculating J columns:', error);
         return 0;
     }
 }

@@ -11,6 +11,8 @@ class NMRTable {
         this.maxJColumns = 0;
         // Row ID to TR element mapping
         this.rowElements = new Map();
+        // AbortController for cleaning up event listeners
+        this.abortController = new AbortController();
         this.tableState = tableState;
         this.validationState = validationState;
         this.tableBody = document.getElementById('nmr-table-body');
@@ -118,7 +120,7 @@ class NMRTable {
                     firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
                 }
             });
-        });
+        }, { signal: this.abortController.signal });
         addRow.appendChild(addCell);
         this.tableBody.appendChild(addRow);
     }
@@ -224,7 +226,7 @@ class NMRTable {
             this.tableState.updateRow(rowId, { shift: input.value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -251,7 +253,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupMultiplicityInput(input, rowId, row) {
         input.addEventListener('input', () => {
@@ -260,7 +262,7 @@ class NMRTable {
             this.validationState.clearError(`mult-${rowId}`);
             // Recalculate J columns when multiplicity changes
             this.updateJColumnVisibility();
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -287,7 +289,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupJInput(input, rowId, index, row) {
         input.addEventListener('input', () => {
@@ -313,7 +315,7 @@ class NMRTable {
             }
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`j${index}-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         // J-value sorting removed - will be handled when Generate Text is clicked
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -343,7 +345,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupIntegrationInput(input, rowId, row) {
         input.addEventListener('input', () => {
@@ -361,7 +363,7 @@ class NMRTable {
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`int-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -388,7 +390,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupAssignmentInput(input, rowId, row) {
         // Paste filtering
@@ -400,13 +402,13 @@ class NMRTable {
             temp.innerHTML = text;
             const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
             const html = input.innerHTML.trim() === '' || input.innerHTML === '<br>' ? '' : input.innerHTML;
             this.tableState.updateRow(rowId, { assignment: html });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`assignment-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -496,7 +498,7 @@ class NMRTable {
                     document.execCommand('italic');
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
         // Ensure placeholder shows when field is empty on blur
         input.addEventListener('blur', () => {
             var _a;
@@ -504,13 +506,13 @@ class NMRTable {
             if (text === '') {
                 input.innerHTML = '';
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupDeleteButton(button, rowId) {
         button.addEventListener('click', (e) => {
             e.preventDefault();
             this.tableState.removeRows([rowId]);
-        });
+        }, { signal: this.abortController.signal });
     }
     focusNextTableCell(currentInput, currentRow, reverse) {
         const currentCell = currentInput.closest('td');
@@ -692,6 +694,18 @@ class NMRTable {
             return firstRow.querySelector('.shift-input');
         }
         return null;
+    }
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    destroy() {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        // Clear row elements map
+        this.rowElements.clear();
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
     }
 }
 exports.NMRTable = NMRTable;

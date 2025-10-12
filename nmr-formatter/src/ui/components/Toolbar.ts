@@ -11,6 +11,9 @@ export class Toolbar {
         sup: HTMLElement;
         endash: HTMLElement;
     };
+    
+    // AbortController for cleaning up event listeners
+    private abortController: AbortController = new AbortController();
 
     constructor() {
         this.buttons = {
@@ -30,38 +33,38 @@ export class Toolbar {
         this.buttons.bold.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('bold');
-        });
+        }, { signal: this.abortController.signal });
 
         this.buttons.italic.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('italic');
-        });
+        }, { signal: this.abortController.signal });
 
         this.buttons.sub.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('subscript');
-        });
+        }, { signal: this.abortController.signal });
 
         this.buttons.sup.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('superscript');
-        });
+        }, { signal: this.abortController.signal });
 
         this.buttons.endash.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.insertEnDash();
-        });
+        }, { signal: this.abortController.signal });
     }
 
     private initializeFocusTracking(): void {
         // Track focus changes to update button states
         document.addEventListener('focusin', () => {
             this.updateButtonStates();
-        });
+        }, { signal: this.abortController.signal });
 
         document.addEventListener('focusout', () => {
             this.updateButtonStates();
-        });
+        }, { signal: this.abortController.signal });
 
         // Initial state
         this.updateButtonStates();
@@ -104,5 +107,17 @@ export class Toolbar {
 
         document.execCommand('insertHTML', false, '–');
         (activeElement as HTMLElement).focus();
+    }
+
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    public destroy(): void {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
     }
 }

@@ -17,3 +17,23 @@ export interface ValidationError {
     field?: string;
     message: string;
 }
+
+/**
+ * Type-safe window interface for NMR utility functions
+ * These functions are exported to the window object by build-browser.js
+ */
+export interface WindowWithNMRFunctions extends Window {
+  /**
+   * Calculate the number of J-values expected for a given multiplicity
+   * @param multiplicity - Multiplicity string (e.g., "dd", "dt", "br s")
+   * @returns Array of J-value counts, or null if invalid/unsupported
+   */
+  multipletnumbers: (multiplicity: string) => number[] | null;
+  
+  /**
+   * Check if J-values are optional for a given multiplicity
+   * @param multiplicity - Multiplicity string
+   * @returns True if J-values are optional (e.g., "m(tt)", "br d")
+   */
+  isJValuesOptional: (multiplicity: string) => boolean;
+}

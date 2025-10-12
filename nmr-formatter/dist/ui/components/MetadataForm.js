@@ -7,6 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetadataForm = void 0;
 class MetadataForm {
     constructor(metadataState, validationState, onNavigateNext, onSortOrderChange) {
+        // AbortController for cleaning up event listeners
+        this.abortController = new AbortController();
         this.metadataState = metadataState;
         this.validationState = validationState;
         this.onSortOrderChange = onSortOrderChange;
@@ -85,12 +87,12 @@ class MetadataForm {
             temp.innerHTML = text;
             const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
-        });
+        }, { signal: this.abortController.signal });
         // Input handling
         element.addEventListener('input', () => {
             onChange(element.innerHTML);
             this.validationState.clearError(element.id);
-        });
+        }, { signal: this.abortController.signal });
         // Enter, Tab, and Arrow key navigation
         element.addEventListener('keydown', (e) => {
             // Check if dropdown is active and has a highlighted item
@@ -164,7 +166,7 @@ class MetadataForm {
                     document.execCommand('italic');
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
         // Ensure placeholder shows when field is empty on blur
         element.addEventListener('blur', () => {
             const cleaned = this.cleanupEmptyTags(element.innerHTML);
@@ -174,7 +176,7 @@ class MetadataForm {
             else if (cleaned !== element.innerHTML) {
                 element.innerHTML = cleaned;
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupNumberField(element, onChange, min, max, onNavigateNext) {
         // Enter, Tab, and Arrow key navigation
@@ -228,7 +230,7 @@ class MetadataForm {
                     }
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
         // Input validation
         element.addEventListener('input', () => {
             const text = element.textContent || '';
@@ -250,7 +252,7 @@ class MetadataForm {
             else {
                 element.classList.remove('error');
             }
-        });
+        }, { signal: this.abortController.signal });
         // Paste filtering
         element.addEventListener('paste', (e) => {
             var _a;
@@ -258,18 +260,18 @@ class MetadataForm {
             const text = ((_a = e.clipboardData) === null || _a === void 0 ? void 0 : _a.getData('text/plain')) || '';
             const cleanText = text.replace(/[^0-9]/g, '');
             document.execCommand('insertText', false, cleanText);
-        });
+        }, { signal: this.abortController.signal });
         // Clear error on focus
         element.addEventListener('focus', () => {
             this.validationState.clearError(element.id);
-        });
+        }, { signal: this.abortController.signal });
         // Ensure placeholder shows when field is empty on blur
         element.addEventListener('blur', () => {
             const text = element.textContent || '';
             if (text.trim() === '') {
                 element.textContent = '';
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     initializeDropdowns() {
         this.setupDropdown('nuclei', window.NUCLEI_PRESETS || []);
@@ -297,7 +299,7 @@ class MetadataForm {
         input.addEventListener('focus', () => {
             dropdown.classList.add('active');
             selectedIndex = -1; // Reset selection on focus
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('blur', () => {
             setTimeout(() => {
                 dropdown.classList.remove('active');
@@ -306,7 +308,7 @@ class MetadataForm {
                     item.classList.remove('highlighted');
                 });
             }, 200);
-        });
+        }, { signal: this.abortController.signal });
         // Keyboard navigation for dropdown
         input.addEventListener('keydown', (e) => {
             if (!dropdown.classList.contains('active'))
@@ -334,7 +336,7 @@ class MetadataForm {
                 this.highlightDropdownItem(items, -1);
                 selectedIndex = -1;
             }
-        });
+        }, { signal: this.abortController.signal });
         // Handle selection
         dropdown.querySelectorAll('.dropdown-item').forEach(item => {
             item.addEventListener('mousedown', (e) => {
@@ -343,7 +345,7 @@ class MetadataForm {
                 input.innerHTML = value;
                 this.handleDropdownSelection(field, value);
                 dropdown.classList.remove('active');
-            });
+            }, { signal: this.abortController.signal });
         });
     }
     /**
@@ -412,7 +414,7 @@ class MetadataForm {
             this.updateSortOrderIcon(newOrder);
             // Trigger formatted text regeneration
             (_a = this.onSortOrderChange) === null || _a === void 0 ? void 0 : _a.call(this);
-        });
+        }, { signal: this.abortController.signal });
         // Keyboard navigation
         button.addEventListener('keydown', (e) => {
             var _a;
@@ -454,7 +456,7 @@ class MetadataForm {
                 }
                 return;
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     /**
      * Update sort order icon based on current state
@@ -627,6 +629,16 @@ class MetadataForm {
         range.selectNodeContents(element);
         sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
         sel === null || sel === void 0 ? void 0 : sel.addRange(range);
+    }
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    destroy() {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
     }
 }
 exports.MetadataForm = MetadataForm;

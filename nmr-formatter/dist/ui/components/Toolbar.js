@@ -7,6 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Toolbar = void 0;
 class Toolbar {
     constructor() {
+        // AbortController for cleaning up event listeners
+        this.abortController = new AbortController();
         this.buttons = {
             bold: document.getElementById('format-bold-btn'),
             italic: document.getElementById('format-italic-btn'),
@@ -22,32 +24,32 @@ class Toolbar {
         this.buttons.bold.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('bold');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.italic.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('italic');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.sub.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('subscript');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.sup.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('superscript');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.endash.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.insertEnDash();
-        });
+        }, { signal: this.abortController.signal });
     }
     initializeFocusTracking() {
         // Track focus changes to update button states
         document.addEventListener('focusin', () => {
             this.updateButtonStates();
-        });
+        }, { signal: this.abortController.signal });
         document.addEventListener('focusout', () => {
             this.updateButtonStates();
-        });
+        }, { signal: this.abortController.signal });
         // Initial state
         this.updateButtonStates();
     }
@@ -82,6 +84,16 @@ class Toolbar {
         }
         document.execCommand('insertHTML', false, '–');
         activeElement.focus();
+    }
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    destroy() {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
     }
 }
 exports.Toolbar = Toolbar;

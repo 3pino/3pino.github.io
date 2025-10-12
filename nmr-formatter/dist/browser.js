@@ -419,14 +419,21 @@ function calculateRequiredJColumns(multiplicity) {
         return 0;
     }
     try {
-        const multipletnumbers = window.multipletnumbers;
-        const jCounts = multipletnumbers(multiplicity);
-        if (jCounts === null) {
+        const w = window;
+        // Type guard: ensure the function exists
+        if (typeof w.multipletnumbers !== 'function') {
+            console.warn('multipletnumbers function not found on window');
+            return 0;
+        }
+        const jCounts = w.multipletnumbers(multiplicity);
+        // Validate return value
+        if (jCounts === null || !Array.isArray(jCounts)) {
             return 0;
         }
         return jCounts.length;
     }
-    catch (_a) {
+    catch (error) {
+        console.error('Error calculating J columns:', error);
         return 0;
     }
 }
@@ -971,6 +978,8 @@ class AppState {
  */
 class MetadataForm {
     constructor(metadataState, validationState, onNavigateNext, onSortOrderChange) {
+        // AbortController for cleaning up event listeners
+        this.abortController = new AbortController();
         this.metadataState = metadataState;
         this.validationState = validationState;
         this.onSortOrderChange = onSortOrderChange;
@@ -1049,12 +1058,12 @@ class MetadataForm {
             temp.innerHTML = text;
             const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
-        });
+        }, { signal: this.abortController.signal });
         // Input handling
         element.addEventListener('input', () => {
             onChange(element.innerHTML);
             this.validationState.clearError(element.id);
-        });
+        }, { signal: this.abortController.signal });
         // Enter, Tab, and Arrow key navigation
         element.addEventListener('keydown', (e) => {
             // Check if dropdown is active and has a highlighted item
@@ -1128,7 +1137,7 @@ class MetadataForm {
                     document.execCommand('italic');
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
         // Ensure placeholder shows when field is empty on blur
         element.addEventListener('blur', () => {
             const cleaned = this.cleanupEmptyTags(element.innerHTML);
@@ -1138,7 +1147,7 @@ class MetadataForm {
             else if (cleaned !== element.innerHTML) {
                 element.innerHTML = cleaned;
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupNumberField(element, onChange, min, max, onNavigateNext) {
         // Enter, Tab, and Arrow key navigation
@@ -1192,7 +1201,7 @@ class MetadataForm {
                     }
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
         // Input validation
         element.addEventListener('input', () => {
             const text = element.textContent || '';
@@ -1214,7 +1223,7 @@ class MetadataForm {
             else {
                 element.classList.remove('error');
             }
-        });
+        }, { signal: this.abortController.signal });
         // Paste filtering
         element.addEventListener('paste', (e) => {
             var _a;
@@ -1222,18 +1231,18 @@ class MetadataForm {
             const text = ((_a = e.clipboardData) === null || _a === void 0 ? void 0 : _a.getData('text/plain')) || '';
             const cleanText = text.replace(/[^0-9]/g, '');
             document.execCommand('insertText', false, cleanText);
-        });
+        }, { signal: this.abortController.signal });
         // Clear error on focus
         element.addEventListener('focus', () => {
             this.validationState.clearError(element.id);
-        });
+        }, { signal: this.abortController.signal });
         // Ensure placeholder shows when field is empty on blur
         element.addEventListener('blur', () => {
             const text = element.textContent || '';
             if (text.trim() === '') {
                 element.textContent = '';
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     initializeDropdowns() {
         this.setupDropdown('nuclei', window.NUCLEI_PRESETS || []);
@@ -1261,7 +1270,7 @@ class MetadataForm {
         input.addEventListener('focus', () => {
             dropdown.classList.add('active');
             selectedIndex = -1; // Reset selection on focus
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('blur', () => {
             setTimeout(() => {
                 dropdown.classList.remove('active');
@@ -1270,7 +1279,7 @@ class MetadataForm {
                     item.classList.remove('highlighted');
                 });
             }, 200);
-        });
+        }, { signal: this.abortController.signal });
         // Keyboard navigation for dropdown
         input.addEventListener('keydown', (e) => {
             if (!dropdown.classList.contains('active'))
@@ -1298,7 +1307,7 @@ class MetadataForm {
                 this.highlightDropdownItem(items, -1);
                 selectedIndex = -1;
             }
-        });
+        }, { signal: this.abortController.signal });
         // Handle selection
         dropdown.querySelectorAll('.dropdown-item').forEach(item => {
             item.addEventListener('mousedown', (e) => {
@@ -1307,7 +1316,7 @@ class MetadataForm {
                 input.innerHTML = value;
                 this.handleDropdownSelection(field, value);
                 dropdown.classList.remove('active');
-            });
+            }, { signal: this.abortController.signal });
         });
     }
     /**
@@ -1376,7 +1385,7 @@ class MetadataForm {
             this.updateSortOrderIcon(newOrder);
             // Trigger formatted text regeneration
             (_a = this.onSortOrderChange) === null || _a === void 0 ? void 0 : _a.call(this);
-        });
+        }, { signal: this.abortController.signal });
         // Keyboard navigation
         button.addEventListener('keydown', (e) => {
             var _a;
@@ -1418,7 +1427,7 @@ class MetadataForm {
                 }
                 return;
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     /**
      * Update sort order icon based on current state
@@ -1592,6 +1601,16 @@ class MetadataForm {
         sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
         sel === null || sel === void 0 ? void 0 : sel.addRange(range);
     }
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    destroy() {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
+    }
 }
 
 /**
@@ -1603,6 +1622,8 @@ class NMRTable {
         this.maxJColumns = 0;
         // Row ID to TR element mapping
         this.rowElements = new Map();
+        // AbortController for cleaning up event listeners
+        this.abortController = new AbortController();
         this.tableState = tableState;
         this.validationState = validationState;
         this.tableBody = document.getElementById('nmr-table-body');
@@ -1710,7 +1731,7 @@ class NMRTable {
                     firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
                 }
             });
-        });
+        }, { signal: this.abortController.signal });
         addRow.appendChild(addCell);
         this.tableBody.appendChild(addRow);
     }
@@ -1816,7 +1837,7 @@ class NMRTable {
             this.tableState.updateRow(rowId, { shift: input.value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1843,7 +1864,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupMultiplicityInput(input, rowId, row) {
         input.addEventListener('input', () => {
@@ -1852,7 +1873,7 @@ class NMRTable {
             this.validationState.clearError(`mult-${rowId}`);
             // Recalculate J columns when multiplicity changes
             this.updateJColumnVisibility();
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1879,7 +1900,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupJInput(input, rowId, index, row) {
         input.addEventListener('input', () => {
@@ -1905,7 +1926,7 @@ class NMRTable {
             }
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`j${index}-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         // J-value sorting removed - will be handled when Generate Text is clicked
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -1935,7 +1956,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupIntegrationInput(input, rowId, row) {
         input.addEventListener('input', () => {
@@ -1953,7 +1974,7 @@ class NMRTable {
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`int-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1980,7 +2001,7 @@ class NMRTable {
                     this.keyboardNav.navigateToCell(row, input, direction);
                 });
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupAssignmentInput(input, rowId, row) {
         // Paste filtering
@@ -1992,13 +2013,13 @@ class NMRTable {
             temp.innerHTML = text;
             const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
             const html = input.innerHTML.trim() === '' || input.innerHTML === '<br>' ? '' : input.innerHTML;
             this.tableState.updateRow(rowId, { assignment: html });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`assignment-${rowId}`);
-        });
+        }, { signal: this.abortController.signal });
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -2088,7 +2109,7 @@ class NMRTable {
                     document.execCommand('italic');
                 }
             }
-        });
+        }, { signal: this.abortController.signal });
         // Ensure placeholder shows when field is empty on blur
         input.addEventListener('blur', () => {
             var _a;
@@ -2096,13 +2117,13 @@ class NMRTable {
             if (text === '') {
                 input.innerHTML = '';
             }
-        });
+        }, { signal: this.abortController.signal });
     }
     setupDeleteButton(button, rowId) {
         button.addEventListener('click', (e) => {
             e.preventDefault();
             this.tableState.removeRows([rowId]);
-        });
+        }, { signal: this.abortController.signal });
     }
     focusNextTableCell(currentInput, currentRow, reverse) {
         const currentCell = currentInput.closest('td');
@@ -2285,6 +2306,18 @@ class NMRTable {
         }
         return null;
     }
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    destroy() {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        // Clear row elements map
+        this.rowElements.clear();
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
+    }
 }
 
 /**
@@ -2318,6 +2351,8 @@ class RichTextEditor {
  */
 class Toolbar {
     constructor() {
+        // AbortController for cleaning up event listeners
+        this.abortController = new AbortController();
         this.buttons = {
             bold: document.getElementById('format-bold-btn'),
             italic: document.getElementById('format-italic-btn'),
@@ -2333,32 +2368,32 @@ class Toolbar {
         this.buttons.bold.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('bold');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.italic.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('italic');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.sub.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('subscript');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.sup.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.applyFormatting('superscript');
-        });
+        }, { signal: this.abortController.signal });
         this.buttons.endash.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.insertEnDash();
-        });
+        }, { signal: this.abortController.signal });
     }
     initializeFocusTracking() {
         // Track focus changes to update button states
         document.addEventListener('focusin', () => {
             this.updateButtonStates();
-        });
+        }, { signal: this.abortController.signal });
         document.addEventListener('focusout', () => {
             this.updateButtonStates();
-        });
+        }, { signal: this.abortController.signal });
         // Initial state
         this.updateButtonStates();
     }
@@ -2393,6 +2428,16 @@ class Toolbar {
         }
         document.execCommand('insertHTML', false, '–');
         activeElement.focus();
+    }
+    /**
+     * Clean up event listeners and resources
+     * Should be called when the component is destroyed
+     */
+    destroy() {
+        // Abort all event listeners attached with AbortController
+        this.abortController.abort();
+        // Create new AbortController for potential reuse
+        this.abortController = new AbortController();
     }
 }
 
