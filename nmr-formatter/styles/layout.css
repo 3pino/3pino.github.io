@@ -23,6 +23,10 @@
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
+  & a{
+    font-size: var(--font-lg);
+    text-decoration: none;
+  }
   }
 
   & span{

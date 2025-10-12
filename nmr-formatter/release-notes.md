@@ -1,5 +1,32 @@
 # NMR Formatter Release Notes
 
+## ver 1.3 (2025-10-12)
+
+### UI/UX Improvements
+
+**Layout and Design:**
+- Unified toolbar and metadata sections for cleaner interface
+- Reorganized metadata fields with improved grouping
+- Updated icon font for modern, consistent look
+
+**Table Enhancements:**
+- Replaced "Add Peak" button with inline '+' cell for intuitive row addition
+- Sort order control now uses icon toggle button instead of dropdown
+- Automatic output update when sort order changes
+- Improved add-row footer behavior with dynamic column adjustment
+
+**Keyboard Navigation:**
+- Enhanced metadata form navigation with group-based focus
+- Fixed navigation issues in numeric fields
+- Improved keyboard navigation consistency across the table
+- Better Enter key handling throughout the application
+
+**Validation and Data Entry:**
+- Improved validation error state management
+- Enhanced J-value sorting behavior (triggered on Generate Text)
+- Fixed numeric field handling and removed confusing default values
+- Better focus management in input fields
+
 ## ver 1.2 (2025-10-07)
 
 ### Precision and Input Handling Improvements
