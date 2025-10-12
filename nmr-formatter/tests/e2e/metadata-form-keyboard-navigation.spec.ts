@@ -282,7 +282,7 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await expect(helper.frequency).toBeFocused();
     });
 
-    test('sort-order dropdown: Enter without highlighted item should move to next field', async () => {
+    test('sort-order dropdown: Enter without highlighted item should stay on last field', async () => {
       const field = helper.sortOrder;
       await field.click();
 
@@ -295,15 +295,15 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
 
       // Press Escape to close dropdown without selection (or wait for it to be inactive)
       await field.press('Escape');
-      
+
       // Wait for dropdown to close
       await expect(dropdown).not.toHaveClass(/active/);
 
-      // Now press Enter - should move to next focusable element (table)
+      // Now press Enter - should stay on sort-order (last field in group)
       await field.press('Enter');
 
-      // Should have moved away from sort-order
-      await expect(field).not.toBeFocused();
+      // Should stay on sort-order (not move away)
+      await expect(field).toBeFocused();
     });
 
 

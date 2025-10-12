@@ -32,8 +32,8 @@ class MetadataForm {
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
-        this.elements.shiftPrecision.textContent = data.shiftPrecision.toString();
-        this.elements.jPrecision.textContent = data.jPrecision.toString();
+        this.elements.shiftPrecision.textContent = '';
+        this.elements.jPrecision.textContent = '';
         // Set sort order display text (default: Descending)
         const sortOrderPreset = (_a = window.SORT_ORDER_PRESETS) === null || _a === void 0 ? void 0 : _a.find((p) => p.id === data.sortOrder);
         this.elements.sortOrder.innerHTML = (sortOrderPreset === null || sortOrderPreset === void 0 ? void 0 : sortOrderPreset.displayHTML) || 'Descending (High → Low)';
@@ -186,7 +186,14 @@ class MetadataForm {
     setupNumberField(element, onChange, min, max, onNavigateNext) {
         // Enter, Tab, and Arrow key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === 'Tab') {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Prevent default behavior and stop propagation to avoid input event
+                e.stopPropagation();
+                this.navigateWithinGroup(element, e.shiftKey);
+                return;
+            }
+            if (e.key === 'Tab') {
                 e.preventDefault();
                 this.navigateWithinGroup(element, e.shiftKey);
                 return;
@@ -424,14 +431,14 @@ class MetadataForm {
                         return;
                     }
                 }
-                // Otherwise, navigate to next field
+                // Otherwise, navigate within group (respects boundaries)
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
             if (e.key === 'Tab') {
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
             // Allow arrow keys for dropdown navigation and field navigation

@@ -57,8 +57,8 @@ export class MetadataForm {
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
-        this.elements.shiftPrecision.textContent = data.shiftPrecision.toString();
-        this.elements.jPrecision.textContent = data.jPrecision.toString();
+        this.elements.shiftPrecision.textContent = '';
+        this.elements.jPrecision.textContent = '';
         
         // Set sort order display text (default: Descending)
         const sortOrderPreset = (window as any).SORT_ORDER_PRESETS?.find((p: any) => p.id === data.sortOrder);
@@ -236,7 +236,15 @@ export class MetadataForm {
     ): void {
         // Enter, Tab, and Arrow key navigation
         element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === 'Tab') {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Prevent default behavior and stop propagation to avoid input event
+                e.stopPropagation();
+                this.navigateWithinGroup(element, e.shiftKey);
+                return;
+            }
+            
+            if (e.key === 'Tab') {
                 e.preventDefault();
                 this.navigateWithinGroup(element, e.shiftKey);
                 return;
@@ -496,15 +504,15 @@ export class MetadataForm {
                         return;
                     }
                 }
-                // Otherwise, navigate to next field
+                // Otherwise, navigate within group (respects boundaries)
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
             
             if (e.key === 'Tab') {
                 e.preventDefault();
-                onNavigateNext(element, e.shiftKey);
+                this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
 
