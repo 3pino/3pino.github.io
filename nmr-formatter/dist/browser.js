@@ -2215,9 +2215,9 @@ class NMRTable {
         if (!multiplicity || multiplicity.trim() === '') {
             return 0;
         }
-        const multiplicityText = this.convertMultiplicityToText(multiplicity.trim());
         try {
-            const jCounts = window.multipletnumbers(multiplicityText);
+            // 直接 multipletnumbers() を呼び出す（変換不要）
+            const jCounts = window.multipletnumbers(multiplicity.trim());
             if (jCounts === null) {
                 return 0;
             }
@@ -2226,28 +2226,6 @@ class NMRTable {
         catch (_a) {
             return 0;
         }
-    }
-    convertMultiplicityToText(input) {
-        if (!input || input.trim() === '')
-            return '';
-        const trimmed = input.trim();
-        if (/^\d+$/.test(trimmed)) {
-            const digitMap = {
-                '1': 's',
-                '2': 'd',
-                '3': 't',
-                '4': 'q',
-                '5': 'quint'
-            };
-            let result = '';
-            for (const digit of trimmed) {
-                if (digit >= '1' && digit <= '5') {
-                    result += digitMap[digit];
-                }
-            }
-            return result;
-        }
-        return trimmed;
     }
     updateTableHeader() {
         const thead = this.tableElement.querySelector('thead tr');
