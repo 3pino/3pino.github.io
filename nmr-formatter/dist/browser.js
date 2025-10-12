@@ -992,6 +992,9 @@ class MetadataForm {
     }
     initializeValues() {
         const data = this.metadataState.getData();
+        // Add .input-richtext class for toolbar integration
+        this.elements.nuclei.classList.add('input-richtext');
+        this.elements.solvent.classList.add('input-richtext');
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
@@ -1799,7 +1802,7 @@ class NMRTable {
         const assignmentCell = document.createElement('td');
         assignmentCell.className = 'assignment-cell';
         const assignmentInput = document.createElement('div');
-        assignmentInput.className = 'assignment-input';
+        assignmentInput.className = 'assignment-input input-richtext';
         assignmentInput.setAttribute('contenteditable', 'true');
         assignmentInput.setAttribute('data-placeholder', 'e.g., H-8');
         assignmentInput.innerHTML = rowData.assignment;
@@ -2345,6 +2348,7 @@ class Toolbar {
             endash: document.getElementById('insert-endash-btn')
         };
         this.initializeEventListeners();
+        this.initializeFocusTracking();
     }
     initializeEventListeners() {
         // Use mousedown to prevent blur on contenteditable fields
@@ -2367,6 +2371,30 @@ class Toolbar {
         this.buttons.endash.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.insertEnDash();
+        });
+    }
+    initializeFocusTracking() {
+        // Track focus changes to update button states
+        document.addEventListener('focusin', () => {
+            this.updateButtonStates();
+        });
+        document.addEventListener('focusout', () => {
+            this.updateButtonStates();
+        });
+        // Initial state
+        this.updateButtonStates();
+    }
+    updateButtonStates() {
+        const activeElement = document.activeElement;
+        const isRichTextFocused = activeElement === null || activeElement === void 0 ? void 0 : activeElement.classList.contains('input-richtext');
+        // Enable/disable buttons based on focus
+        Object.values(this.buttons).forEach(button => {
+            if (isRichTextFocused) {
+                button.classList.remove('disabled');
+            }
+            else {
+                button.classList.add('disabled');
+            }
         });
     }
     applyFormatting(command) {

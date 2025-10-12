@@ -15,6 +15,7 @@ class Toolbar {
             endash: document.getElementById('insert-endash-btn')
         };
         this.initializeEventListeners();
+        this.initializeFocusTracking();
     }
     initializeEventListeners() {
         // Use mousedown to prevent blur on contenteditable fields
@@ -37,6 +38,30 @@ class Toolbar {
         this.buttons.endash.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.insertEnDash();
+        });
+    }
+    initializeFocusTracking() {
+        // Track focus changes to update button states
+        document.addEventListener('focusin', () => {
+            this.updateButtonStates();
+        });
+        document.addEventListener('focusout', () => {
+            this.updateButtonStates();
+        });
+        // Initial state
+        this.updateButtonStates();
+    }
+    updateButtonStates() {
+        const activeElement = document.activeElement;
+        const isRichTextFocused = activeElement === null || activeElement === void 0 ? void 0 : activeElement.classList.contains('input-richtext');
+        // Enable/disable buttons based on focus
+        Object.values(this.buttons).forEach(button => {
+            if (isRichTextFocused) {
+                button.classList.remove('disabled');
+            }
+            else {
+                button.classList.add('disabled');
+            }
         });
     }
     applyFormatting(command) {

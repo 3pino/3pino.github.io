@@ -22,6 +22,7 @@ export class Toolbar {
         };
 
         this.initializeEventListeners();
+        this.initializeFocusTracking();
     }
 
     private initializeEventListeners(): void {
@@ -49,6 +50,34 @@ export class Toolbar {
         this.buttons.endash.addEventListener('mousedown', (e) => {
             e.preventDefault();
             this.insertEnDash();
+        });
+    }
+
+    private initializeFocusTracking(): void {
+        // Track focus changes to update button states
+        document.addEventListener('focusin', () => {
+            this.updateButtonStates();
+        });
+
+        document.addEventListener('focusout', () => {
+            this.updateButtonStates();
+        });
+
+        // Initial state
+        this.updateButtonStates();
+    }
+
+    private updateButtonStates(): void {
+        const activeElement = document.activeElement;
+        const isRichTextFocused = activeElement?.classList.contains('input-richtext');
+
+        // Enable/disable buttons based on focus
+        Object.values(this.buttons).forEach(button => {
+            if (isRichTextFocused) {
+                button.classList.remove('disabled');
+            } else {
+                button.classList.add('disabled');
+            }
         });
     }
 

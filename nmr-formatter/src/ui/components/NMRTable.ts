@@ -253,7 +253,7 @@ export class NMRTable {
         const assignmentCell = document.createElement('td');
         assignmentCell.className = 'assignment-cell';
         const assignmentInput = document.createElement('div');
-        assignmentInput.className = 'assignment-input';
+        assignmentInput.className = 'assignment-input input-richtext';
         assignmentInput.setAttribute('contenteditable', 'true');
         assignmentInput.setAttribute('data-placeholder', 'e.g., H-8');
         assignmentInput.innerHTML = rowData.assignment;

@@ -28,6 +28,9 @@ class MetadataForm {
     }
     initializeValues() {
         const data = this.metadataState.getData();
+        // Add .input-richtext class for toolbar integration
+        this.elements.nuclei.classList.add('input-richtext');
+        this.elements.solvent.classList.add('input-richtext');
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
