@@ -15,7 +15,7 @@
 /* Title Bar */
 .title-bar {
     flex: 0 0 auto;
-    padding: 0px 16px;
+    padding: 6px 16px 0px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;

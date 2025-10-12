@@ -9,6 +9,7 @@ import { ValidationState } from '../../state/ValidationState';
 export class MetadataForm {
     private metadataState: MetadataState;
     private validationState: ValidationState;
+    private onSortOrderChange?: () => void;
     // Note: shift-precision, j-precision, sort-order are now in .rich-text-section but IDs remain the same
     private elements: {
         nuclei: HTMLElement;
@@ -26,10 +27,12 @@ export class MetadataForm {
     constructor(
         metadataState: MetadataState,
         validationState: ValidationState,
-        onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void
+        onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void,
+        onSortOrderChange?: () => void
     ) {
         this.metadataState = metadataState;
         this.validationState = validationState;
+        this.onSortOrderChange = onSortOrderChange;
 
         this.elements = {
             nuclei: document.getElementById('nuclei')!,
@@ -475,6 +478,8 @@ export class MetadataForm {
             const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
             this.metadataState.setSortOrder(newOrder);
             this.updateSortOrderIcon(newOrder);
+            // Trigger formatted text regeneration
+            this.onSortOrderChange?.();
         });
 
         // Keyboard navigation
@@ -485,6 +490,8 @@ export class MetadataForm {
                 const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
                 this.metadataState.setSortOrder(newOrder);
                 this.updateSortOrderIcon(newOrder);
+                // Trigger formatted text regeneration
+                this.onSortOrderChange?.();
                 return;
             }
 

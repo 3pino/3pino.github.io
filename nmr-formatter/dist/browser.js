@@ -970,9 +970,10 @@ class AppState {
  * Handles nuclei, solvent, frequency, precision, and sort order inputs
  */
 class MetadataForm {
-    constructor(metadataState, validationState, onNavigateNext) {
+    constructor(metadataState, validationState, onNavigateNext, onSortOrderChange) {
         this.metadataState = metadataState;
         this.validationState = validationState;
+        this.onSortOrderChange = onSortOrderChange;
         this.elements = {
             nuclei: document.getElementById('nuclei'),
             solvent: document.getElementById('solvent'),
@@ -1364,20 +1365,26 @@ class MetadataForm {
         const button = this.elements.sortOrder;
         // Click handler - toggle between asc and desc
         button.addEventListener('click', (e) => {
+            var _a;
             e.preventDefault();
             const currentOrder = this.metadataState.getData().sortOrder;
             const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
             this.metadataState.setSortOrder(newOrder);
             this.updateSortOrderIcon(newOrder);
+            // Trigger formatted text regeneration
+            (_a = this.onSortOrderChange) === null || _a === void 0 ? void 0 : _a.call(this);
         });
         // Keyboard navigation
         button.addEventListener('keydown', (e) => {
+            var _a;
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 const currentOrder = this.metadataState.getData().sortOrder;
                 const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
                 this.metadataState.setSortOrder(newOrder);
                 this.updateSortOrderIcon(newOrder);
+                // Trigger formatted text regeneration
+                (_a = this.onSortOrderChange) === null || _a === void 0 ? void 0 : _a.call(this);
                 return;
             }
             if (e.key === 'Tab') {
@@ -2660,6 +2667,9 @@ class NMRFormatterApp {
         // Initialize metadata form
         this.metadataForm = new MetadataForm(this.appState.metadata, this.appState.validation, (currentField, reverse) => {
             this.focusManager.focusNextMetadataField(currentField, reverse);
+        }, () => {
+            // Regenerate formatted text when sort order changes
+            this.generateFormattedText();
         });
         // Update focus manager with metadata fields
         this.focusManager = new FocusManager(this.metadataForm.getFieldOrder(), () => {

@@ -29,6 +29,9 @@ class NMRFormatterApp {
         // Initialize metadata form
         this.metadataForm = new MetadataForm_1.MetadataForm(this.appState.metadata, this.appState.validation, (currentField, reverse) => {
             this.focusManager.focusNextMetadataField(currentField, reverse);
+        }, () => {
+            // Regenerate formatted text when sort order changes
+            this.generateFormattedText();
         });
         // Update focus manager with metadata fields
         this.focusManager = new FocusManager_1.FocusManager(this.metadataForm.getFieldOrder(), () => {

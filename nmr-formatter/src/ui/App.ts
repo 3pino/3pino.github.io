@@ -41,6 +41,10 @@ export class NMRFormatterApp {
             this.appState.validation,
             (currentField, reverse) => {
                 this.focusManager.focusNextMetadataField(currentField, reverse);
+            },
+            () => {
+                // Regenerate formatted text when sort order changes
+                this.generateFormattedText();
             }
         );
 

@@ -6,9 +6,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetadataForm = void 0;
 class MetadataForm {
-    constructor(metadataState, validationState, onNavigateNext) {
+    constructor(metadataState, validationState, onNavigateNext, onSortOrderChange) {
         this.metadataState = metadataState;
         this.validationState = validationState;
+        this.onSortOrderChange = onSortOrderChange;
         this.elements = {
             nuclei: document.getElementById('nuclei'),
             solvent: document.getElementById('solvent'),
@@ -400,20 +401,26 @@ class MetadataForm {
         const button = this.elements.sortOrder;
         // Click handler - toggle between asc and desc
         button.addEventListener('click', (e) => {
+            var _a;
             e.preventDefault();
             const currentOrder = this.metadataState.getData().sortOrder;
             const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
             this.metadataState.setSortOrder(newOrder);
             this.updateSortOrderIcon(newOrder);
+            // Trigger formatted text regeneration
+            (_a = this.onSortOrderChange) === null || _a === void 0 ? void 0 : _a.call(this);
         });
         // Keyboard navigation
         button.addEventListener('keydown', (e) => {
+            var _a;
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 const currentOrder = this.metadataState.getData().sortOrder;
                 const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
                 this.metadataState.setSortOrder(newOrder);
                 this.updateSortOrderIcon(newOrder);
+                // Trigger formatted text regeneration
+                (_a = this.onSortOrderChange) === null || _a === void 0 ? void 0 : _a.call(this);
                 return;
             }
             if (e.key === 'Tab') {
