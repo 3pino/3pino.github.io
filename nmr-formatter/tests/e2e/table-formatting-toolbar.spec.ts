@@ -212,9 +212,9 @@ test.describe('Table Section - Formatting Toolbar', () => {
       // Select text
       await shiftInput.press('Control+A');
 
-      // Try to apply bold
-      await helper.boldBtn.click();
-
+      // Toolbar buttons should be disabled for Shift input
+      await expect(helper.boldBtn).toHaveClass(/disabled/);
+      
       // Input value should remain plain text (no HTML formatting)
       const value = await helper.getInputValue(shiftInput);
       expect(value).toBe('7.53');
@@ -230,8 +230,8 @@ test.describe('Table Section - Formatting Toolbar', () => {
       await multInput.click();
       await multInput.press('Control+A');
 
-      // Try to apply italic
-      await helper.italicBtn.click();
+      // Toolbar buttons should be disabled for Multiplicity input
+      await expect(helper.italicBtn).toHaveClass(/disabled/);
 
       const value = await helper.getInputValue(multInput);
       expect(value).toBe('dd');
@@ -249,8 +249,8 @@ test.describe('Table Section - Formatting Toolbar', () => {
       await jInput.click();
       await jInput.press('Control+A');
 
-      // Try to apply subscript
-      await helper.subBtn.click();
+      // Toolbar buttons should be disabled for J-value input
+      await expect(helper.subBtn).toHaveClass(/disabled/);
 
       const value = await helper.getInputValue(jInput);
       expect(value).toBe('7.5');
@@ -264,8 +264,8 @@ test.describe('Table Section - Formatting Toolbar', () => {
       await intInput.click();
       await intInput.press('Control+A');
 
-      // Try to apply superscript
-      await helper.supBtn.click();
+      // Toolbar buttons should be disabled for Integration input
+      await expect(helper.supBtn).toHaveClass(/disabled/);
 
       const value = await helper.getInputValue(intInput);
       expect(value).toBe('3');
