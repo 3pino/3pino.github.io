@@ -1,0 +1,209 @@
+/* ============================================
+   Table Component - NMR Data Table
+   ============================================ */
+
+.nmr-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-white);
+  margin-top: var(--space-8);
+}
+
+/* Table Headers */
+.nmr-table th {
+  background-color: var(--color-gray-100);
+  border: 1px solid var(--color-border);
+  padding: var(--space-8) var(--space-12);
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  min-width: var(--width-j-cell);
+}
+
+.nmr-table th.delete-header {
+  min-width: var(--width-delete);
+  width: var(--width-delete);
+  border: none;
+  background: transparent;
+}
+
+/* Table Cells */
+.nmr-table td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-6) var(--space-12);
+  vertical-align: top;
+  min-width: var(--width-j-cell);
+}
+
+.nmr-table td.delete-cell {
+  min-width: var(--width-delete);
+  width: var(--width-delete);
+  max-width: var(--width-delete);
+  text-align: center;
+  border: none;
+  background: transparent;
+  vertical-align: middle;
+}
+
+/* Delete Button */
+.delete-row-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-danger);
+  font-size: var(--font-xl);
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+  padding: 0;
+  width: var(--height-sm);
+  height: var(--height-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.delete-row-btn:hover {
+  background-color: var(--color-danger);
+  color: var(--color-white);
+}
+
+.delete-row-btn:active {
+  transform: scale(0.95);
+}
+
+/* Column Width Constraints */
+.nmr-table td:has(.shift-input) {
+  width: var(--width-shift-mult);
+  min-width: var(--width-shift-mult);
+  max-width: var(--width-shift-mult);
+}
+
+.nmr-table td:has(.mult-input) {
+  width: var(--width-shift-mult);
+  min-width: var(--width-shift-mult);
+  max-width: var(--width-shift-mult);
+}
+
+.nmr-table td.int-cell {
+  width: var(--width-int-cell);
+  min-width: var(--width-int-cell);
+  max-width: var(--width-int-cell);
+}
+
+.nmr-table td.j-input-cell {
+  width: var(--width-j-cell);
+  min-width: var(--width-j-cell);
+  max-width: var(--width-j-cell);
+}
+
+.nmr-table td.assignment-cell {
+  min-width: var(--width-assignment-min);
+}
+
+/* Selected Row */
+.nmr-table tr.selected {
+  background-color: var(--color-primary-light);
+}
+
+/* Table Inputs */
+.nmr-table input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: var(--font-base);
+  padding: var(--space-2);
+  outline: none;
+}
+
+.nmr-table input:focus {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.nmr-table input::placeholder {
+  color: var(--color-gray-700);
+}
+
+/* Assignment Cell (Contenteditable) */
+.assignment-input {
+  width: 100%;
+  min-height: 20px;
+  border: none;
+  background: transparent;
+  font-size: var(--font-base);
+  padding: var(--space-2);
+  outline: none;
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.assignment-input:focus {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.assignment-input:empty:before {
+  content: attr(data-placeholder);
+  color: var(--color-gray-700);
+}
+
+/* J-Value Columns */
+.nmr-table .j-column {
+  min-width: var(--width-j-cell);
+}
+
+/* Disabled J-value Cells */
+.j-input-cell.disabled {
+  background-color: var(--color-gray-300);
+}
+
+.j-input-cell.disabled input {
+  background-color: var(--color-gray-300);
+}
+
+/* Add Row Footer */
+.add-row-footer .delete-cell {
+  background-color: transparent;
+  border: none;
+  border-top: none !important;
+}
+
+.add-row-cell {
+  padding: 0 !important;
+  border: none !important;
+  background-color: var(--color-gray-100);
+  text-align: center;
+}
+
+.add-row-btn {
+  width: 100%;
+  height: var(--height-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-xl);
+  font-weight: 300;
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-row-btn:hover {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-hover);
+}
+
+.add-row-btn:active {
+  background-color: var(--color-primary-lighter);
+}

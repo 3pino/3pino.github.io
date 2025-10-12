@@ -1,0 +1,121 @@
+/* ============================================
+   Metadata Component - Form Inputs
+   ============================================ */
+
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-10);
+  max-width: 100%;
+}
+
+.metadata-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: relative;
+  width: 150px;
+}
+
+.metadata-group label {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  color: var(--color-gray-900);
+  text-transform: uppercase;
+}
+
+.metadata-input {
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-base);
+  background-color: var(--color-white);
+  transition: border-color var(--transition);
+  min-height: var(--height-md);
+  height: var(--height-md);
+  line-height: var(--line-height-relaxed);
+  box-sizing: border-box;
+}
+
+.metadata-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.metadata-input::placeholder {
+  color: var(--color-gray-700);
+}
+
+/* Contenteditable metadata inputs */
+.metadata-editable,
+.metadata-number {
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.metadata-select {
+  cursor: pointer;
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+}
+
+/* Read-only dropdown field (sort-order) - no text selection, no cursor */
+#sort-order {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  caret-color: transparent;
+}
+
+.metadata-editable:empty:before,
+.metadata-number:empty:before {
+  content: attr(data-placeholder);
+  color: var(--color-gray-700);
+  font-style: italic;
+}
+
+/* Custom dropdown for metadata presets */
+.metadata-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  box-shadow: var(--shadow-dropdown);
+  z-index: var(--z-dropdown);
+  margin-top: -1px;
+}
+
+.metadata-dropdown.active {
+  display: block;
+}
+
+.dropdown-item {
+  padding: var(--space-6) var(--space-8);
+  cursor: pointer;
+  font-size: var(--font-base);
+  transition: background-color var(--transition);
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-primary-light);
+}
+
+.dropdown-item.highlighted {
+  background-color: var(--color-primary-lighter);
+}
+
+.dropdown-item:active {
+  background-color: var(--color-primary-pale);
+}

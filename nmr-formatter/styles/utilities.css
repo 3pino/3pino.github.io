@@ -1,63 +1,106 @@
-/* NMR Formatter - Utility Classes */
+/* ============================================
+   Utilities - Helper Classes
+   ============================================ */
 
-/* Utility Classes */
+/* Hidden */
 .hidden {
-    display: none;
+  display: none;
 }
 
+/* Disabled */
 .disabled {
-    opacity: 0.5;
-    pointer-events: none;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-/* Loading States */
+/* Loading State */
 .loading {
-    position: relative;
-    opacity: 0.7;
+  position: relative;
+  opacity: 0.7;
 }
 
 .loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007acc;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--size-spinner);
+  height: var(--size-spinner);
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--color-gray-100);
+  border-top: 2px solid var(--color-primary);
+  border-radius: var(--radius-round);
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Error Indicators */
+/* Error States */
 .error {
-    background-color: #ffebee !important;
-    border-color: #f44336 !important;
+  background-color: var(--color-error-bg) !important;
+  border-color: var(--color-error) !important;
 }
 
 .rich-text-editor.error {
-    background-color: #ffebee;
-    border: 2px solid #f44336;
+  background-color: var(--color-error-bg);
+  border: 2px solid var(--color-error);
 }
 
 .nmr-table input.error {
-    background-color: #ffebee;
-    border: 1px solid #f44336;
-    color: #d32f2f;
+  background-color: var(--color-error-bg);
+  border: 1px solid var(--color-error);
+  color: var(--color-error-dark);
 }
 
 .nmr-table td.error {
-    background-color: #ffebee;
+  background-color: var(--color-error-bg);
 }
 
 .setting-input.error {
-    background-color: #ffebee;
-    border-color: #f44336;
-    color: #d32f2f;
+  background-color: var(--color-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error-dark);
+}
+
+/* Error Tooltip */
+.error-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.error-tooltip .error-message {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--color-error);
+  color: var(--color-white);
+  text-align: center;
+  border-radius: var(--radius-md);
+  padding: 5px;
+  position: absolute;
+  z-index: var(--z-dropdown);
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  font-size: var(--font-sm);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.error-tooltip .error-message::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--color-error) transparent transparent transparent;
+}
+
+.error-tooltip:hover .error-message {
+  visibility: visible;
+  opacity: 1;
 }

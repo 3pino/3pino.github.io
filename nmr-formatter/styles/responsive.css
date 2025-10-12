@@ -1,0 +1,19 @@
+/* ============================================
+   Responsive Design - Media Queries
+   ============================================ */
+
+/* Tablet & Below (max-width: 768px) */
+@media (max-width: 768px) {
+  .metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .nmr-table {
+    font-size: var(--font-sm);
+  }
+
+  .nmr-table th,
+  .nmr-table td {
+    padding: var(--space-4) var(--space-6);
+  }
+}

@@ -1,0 +1,59 @@
+/* ============================================
+   Editor Component - Rich Text Output
+   ============================================ */
+
+.rich-text-editor {
+  min-height: 100px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: var(--space-12);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  outline: none;
+  line-height: var(--line-height-relaxed);
+  font-family: var(--font-family-editor);
+  font-size: var(--font-base);
+  background-color: var(--color-white);
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+.rich-text-editor[contenteditable="false"] {
+  background-color: var(--color-gray-100);
+  cursor: default;
+}
+
+.rich-text-editor:empty:before {
+  content: "Formatted NMR text will appear here...";
+  color: var(--color-gray-700);
+  font-style: italic;
+}
+
+/* Setting Input (Output controls) */
+.setting-input {
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  background-color: var(--color-white);
+  transition: border-color var(--transition);
+  min-height: var(--height-sm);
+  height: var(--height-sm);
+  line-height: var(--font-base);
+  box-sizing: border-box;
+  min-width: 50px;
+}
+
+.setting-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.setting-input:empty:before {
+  content: attr(data-placeholder);
+  color: var(--color-gray-700);
+  font-style: italic;
+}

@@ -1,36 +1,38 @@
-/* NMR Formatter - Base Styles */
+/* ============================================
+   Base Styles - Reset & Fundamentals
+   ============================================ */
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #333;
-    background-color: #f7f7f7;
+  font-family: var(--font-family-base);
+  font-size: var(--font-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-gray-100);
 }
 
 /* Rich Text Formatting */
 .rich-text-editor i,
 .rich-text-editor em {
-    font-style: italic;
+  font-style: italic;
 }
 
 .rich-text-editor b,
 .rich-text-editor strong {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .rich-text-editor sub {
-    vertical-align: sub;
-    font-size: smaller;
+  vertical-align: sub;
+  font-size: smaller;
 }
 
 .rich-text-editor sup {
-    vertical-align: super;
-    font-size: smaller;
+  vertical-align: super;
+  font-size: smaller;
 }

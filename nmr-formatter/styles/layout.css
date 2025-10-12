@@ -1,105 +1,129 @@
-/* Import toolbar and metadata styles */
-@import url('toolbar-metadata.css');
+/* ============================================
+   Layout - Container & Section Structure
+   ============================================ */
 
-/* NMR Formatter - Layout Styles */
-
+/* Main app container */
 .app-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    width: 100vw;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: var(--color-white);
+  box-shadow: var(--shadow-container);
 }
 
 /* Title Bar */
 .title-bar {
-    flex: 0 0 auto;
-    padding: 6px 16px 0px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+  flex: 0 0 auto;
+  padding: var(--space-12) var(--space-16) 0 var(--space-16);
+  display: flex;
 
-.title-bar h1 {
-    font-size: 18px;
-    font-weight: 600;
-    color: black;
-    margin: 0;
-}
+  & h1{
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  }
 
-.title-bar span {
+  & span{
     display: block;
     margin-left: auto;
     font-size: 8px;
-    color: #666;
+    color: var(--color-text);
+    opacity: 0.5;
+    & a{
+      text-decoration: none;
+      color: var(--color-text);
+      &:hover{
+        cursor: default;
+      }
+    }
+  }
 }
 
-.title-bar span a {
-    color: #666;
-    text-decoration: none;
+/* Toolbar & Metadata Wrapper */
+.toolbar-container-wrapper {
+  flex: 0 0 auto;
+  border-bottom: 2px solid var(--color-gray-300);
+  padding: var(--space-12);
 }
 
-.title-bar span a:hover {
-    text-decoration: underline;
+.toolbar-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  padding: var(--space-10) var(--space-16);
+  background-color: var(--color-gray-300);
+  border-radius: var(--radius-md);
 }
-
-
 
 /* Table Section */
 .table-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-bottom: 2px solid #e0e0e0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-bottom: 2px solid var(--color-gray-300);
+}
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0 var(--space-12) var(--space-12) var(--space-12);
+  min-height: 300px;
 }
 
 /* Conversion Section */
 .conversion-section {
-    flex: 0 0 auto;
-    padding: 12px;
-    background-color: #f0f0f0;
-    border-bottom: 2px solid #e0e0e0;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
+  flex: 0 0 auto;
+  padding: var(--space-12);
+  background-color: var(--color-gray-100);
+  border-bottom: 2px solid var(--color-gray-300);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-12);
 }
 
-/* Rich Text Display Section */
+/* Rich Text Section */
 .rich-text-section {
-    flex: 0 0 auto;
-    background-color: #fafafa;
-    padding: 16px;
+  flex: 0 0 auto;
+  background-color: var(--color-gray-100);
+  padding: var(--space-16);
 }
 
 .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    gap: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-12);
+  gap: var(--space-12);
 }
 
 .rich-text-section h2 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .metadata {
-        grid-template-columns: 1fr;
-    }
+/* Output settings controls */
+.output-settings {
+  display: flex;
+  gap: var(--space-12);
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
 
-    .nmr-table {
-        font-size: 12px;
-    }
+.setting-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  position: relative;
+}
 
-    .nmr-table th,
-    .nmr-table td {
-        padding: 4px 6px;
-    }
+.setting-group label {
+  font-weight: 600;
+  font-size: var(--font-sm);
+  color: var(--color-gray-900);
 }

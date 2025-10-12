@@ -1,0 +1,47 @@
+/* ============================================
+   Buttons Component - Shared Button Styles
+   ============================================ */
+
+/* Conversion Button */
+.conversion-btn {
+  padding: var(--space-8) var(--space-24);
+  border: 2px solid var(--color-primary);
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  font-size: var(--font-base);
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.conversion-btn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.conversion-btn:active {
+  transform: scale(0.98);
+}
+
+/* Copy Button */
+.copy-btn {
+  padding: var(--space-6) var(--space-16);
+  border: 1px solid var(--color-primary);
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.copy-btn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.copy-btn:active {
+  transform: scale(0.98);
+}

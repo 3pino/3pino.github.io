@@ -1,0 +1,50 @@
+/* ============================================
+   Toolbar Component - Formatting Buttons
+   ============================================ */
+
+.toolbar {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.format-btn {
+  padding: var(--space-8);
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-base);
+  transition: all var(--transition);
+  width: var(--height-sm);
+  height: var(--height-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  user-select: none;
+}
+
+.format-btn i {
+  font-size: var(--size-icon);
+  display: block;
+  line-height: var(--size-icon);
+}
+
+.format-btn:hover {
+  background-color: var(--color-gray-500);
+}
+
+.format-btn:active {
+  background-color: var(--color-gray-700);
+}
+
+.format-btn.disabled {
+  color: var(--color-gray-800);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.format-btn.disabled:hover {
+  background-color: transparent;
+}
