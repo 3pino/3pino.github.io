@@ -1690,15 +1690,16 @@ class NMRTable {
         addCell.colSpan = remainingColumns;
         addCell.innerHTML = '<button class="add-row-btn" title="Add new row">+</button>';
         const addButton = addCell.querySelector('.add-row-btn');
+        addButton.tabIndex = -1; // Exclude from tab order
         addButton.addEventListener('click', () => {
             const newId = this.tableState.addRow();
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 const newRow = this.rowElements.get(newId);
                 if (newRow) {
                     const firstInput = newRow.querySelector('.shift-input');
                     firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
                 }
-            }, 50);
+            });
         });
         addRow.appendChild(addCell);
         this.tableBody.appendChild(addRow);
@@ -1814,17 +1815,17 @@ class NMRTable {
             else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 // Check if ArrowDown at last row
                 if (e.key === 'ArrowDown') {
-                    const isLastRow = !row.nextElementSibling;
+                    const isLastRow = !row.nextElementSibling || row.nextElementSibling.classList.contains('add-row-footer');
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const targetInput = newRow.querySelector('.shift-input');
                                 targetInput === null || targetInput === void 0 ? void 0 : targetInput.focus();
                             }
-                        }, 50);
+                        });
                         return;
                     }
                 }
@@ -1850,17 +1851,17 @@ class NMRTable {
             else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 // Check if ArrowDown at last row
                 if (e.key === 'ArrowDown') {
-                    const isLastRow = !row.nextElementSibling;
+                    const isLastRow = !row.nextElementSibling || row.nextElementSibling.classList.contains('add-row-footer');
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const targetInput = newRow.querySelector('.mult-input');
                                 targetInput === null || targetInput === void 0 ? void 0 : targetInput.focus();
                             }
-                        }, 50);
+                        });
                         return;
                     }
                 }
@@ -1904,11 +1905,11 @@ class NMRTable {
             else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 // Check if ArrowDown at last row
                 if (e.key === 'ArrowDown') {
-                    const isLastRow = !row.nextElementSibling;
+                    const isLastRow = !row.nextElementSibling || row.nextElementSibling.classList.contains('add-row-footer');
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const cellIndex = Array.from(row.children).indexOf(input.closest('td'));
@@ -1916,7 +1917,7 @@ class NMRTable {
                                 const targetInput = targetCell === null || targetCell === void 0 ? void 0 : targetCell.querySelector('input');
                                 targetInput === null || targetInput === void 0 ? void 0 : targetInput.focus();
                             }
-                        }, 50);
+                        });
                         return;
                     }
                 }
@@ -1951,17 +1952,17 @@ class NMRTable {
             else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 // Check if ArrowDown at last row
                 if (e.key === 'ArrowDown') {
-                    const isLastRow = !row.nextElementSibling;
+                    const isLastRow = !row.nextElementSibling || row.nextElementSibling.classList.contains('add-row-footer');
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const targetInput = newRow.querySelector('.int-input');
                                 targetInput === null || targetInput === void 0 ? void 0 : targetInput.focus();
                             }
-                        }, 50);
+                        });
                         return;
                     }
                 }
@@ -2000,37 +2001,37 @@ class NMRTable {
                 }
                 else {
                     const nextRow = row.nextElementSibling;
-                    if (nextRow) {
+                    if (nextRow && !nextRow.classList.contains('add-row-footer')) {
                         const nextAssignment = nextRow.querySelector('.assignment-input');
                         nextAssignment === null || nextAssignment === void 0 ? void 0 : nextAssignment.focus();
                     }
                     else {
                         // Last row: add new row
                         const newId = this.tableState.addRow();
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const newAssignment = newRow.querySelector('.assignment-input');
                                 newAssignment === null || newAssignment === void 0 ? void 0 : newAssignment.focus();
                             }
-                        }, 50);
+                        });
                     }
                 }
             }
             else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 // Check if ArrowDown at last row
                 if (e.key === 'ArrowDown') {
-                    const isLastRow = !row.nextElementSibling;
+                    const isLastRow = !row.nextElementSibling || row.nextElementSibling.classList.contains('add-row-footer');
                     if (isLastRow) {
                         e.preventDefault();
                         const newId = this.tableState.addRow();
-                        setTimeout(() => {
+                        requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
                                 const nextAssignment = newRow.querySelector('.assignment-input');
                                 nextAssignment === null || nextAssignment === void 0 ? void 0 : nextAssignment.focus();
                             }
-                        }, 50);
+                        });
                         return;
                     }
                 }
@@ -2042,20 +2043,20 @@ class NMRTable {
                         if (isAtEnd) {
                             e.preventDefault();
                             const nextRow = row.nextElementSibling;
-                            if (nextRow) {
+                            if (nextRow && !nextRow.classList.contains('add-row-footer')) {
                                 const nextShift = nextRow.querySelector('.shift-input');
                                 nextShift === null || nextShift === void 0 ? void 0 : nextShift.focus();
                             }
                             else {
                                 // Last row: add new row
                                 const newId = this.tableState.addRow();
-                                setTimeout(() => {
+                                requestAnimationFrame(() => {
                                     const newRow = this.rowElements.get(newId);
                                     if (newRow) {
                                         const firstInput = newRow.querySelector('.shift-input');
                                         firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
                                     }
-                                }, 50);
+                                });
                             }
                             return;
                         }
@@ -2129,7 +2130,7 @@ class NMRTable {
             }
             // No cell below: add new row
             const newId = this.tableState.addRow();
-            setTimeout(() => {
+            requestAnimationFrame(() => {
                 const newRow = this.rowElements.get(newId);
                 if (newRow) {
                     const targetCell = newRow.children[cellIndex];
@@ -2143,7 +2144,7 @@ class NMRTable {
                         firstInput === null || firstInput === void 0 ? void 0 : firstInput.focus();
                     }
                 }
-            }, 50);
+            });
         }
     }
     updateJInputsForRow(row, jValues) {
