@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+    width="24" height="24" viewBox="0 0 24 24"
+    class="icon" role="img" aria-hidden="true">
+  <path fill="#d5848a"
+  d="m 4 11 a 1 1 0 0 0 3 0 V 1.5 A 1.5 1.5 0 0 0 4.44 0.44 l -3 3 A 1 1 0 0 0 4 5.12 V 11 z M 6 13 V 22 a 1 1 0 0 0 4 0 v -9 h 9 v 9 a 1 1 0 0 0 4 0 v -20 a 1 1 0 0 0 -4 0 v 8 h -9 v -8 A 2 2 0 0 0 8 0 V 11 a 2 2 0 0 1 -2 2 Z"
+  />
+</svg>
