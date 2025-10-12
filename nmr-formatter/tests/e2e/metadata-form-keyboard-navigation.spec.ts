@@ -121,28 +121,27 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       expect(html).not.toBe('');
     });
 
-    test('sort-order dropdown: should navigate and select with arrow keys', async () => {
-      const field = helper.sortOrder;
-      await field.click();
+    test('sort-order toggle button: should toggle state with Enter/Space', async () => {
+      const button = helper.sortOrder;
+      await button.click();
 
-      const dropdown = helper.page.locator('#sort-order-dropdown');
-      await expect(dropdown).toHaveClass(/active/);
+      // Initial state should be down arrow (Descending)
+      const icon = button.locator('i');
 
-      // There should be 2 items: Descending and Ascending
-      const items = dropdown.locator('.dropdown-item');
-      await expect(items).toHaveCount(2);
+      // After click, it should toggle to up arrow (Ascending)
+      await expect(icon).toHaveClass(/fi-rr-up/);
 
-      // Press ArrowDown to highlight first item
-      await field.press('ArrowDown');
+      // Press Space to toggle back
+      await button.press(' ');
 
-      // Press ArrowDown again to highlight second item
-      await field.press('ArrowDown');
+      // Should toggle back to down arrow (Descending)
+      await expect(icon).toHaveClass(/fi-rr-down/);
 
-      // Press Enter to select (should be Ascending)
-      await field.press('Enter');
+      // Press Enter to toggle again
+      await button.press('Enter');
 
-      const html = await helper.getInnerHTML(field);
-      expect(html).toContain('Ascending');
+      // Should toggle to up arrow (Ascending)
+      await expect(icon).toHaveClass(/fi-rr-up/);
     });
 
     test('dropdown highlight should scroll into view', async () => {
@@ -233,24 +232,22 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await expect(field).toBeFocused();
     });
 
-    test('sort-order dropdown: Enter with highlighted item should NOT move focus to table', async () => {
-      const field = helper.sortOrder;
-      await field.click();
+    test('sort-order toggle button: Enter should toggle state and stay focused', async () => {
+      const button = helper.sortOrder;
+      await button.focus();
 
-      const dropdown = helper.page.locator('#sort-order-dropdown');
-      await expect(dropdown).toHaveClass(/active/);
+      // Check initial state
+      const icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
 
-      // Navigate with ArrowDown
-      await field.press('ArrowDown');
+      // Press Enter to toggle
+      await button.press('Enter');
 
-      // Press Enter to select
-      await field.press('Enter');
-
-      // Dropdown should close
-      await expect(dropdown).not.toHaveClass(/active/);
+      // Icon should toggle to up arrow
+      await expect(icon).toHaveClass(/fi-rr-up/);
 
       // Should still be focused on sort-order (NOT moved away)
-      await expect(field).toBeFocused();
+      await expect(button).toBeFocused();
     });
 
     test('nuclei dropdown: Enter without highlighted item should move to next field', async () => {
@@ -282,28 +279,31 @@ test.describe('Metadata Form - Keyboard Navigation', () => {
       await expect(helper.frequency).toBeFocused();
     });
 
-    test('sort-order dropdown: Enter without highlighted item should stay on last field', async () => {
-      const field = helper.sortOrder;
-      await field.click();
+    test('sort-order toggle button: Enter should toggle and stay on last field', async () => {
+      const button = helper.sortOrder;
+      await button.focus();
 
-      const dropdown = helper.page.locator('#sort-order-dropdown');
-      await expect(dropdown).toHaveClass(/active/);
+      // Check initial state
+      const icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
 
-      // Close dropdown first by blurring
-      await helper.jPrecision.click();
-      await field.click();
+      // Press Enter - should toggle icon
+      await button.press('Enter');
 
-      // Press Escape to close dropdown without selection (or wait for it to be inactive)
-      await field.press('Escape');
+      // Icon should toggle to up arrow
+      await expect(icon).toHaveClass(/fi-rr-up/);
 
-      // Wait for dropdown to close
-      await expect(dropdown).not.toHaveClass(/active/);
+      // Should stay on sort-order (not move away - last field in group)
+      await expect(button).toBeFocused();
 
-      // Now press Enter - should stay on sort-order (last field in group)
-      await field.press('Enter');
+      // Press Enter again - should toggle back
+      await button.press('Enter');
 
-      // Should stay on sort-order (not move away)
-      await expect(field).toBeFocused();
+      // Icon should toggle back to down arrow
+      await expect(icon).toHaveClass(/fi-rr-down/);
+
+      // Should still be focused on sort-order
+      await expect(button).toBeFocused();
     });
 
 

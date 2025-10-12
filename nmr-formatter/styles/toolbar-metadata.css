@@ -26,7 +26,7 @@
 }
 
 .format-btn {
-    padding: 4px 8px;
+    padding: 8px;
     color: #333;
     cursor: pointer;
     border-radius: 3px;
@@ -42,6 +42,7 @@
     & i{
         font-size: 16px;
         display: block;
+        line-height: 16px;
     }
     &:hover{
         background-color: #ccc;

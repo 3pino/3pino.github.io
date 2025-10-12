@@ -410,128 +410,145 @@ test.describe('Metadata Form - Input Validation', () => {
       expect(html).toContain('DMSO');
     });
 
-    test('sort-order: should be able to select from dropdown', async () => {
-      const field = helper.sortOrder;
-      
-      // Focus to show dropdown
-      await field.click();
-      
-      const dropdown = helper.page.locator('#sort-order-dropdown');
-      await expect(dropdown).toHaveClass(/active/);
-      
-      // Click on Ascending
-      const item = dropdown.locator('.dropdown-item').filter({ hasText: 'Ascending' }).first();
-      await item.click();
-      
-      const html = await helper.getInnerHTML(field);
-      expect(html).toContain('Ascending');
+    test('sort-order: should toggle between Descending and Ascending', async () => {
+      const button = helper.sortOrder;
+
+      // Check initial state (Descending - down arrow)
+      let icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
+
+      // Click to toggle to Ascending
+      await button.click();
+
+      // Should now show up arrow
+      await expect(icon).toHaveClass(/fi-rr-up/);
+
+      // Click again to toggle back to Descending
+      await button.click();
+
+      // Should show down arrow again
+      await expect(icon).toHaveClass(/fi-rr-down/);
     });
 
     test('sort-order: should not accept text input', async () => {
-      const field = helper.sortOrder;
-      
-      await field.click();
-      
-      // Try to type text - should be prevented
-      await field.type('invalid text');
-      
-      // Content should remain as default (Descending)
-      const html = await helper.getInnerHTML(field);
-      expect(html).toContain('Descending');
+      const button = helper.sortOrder;
+
+      // Focus the button
+      await button.focus();
+
+      // Check initial state
+      let icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
+
+      // Try to type text - should be ignored
+      await button.press('a');
+      await button.press('b');
+      await button.press('c');
+
+      // Icon should remain unchanged (still down arrow)
+      await expect(icon).toHaveClass(/fi-rr-down/);
     });
 
-    test('sort-order: should navigate with Enter/Shift+Enter but not accept text', async () => {
-      const field = helper.sortOrder;
-      
-      // Focus sort-order
-      await field.click();
-      
-      // Try typing letters - should be prevented
-      await field.press('a');
-      await field.press('b');
-      await field.press('c');
-      
-      const html = await helper.getInnerHTML(field);
-      expect(html).not.toContain('abc');
-      
-      // Enter should still navigate
-      await field.press('Shift+Enter');
+    test('sort-order: should toggle with Enter/Space and navigate with Tab', async () => {
+      const button = helper.sortOrder;
+
+      // Focus the button
+      await button.focus();
+
+      // Check initial state
+      let icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
+
+      // Press Enter to toggle
+      await button.press('Enter');
+
+      // Should toggle to up arrow
+      await expect(icon).toHaveClass(/fi-rr-up/);
+
+      // Press Space to toggle back
+      await button.press(' ');
+
+      // Should toggle back to down arrow
+      await expect(icon).toHaveClass(/fi-rr-down/);
+
+      // Tab should navigate to previous field (Shift+Tab navigates backward)
+      await button.press('Shift+Tab');
       await expect(helper.jPrecision).toBeFocused();
     });
   });
 
-  test.describe('Sort-Order Non-Selectable Behavior', () => {
-    test('sort-order should not show text cursor on click', async () => {
-      const field = helper.sortOrder;
+  test.describe('Sort-Order Toggle Button Behavior', () => {
+    test('sort-order should be focusable and toggle on click', async () => {
+      const button = helper.sortOrder;
 
-      // Click on sort-order
-      await field.click();
-      await expect(field).toBeFocused();
+      // Click on sort-order button
+      await button.click();
+      await expect(button).toBeFocused();
 
-      // Try to select text with Ctrl+A
-      await field.press('Control+A');
+      // Icon should toggle to up arrow (Ascending)
+      const icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-up/);
 
-      // Content should remain unchanged (Descending by default)
-      const html = await helper.getInnerHTML(field);
-      expect(html).toContain('Descending');
+      // Click again to toggle back
+      await button.click();
+      await expect(icon).toHaveClass(/fi-rr-down/);
     });
 
-    test('sort-order should not allow text selection with mouse', async () => {
-      const field = helper.sortOrder;
+    test('sort-order should ignore text input attempts', async () => {
+      const button = helper.sortOrder;
 
-      // Get bounding box for triple-click (select all)
-      const box = await field.boundingBox();
-      if (box) {
-        // Triple click to try selecting all text
-        await helper.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 3 });
-      }
+      // Focus the button
+      await button.focus();
 
-      // Check that field is focused but no selection API is usable
-      await expect(field).toBeFocused();
+      // Initial state should be down arrow
+      const icon = button.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
 
-      // Try typing - should not insert text
-      await field.press('a');
-      await field.press('b');
-      await field.press('c');
+      // Try typing - should be ignored (button doesn't accept text)
+      await button.press('a');
+      await button.press('b');
+      await button.press('c');
 
-      const html = await helper.getInnerHTML(field);
-      expect(html).not.toContain('abc');
-      expect(html).toContain('Descending');
+      // Icon should remain unchanged
+      await expect(icon).toHaveClass(/fi-rr-down/);
     });
 
-    test('sort-order should focus with Tab but not allow text editing', async () => {
+    test('sort-order should focus with Tab and toggle with keyboard', async () => {
       // Tab to sort-order from j-precision
       await helper.jPrecision.click();
       await helper.jPrecision.press('Tab');
 
       await expect(helper.sortOrder).toBeFocused();
 
-      // Try to type
-      await helper.sortOrder.type('test input');
+      // Check initial state
+      const icon = helper.sortOrder.locator('i');
+      await expect(icon).toHaveClass(/fi-rr-down/);
 
-      // Should still show default value
-      const html = await helper.getInnerHTML(helper.sortOrder);
-      expect(html).toContain('Descending');
-      expect(html).not.toContain('test input');
+      // Press Enter to toggle
+      await helper.sortOrder.press('Enter');
+
+      // Should toggle to up arrow
+      await expect(icon).toHaveClass(/fi-rr-up/);
     });
 
-    test('sort-order should only change via dropdown selection', async () => {
-      const field = helper.sortOrder;
+    test('sort-order should change via click or keyboard interaction', async () => {
+      const button = helper.sortOrder;
+      const icon = button.locator('i');
 
-      await field.click();
+      // Initial state: down arrow (Descending)
+      await expect(icon).toHaveClass(/fi-rr-down/);
 
-      // Dropdown should appear
-      const dropdown = helper.page.locator('#sort-order-dropdown');
-      await expect(dropdown).toHaveClass(/active/);
+      // Click to toggle
+      await button.click();
 
-      // Select Ascending from dropdown
-      const item = dropdown.locator('.dropdown-item').filter({ hasText: 'Ascending' }).first();
-      await item.click();
+      // Should change to up arrow (Ascending)
+      await expect(icon).toHaveClass(/fi-rr-up/);
 
-      // Value should change
-      const html = await helper.getInnerHTML(field);
-      expect(html).toContain('Ascending');
-      expect(html).not.toContain('Descending');
+      // Use keyboard (Space) to toggle back
+      await button.press(' ');
+
+      // Should change back to down arrow (Descending)
+      await expect(icon).toHaveClass(/fi-rr-down/);
     });
   });
 });
