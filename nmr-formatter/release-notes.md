@@ -1,5 +1,12 @@
 # NMR Formatter Release Notes
 
+## ver 1.3.1 (2025-10-12)
+
+### Bug Fixes
+
+**Table Functionality:**
+- Fixed J-column calculation for multiplicities 6-9 (sextet, septet, octet, nonet)
+
 ## ver 1.3 (2025-10-12)
 
 ### UI/UX Improvements
