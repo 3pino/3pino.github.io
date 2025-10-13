@@ -1,5 +1,20 @@
 # NMR Formatter Release Notes
 
+## ver 1.3.2 (2025-10-13)
+
+### UI/UX Improvements
+
+**Layout and Design:**
+- Fixed page layout to prevent vertical overflow
+- Changed app container from min-height to fixed height (100vh)
+- Made table section independently scrollable
+- Set rich text editor to max 30vh height with internal scrolling
+- Improved overall page responsiveness
+
+**Visual Enhancements:**
+- Added favicon support with ICO and SVG formats
+- Better visual identity for the application
+
 ## ver 1.3.1 (2025-10-12)
 
 ### Bug Fixes
