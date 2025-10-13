@@ -6,7 +6,8 @@
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   margin: 0 auto;
   background-color: var(--color-white);
   box-shadow: var(--shadow-container);
@@ -68,13 +69,15 @@
   flex-direction: column;
   overflow: hidden;
   border-bottom: 2px solid var(--color-gray-300);
+  min-height: 0;
 }
 
 .table-container {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: auto;
   padding: 0 var(--space-12) var(--space-12) var(--space-12);
-  min-height: 300px;
+  min-height: 0;
 }
 
 /* Conversion Section */
@@ -91,8 +94,12 @@
 /* Rich Text Section */
 .rich-text-section {
   flex: 0 0 auto;
+  max-height: 30vh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-gray-100);
   padding: var(--space-16);
+  min-height: 0;
 }
 
 .section-header {
