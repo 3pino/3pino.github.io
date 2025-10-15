@@ -7,6 +7,7 @@ import { TableState, TableRowData } from '../../state/TableState';
 import { ValidationState } from '../../state/ValidationState';
 import { KeyboardNav } from '../navigation/KeyboardNav';
 import { isTSVData } from '../../utils/tsv-parser';
+import { filterNumericInput, filterHTMLTags } from '../../utils/validators/input-filters';
 
 export class NMRTable {
     private tableState: TableState;
@@ -571,14 +572,8 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            // Filter to allow only numbers and ONE decimal point
-            let filtered = input.value.replace(/[^0-9.]/g, '');
-            
-            // Allow only one decimal point
-            const parts = filtered.split('.');
-            if (parts.length > 2) {
-                filtered = parts[0] + '.' + parts.slice(1).join('');
-            }
+            // Use shared input filter
+            const filtered = filterNumericInput(input.value);
             
             if (filtered !== input.value) {
                 input.value = filtered;
@@ -646,14 +641,8 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            // Filter to allow only numbers and ONE decimal point
-            let filtered = input.value.replace(/[^0-9.]/g, '');
-            
-            // Allow only one decimal point
-            const parts = filtered.split('.');
-            if (parts.length > 2) {
-                filtered = parts[0] + '.' + parts.slice(1).join('');
-            }
+            // Use shared input filter
+            const filtered = filterNumericInput(input.value);
             
             if (filtered !== input.value) {
                 input.value = filtered;
@@ -712,7 +701,7 @@ export class NMRTable {
             const htmlText = clipboardData?.getData('text/html') || clipboardData?.getData('text/plain') || '';
             const temp = document.createElement('div');
             temp.innerHTML = htmlText;
-            const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
+            const filtered = filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
         }, { signal: this.abortController.signal });
 
@@ -998,22 +987,7 @@ export class NMRTable {
         return testRange.toString().length === 0;
     }
 
-    private filterHTMLTags(element: Element, allowedTags: string[]): string {
-        let result = '';
-        element.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                result += node.textContent;
-            } else if (node.nodeType === Node.ELEMENT_NODE) {
-                const tagName = (node as Element).tagName.toUpperCase();
-                if (allowedTags.includes(tagName)) {
-                    result += `<${tagName.toLowerCase()}>${this.filterHTMLTags(node as Element, allowedTags)}</${tagName.toLowerCase()}>`;
-                } else {
-                    result += this.filterHTMLTags(node as Element, allowedTags);
-                }
-            }
-        });
-        return result;
-    }
+    
 
     getFirstInput(): HTMLElement | null {
         const firstRow = this.tableBody.querySelector('tr');

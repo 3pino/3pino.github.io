@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NMRTable = void 0;
 const KeyboardNav_1 = require("../navigation/KeyboardNav");
 const tsv_parser_1 = require("../../utils/tsv-parser");
+const input_filters_1 = require("../../utils/validators/input-filters");
 class NMRTable {
     constructor(tableState, validationState, onMultiplicityChange, onNavigateToMetadata) {
         this.maxJColumns = 0;
@@ -500,13 +501,8 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Filter to allow only numbers and ONE decimal point
-            let filtered = input.value.replace(/[^0-9.]/g, '');
-            // Allow only one decimal point
-            const parts = filtered.split('.');
-            if (parts.length > 2) {
-                filtered = parts[0] + '.' + parts.slice(1).join('');
-            }
+            // Use shared input filter
+            const filtered = (0, input_filters_1.filterNumericInput)(input.value);
             if (filtered !== input.value) {
                 input.value = filtered;
             }
@@ -566,13 +562,8 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Filter to allow only numbers and ONE decimal point
-            let filtered = input.value.replace(/[^0-9.]/g, '');
-            // Allow only one decimal point
-            const parts = filtered.split('.');
-            if (parts.length > 2) {
-                filtered = parts[0] + '.' + parts.slice(1).join('');
-            }
+            // Use shared input filter
+            const filtered = (0, input_filters_1.filterNumericInput)(input.value);
             if (filtered !== input.value) {
                 input.value = filtered;
             }
@@ -625,7 +616,7 @@ class NMRTable {
             const htmlText = (clipboardData === null || clipboardData === void 0 ? void 0 : clipboardData.getData('text/html')) || (clipboardData === null || clipboardData === void 0 ? void 0 : clipboardData.getData('text/plain')) || '';
             const temp = document.createElement('div');
             temp.innerHTML = htmlText;
-            const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
+            const filtered = (0, input_filters_1.filterHTMLTags)(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
@@ -894,24 +885,6 @@ class NMRTable {
         testRange.setStart(range.endContainer, range.endOffset);
         // If range is empty, we're at the end
         return testRange.toString().length === 0;
-    }
-    filterHTMLTags(element, allowedTags) {
-        let result = '';
-        element.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                result += node.textContent;
-            }
-            else if (node.nodeType === Node.ELEMENT_NODE) {
-                const tagName = node.tagName.toUpperCase();
-                if (allowedTags.includes(tagName)) {
-                    result += `<${tagName.toLowerCase()}>${this.filterHTMLTags(node, allowedTags)}</${tagName.toLowerCase()}>`;
-                }
-                else {
-                    result += this.filterHTMLTags(node, allowedTags);
-                }
-            }
-        });
-        return result;
     }
     getFirstInput() {
         const firstRow = this.tableBody.querySelector('tr');

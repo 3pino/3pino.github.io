@@ -38,7 +38,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isJValuesOptional = exports.multipletnumbers = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
+exports.isJValuesOptional = exports.multipletnumbers = exports.getValidator = exports.assignmentValidator = exports.integrationValidator = exports.jValueValidator = exports.multiplicityValidator = exports.shiftValidator = exports.noFilter = exports.filterHTMLTags = exports.filterNumericInput = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
 // Core types and constants
 __exportStar(require("./core/types"), exports);
 __exportStar(require("./core/logger"), exports);
@@ -84,6 +84,18 @@ Object.defineProperty(exports, "getMaxJValues", { enumerable: true, get: functio
 var tsv_parser_1 = require("./utils/tsv-parser");
 Object.defineProperty(exports, "isTSVData", { enumerable: true, get: function () { return tsv_parser_1.isTSVData; } });
 Object.defineProperty(exports, "parseTSV", { enumerable: true, get: function () { return tsv_parser_1.parseTSV; } });
+// Validators
+var input_filters_1 = require("./utils/validators/input-filters");
+Object.defineProperty(exports, "filterNumericInput", { enumerable: true, get: function () { return input_filters_1.filterNumericInput; } });
+Object.defineProperty(exports, "filterHTMLTags", { enumerable: true, get: function () { return input_filters_1.filterHTMLTags; } });
+Object.defineProperty(exports, "noFilter", { enumerable: true, get: function () { return input_filters_1.noFilter; } });
+var field_validators_1 = require("./utils/validators/field-validators");
+Object.defineProperty(exports, "shiftValidator", { enumerable: true, get: function () { return field_validators_1.shiftValidator; } });
+Object.defineProperty(exports, "multiplicityValidator", { enumerable: true, get: function () { return field_validators_1.multiplicityValidator; } });
+Object.defineProperty(exports, "jValueValidator", { enumerable: true, get: function () { return field_validators_1.jValueValidator; } });
+Object.defineProperty(exports, "integrationValidator", { enumerable: true, get: function () { return field_validators_1.integrationValidator; } });
+Object.defineProperty(exports, "assignmentValidator", { enumerable: true, get: function () { return field_validators_1.assignmentValidator; } });
+Object.defineProperty(exports, "getValidator", { enumerable: true, get: function () { return field_validators_1.getValidator; } });
 // Re-export validation functions for backward compatibility
 exports.multipletnumbers = NMRPeak_2.NMRPeak.multipletnumbers;
 exports.isJValuesOptional = NMRPeak_2.NMRPeak.isJValuesOptional;

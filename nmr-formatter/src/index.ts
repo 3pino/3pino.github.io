@@ -52,6 +52,24 @@ export {
     parseTSV
 } from './utils/tsv-parser';
 
+// Validators
+export {
+    filterNumericInput,
+    filterHTMLTags,
+    noFilter
+} from './utils/validators/input-filters';
+
+export {
+    shiftValidator,
+    multiplicityValidator,
+    jValueValidator,
+    integrationValidator,
+    assignmentValidator,
+    getValidator
+} from './utils/validators/field-validators';
+
+export type { FieldValidator, FieldValidationResult } from './utils/validators/field-validators';
+
 // Re-export validation functions for backward compatibility
 export const multipletnumbers = NMRPeak.multipletnumbers;
 export const isJValuesOptional = NMRPeak.isJValuesOptional;

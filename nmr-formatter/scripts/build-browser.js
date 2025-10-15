@@ -23,6 +23,10 @@ const formValidationCode = fs.readFileSync(path.join(distDir, 'utils', 'form-val
 const formatterCode = fs.readFileSync(path.join(distDir, 'utils', 'formatter.js'), 'utf8');
 const tsvParserCode = fs.readFileSync(path.join(distDir, 'utils', 'tsv-parser.js'), 'utf8');
 
+// Read Validators files
+const inputFiltersCode = fs.readFileSync(path.join(distDir, 'utils', 'validators', 'input-filters.js'), 'utf8');
+const fieldValidatorsCode = fs.readFileSync(path.join(distDir, 'utils', 'validators', 'field-validators.js'), 'utf8');
+
 // Read State Management files
 const metadataStateCode = fs.readFileSync(path.join(distDir, 'state', 'MetadataState.js'), 'utf8');
 const tableStateCode = fs.readFileSync(path.join(distDir, 'state', 'TableState.js'), 'utf8');
@@ -83,6 +87,9 @@ function convertToBrowserCode(code) {
     // Fix logger references - e.g., logger_1.Logger.warn
     code = code.replace(/\w+_\d+\.Logger\./g, 'Logger.');
 
+    // Fix all module references - e.g., input_filters_1.filterNumericInput -> filterNumericInput
+    code = code.replace(/\w+_\d+\.(\w+)/g, '$1');
+
     // Remove source map comments
     code = code.replace(/\/\/# sourceMappingURL=.*\n?/g, '');
 
@@ -114,6 +121,11 @@ ${convertToBrowserCode(formValidationCode)}
 ${convertToBrowserCode(formatterCode)}
 
 ${convertToBrowserCode(tsvParserCode)}
+
+// ========== VALIDATORS ==========
+${convertToBrowserCode(inputFiltersCode)}
+
+${convertToBrowserCode(fieldValidatorsCode)}
 
 // ========== STATE MANAGEMENT ==========
 ${convertToBrowserCode(metadataStateCode)}

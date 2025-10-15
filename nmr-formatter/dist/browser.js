@@ -496,79 +496,60 @@ function validateMetadata(metadata, validationState) {
 function validateTableRow(row, is1HNMR, validationState) {
     let hasErrors = false;
     const rowId = row.id;
-    // Validate chemical shift
-    const shift = parseChemicalShift(row.shift);
-    if (shift === null || row.shift.trim() === '') {
-        validationState.setError(`shift-${rowId}`, 'Invalid chemical shift');
+    // Validate chemical shift using field validator
+    const shiftResult = shiftValidator.validate(row.shift);
+    if (!shiftResult.isValid) {
+        validationState.setError(`shift-${rowId}`, shiftResult.errorMessage || 'Invalid chemical shift');
         hasErrors = true;
     }
     else {
         validationState.clearError(`shift-${rowId}`);
     }
-    // Validate multiplicity (for 1H NMR)
-    if (is1HNMR) {
-        const multiplicity = convertMultiplicityToText(row.multiplicity);
-        if (row.multiplicity.trim() === '') {
-            validationState.setError(`mult-${rowId}`, 'Multiplicity is required for 1H NMR');
-            hasErrors = true;
-        }
-        else {
-            try {
-                const multipletnumbers = window.multipletnumbers;
-                multipletnumbers(multiplicity);
-                validationState.clearError(`mult-${rowId}`);
-            }
-            catch (error) {
-                validationState.setError(`mult-${rowId}`, 'Invalid multiplicity');
-                hasErrors = true;
-            }
-        }
-        // Validate integration (for 1H NMR)
-        if (!row.integration || row.integration === 0) {
-            validationState.setError(`int-${rowId}`, 'Integration is required for 1H NMR');
-            hasErrors = true;
-        }
-        else {
-            validationState.clearError(`int-${rowId}`);
-        }
-    }
-    // Validate J-values
-    const multiplicity = convertMultiplicityToText(row.multiplicity);
-    const isJValuesOptional = window.isJValuesOptional;
-    const isOptional = multiplicity && isJValuesOptional(multiplicity);
-    const requiredJCount = calculateRequiredJColumns(multiplicity);
-    const actualJCount = row.jValues.filter((j) => !isNaN(j) && j !== 0).length;
-    if (isOptional) {
-        // Optional: either all empty or all filled
-        if (actualJCount > 0 && actualJCount < requiredJCount) {
-            for (let i = 0; i < requiredJCount; i++) {
-                if (!row.jValues[i] || row.jValues[i] === 0) {
-                    validationState.setError(`j${i}-${rowId}`, 'All J-values must be filled');
-                    hasErrors = true;
-                }
-                else {
-                    validationState.clearError(`j${i}-${rowId}`);
-                }
-            }
-        }
-        else {
-            // All filled or all empty - clear all errors
-            for (let i = 0; i < requiredJCount; i++) {
-                validationState.clearError(`j${i}-${rowId}`);
-            }
-        }
+    // Validate multiplicity using field validator
+    const multResult = multiplicityValidator.validate(row.multiplicity, { is1HNMR });
+    if (!multResult.isValid) {
+        validationState.setError(`mult-${rowId}`, multResult.errorMessage || 'Invalid multiplicity');
+        hasErrors = true;
     }
     else {
-        // Not optional: all must be filled
-        for (let i = 0; i < requiredJCount; i++) {
-            if (!row.jValues[i] || row.jValues[i] === 0) {
-                validationState.setError(`j${i}-${rowId}`, 'J-value is required');
-                hasErrors = true;
-            }
-            else {
-                validationState.clearError(`j${i}-${rowId}`);
-            }
+        validationState.clearError(`mult-${rowId}`);
+    }
+    // Validate integration using field validator
+    const intResult = integrationValidator.validate(row.integration, { is1HNMR });
+    if (!intResult.isValid) {
+        validationState.setError(`int-${rowId}`, intResult.errorMessage || 'Invalid integration');
+        hasErrors = true;
+    }
+    else {
+        validationState.clearError(`int-${rowId}`);
+    }
+    // Validate J-values using field validator
+    const multiplicity = convertMultiplicityToText(row.multiplicity);
+    let requiredJCount = 0;
+    try {
+        const jCounts = NMRPeak.multipletnumbers(multiplicity);
+        requiredJCount = (jCounts === null || jCounts === void 0 ? void 0 : jCounts.length) || 0;
+    }
+    catch (error) {
+        // Invalid multiplicity - skip J-value validation
+    }
+    for (let i = 0; i < requiredJCount; i++) {
+        const jResult = jValueValidator.validate(row.jValues[i] || 0, {
+            multiplicity: row.multiplicity,
+            jIndex: i,
+            allJValues: row.jValues
+        });
+        if (!jResult.isValid) {
+            validationState.setError(`j${i}-${rowId}`, jResult.errorMessage || 'Invalid J-value');
+            hasErrors = true;
         }
+        else {
+            validationState.clearError(`j${i}-${rowId}`);
+        }
+    }
+    // Clear errors for J-values beyond required count
+    for (let i = requiredJCount; i < row.jValues.length; i++) {
+        validationState.clearError(`j${i}-${rowId}`);
     }
     return hasErrors;
 }
@@ -763,6 +744,196 @@ function parseTSV(text) {
     const lines = normalized.split('\n');
     // Parse each line by tabs
     return lines.map(line => line.split('\t'));
+}
+
+// ========== VALIDATORS ==========
+/**
+ * Input filtering utilities for real-time input restriction
+ * These functions filter user input to prevent invalid characters from being entered
+ */
+/**
+ * Filter numeric input to allow only digits and one decimal point
+ * Used for J-values and Integration fields
+ * @param value - The input value to filter
+ * @returns Filtered value containing only digits and at most one decimal point
+ * @example
+ * filterNumericInput("12.34.56") // "12.3456"
+ * filterNumericInput("abc123") // "123"
+ * filterNumericInput("1.2.3") // "1.23"
+ */
+function filterNumericInput(value) {
+    // Remove all non-numeric characters except decimal point
+    let filtered = value.replace(/[^0-9.]/g, '');
+    // Allow only one decimal point
+    const parts = filtered.split('.');
+    if (parts.length > 2) {
+        filtered = parts[0] + '.' + parts.slice(1).join('');
+    }
+    return filtered;
+}
+/**
+ * Filter HTML content to allow only specific tags
+ * Used for Assignment field to restrict rich text formatting
+ * @param container - DOM element containing HTML to filter
+ * @param allowedTags - Array of uppercase tag names to allow (e.g., ['B', 'I', 'SUB', 'SUP'])
+ * @returns Filtered HTML string
+ */
+function filterHTMLTags(container, allowedTags) {
+    const clone = container.cloneNode(true);
+    const allElements = clone.querySelectorAll('*');
+    allElements.forEach(el => {
+        var _a;
+        if (!allowedTags.includes(el.tagName)) {
+            // Replace disallowed element with its text content
+            const textNode = document.createTextNode(el.textContent || '');
+            (_a = el.parentNode) === null || _a === void 0 ? void 0 : _a.replaceChild(textNode, el);
+        }
+    });
+    return clone.innerHTML;
+}
+/**
+ * No filtering - allows any input
+ * Used for Chemical Shift and Multiplicity fields
+ * @param value - The input value
+ * @returns Unmodified value
+ */
+function noFilter(value) {
+    return value;
+}
+
+/**
+ * Field-level validation logic
+ * Each validator provides input filtering and validation rules for a specific field type
+ */
+/**
+ * Chemical Shift validator
+ */
+const shiftValidator = {
+    filterInput: noFilter,
+    validate: (value) => {
+        const strValue = typeof value === 'number' ? value.toString() : value;
+        if (!strValue || strValue.trim() === '') {
+            return { isValid: false, errorMessage: 'Chemical shift is required' };
+        }
+        const parsed = parseChemicalShift(strValue);
+        if (parsed === null) {
+            return { isValid: false, errorMessage: 'Invalid chemical shift' };
+        }
+        return { isValid: true };
+    }
+};
+/**
+ * Multiplicity validator
+ * @param context.is1HNMR - Whether this is 1H NMR (multiplicity required)
+ */
+const multiplicityValidator = {
+    filterInput: noFilter,
+    validate: (value, context) => {
+        var _a;
+        const strValue = typeof value === 'number' ? value.toString() : value;
+        const is1HNMR = (_a = context === null || context === void 0 ? void 0 : context.is1HNMR) !== null && _a !== void 0 ? _a : false;
+        // Only validate for 1H NMR
+        if (!is1HNMR) {
+            return { isValid: true };
+        }
+        if (!strValue || strValue.trim() === '') {
+            return { isValid: false, errorMessage: 'Multiplicity is required for 1H NMR' };
+        }
+        const multiplicityText = convertMultiplicityToText(strValue);
+        try {
+            NMRPeak.multipletnumbers(multiplicityText);
+            return { isValid: true };
+        }
+        catch (error) {
+            return { isValid: false, errorMessage: 'Invalid multiplicity' };
+        }
+    }
+};
+/**
+ * J-value validator
+ * @param context.multiplicity - The multiplicity text to determine required J count
+ * @param context.jIndex - Index of this J-value (0-based)
+ * @param context.allJValues - All J-values for this peak
+ */
+const jValueValidator = {
+    filterInput: filterNumericInput,
+    validate: (value, context) => {
+        if (!(context === null || context === void 0 ? void 0 : context.multiplicity)) {
+            return { isValid: true }; // No multiplicity, no validation
+        }
+        const multiplicityText = convertMultiplicityToText(context.multiplicity);
+        const jCounts = NMRPeak.multipletnumbers(multiplicityText);
+        if (jCounts === null) {
+            return { isValid: true }; // Singlet/multiplet/broad - no J-values needed
+        }
+        const requiredJCount = jCounts.length;
+        const isOptional = NMRPeak.isJValuesOptional(multiplicityText);
+        const actualJCount = context.allJValues.filter(j => !isNaN(j) && j !== 0).length;
+        if (isOptional) {
+            // Optional: either all empty or all filled
+            if (actualJCount > 0 && actualJCount < requiredJCount) {
+                // Partial fill - check if this specific J-value is empty
+                const numValue = typeof value === 'number' ? value : parseFloat(value);
+                if (isNaN(numValue) || numValue === 0) {
+                    return { isValid: false, errorMessage: 'All J-values must be filled' };
+                }
+            }
+            return { isValid: true };
+        }
+        else {
+            // Not optional: all must be filled
+            if (context.jIndex < requiredJCount) {
+                const numValue = typeof value === 'number' ? value : parseFloat(value);
+                if (isNaN(numValue) || numValue === 0) {
+                    return { isValid: false, errorMessage: 'J-value is required' };
+                }
+            }
+            return { isValid: true };
+        }
+    }
+};
+/**
+ * Integration validator
+ * @param context.is1HNMR - Whether this is 1H NMR (integration required)
+ */
+const integrationValidator = {
+    filterInput: filterNumericInput,
+    validate: (value, context) => {
+        var _a;
+        const is1HNMR = (_a = context === null || context === void 0 ? void 0 : context.is1HNMR) !== null && _a !== void 0 ? _a : false;
+        // Only validate for 1H NMR
+        if (!is1HNMR) {
+            return { isValid: true };
+        }
+        const numValue = typeof value === 'number' ? value : parseFloat(value);
+        if (isNaN(numValue) || numValue === 0) {
+            return { isValid: false, errorMessage: 'Integration is required for 1H NMR' };
+        }
+        return { isValid: true };
+    }
+};
+/**
+ * Assignment validator
+ * No validation - optional field
+ */
+const assignmentValidator = {
+    filterInput: noFilter, // HTML filtering is done separately in the UI
+    validate: () => {
+        return { isValid: true }; // Always valid - optional field
+    }
+};
+/**
+ * Get validator for a specific field type
+ */
+function getValidator(fieldType) {
+    const validators = {
+        'shift': exports.shiftValidator,
+        'multiplicity': exports.multiplicityValidator,
+        'jValue': exports.jValueValidator,
+        'integration': exports.integrationValidator,
+        'assignment': exports.assignmentValidator
+    };
+    return validators[fieldType] || null;
 }
 
 // ========== STATE MANAGEMENT ==========
@@ -2136,13 +2307,8 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Filter to allow only numbers and ONE decimal point
-            let filtered = input.value.replace(/[^0-9.]/g, '');
-            // Allow only one decimal point
-            const parts = filtered.split('.');
-            if (parts.length > 2) {
-                filtered = parts[0] + '.' + parts.slice(1).join('');
-            }
+            // Use shared input filter
+            const filtered = filterNumericInput(input.value);
             if (filtered !== input.value) {
                 input.value = filtered;
             }
@@ -2202,13 +2368,8 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Filter to allow only numbers and ONE decimal point
-            let filtered = input.value.replace(/[^0-9.]/g, '');
-            // Allow only one decimal point
-            const parts = filtered.split('.');
-            if (parts.length > 2) {
-                filtered = parts[0] + '.' + parts.slice(1).join('');
-            }
+            // Use shared input filter
+            const filtered = filterNumericInput(input.value);
             if (filtered !== input.value) {
                 input.value = filtered;
             }
@@ -2261,7 +2422,7 @@ class NMRTable {
             const htmlText = (clipboardData === null || clipboardData === void 0 ? void 0 : clipboardData.getData('text/html')) || (clipboardData === null || clipboardData === void 0 ? void 0 : clipboardData.getData('text/plain')) || '';
             const temp = document.createElement('div');
             temp.innerHTML = htmlText;
-            const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
+            const filtered = filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
@@ -2530,24 +2691,6 @@ class NMRTable {
         testRange.setStart(range.endContainer, range.endOffset);
         // If range is empty, we're at the end
         return testRange.toString().length === 0;
-    }
-    filterHTMLTags(element, allowedTags) {
-        let result = '';
-        element.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                result += node.textContent;
-            }
-            else if (node.nodeType === Node.ELEMENT_NODE) {
-                const tagName = node.tagName.toUpperCase();
-                if (allowedTags.includes(tagName)) {
-                    result += `<${tagName.toLowerCase()}>${this.filterHTMLTags(node, allowedTags)}</${tagName.toLowerCase()}>`;
-                }
-                else {
-                    result += this.filterHTMLTags(node, allowedTags);
-                }
-            }
-        });
-        return result;
     }
     getFirstInput() {
         const firstRow = this.tableBody.querySelector('tr');

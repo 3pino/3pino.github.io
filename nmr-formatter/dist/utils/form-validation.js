@@ -7,6 +7,8 @@ exports.validateMetadata = validateMetadata;
 exports.validateTableRow = validateTableRow;
 exports.validateTableRows = validateTableRows;
 const conversion_1 = require("./conversion");
+const NMRPeak_1 = require("../models/NMRPeak");
+const field_validators_1 = require("./validators/field-validators");
 /**
  * Validate metadata fields
  * @returns true if there are errors
@@ -34,79 +36,60 @@ function validateMetadata(metadata, validationState) {
 function validateTableRow(row, is1HNMR, validationState) {
     let hasErrors = false;
     const rowId = row.id;
-    // Validate chemical shift
-    const shift = (0, conversion_1.parseChemicalShift)(row.shift);
-    if (shift === null || row.shift.trim() === '') {
-        validationState.setError(`shift-${rowId}`, 'Invalid chemical shift');
+    // Validate chemical shift using field validator
+    const shiftResult = field_validators_1.shiftValidator.validate(row.shift);
+    if (!shiftResult.isValid) {
+        validationState.setError(`shift-${rowId}`, shiftResult.errorMessage || 'Invalid chemical shift');
         hasErrors = true;
     }
     else {
         validationState.clearError(`shift-${rowId}`);
     }
-    // Validate multiplicity (for 1H NMR)
-    if (is1HNMR) {
-        const multiplicity = (0, conversion_1.convertMultiplicityToText)(row.multiplicity);
-        if (row.multiplicity.trim() === '') {
-            validationState.setError(`mult-${rowId}`, 'Multiplicity is required for 1H NMR');
-            hasErrors = true;
-        }
-        else {
-            try {
-                const multipletnumbers = window.multipletnumbers;
-                multipletnumbers(multiplicity);
-                validationState.clearError(`mult-${rowId}`);
-            }
-            catch (error) {
-                validationState.setError(`mult-${rowId}`, 'Invalid multiplicity');
-                hasErrors = true;
-            }
-        }
-        // Validate integration (for 1H NMR)
-        if (!row.integration || row.integration === 0) {
-            validationState.setError(`int-${rowId}`, 'Integration is required for 1H NMR');
-            hasErrors = true;
-        }
-        else {
-            validationState.clearError(`int-${rowId}`);
-        }
-    }
-    // Validate J-values
-    const multiplicity = (0, conversion_1.convertMultiplicityToText)(row.multiplicity);
-    const isJValuesOptional = window.isJValuesOptional;
-    const isOptional = multiplicity && isJValuesOptional(multiplicity);
-    const requiredJCount = (0, conversion_1.calculateRequiredJColumns)(multiplicity);
-    const actualJCount = row.jValues.filter((j) => !isNaN(j) && j !== 0).length;
-    if (isOptional) {
-        // Optional: either all empty or all filled
-        if (actualJCount > 0 && actualJCount < requiredJCount) {
-            for (let i = 0; i < requiredJCount; i++) {
-                if (!row.jValues[i] || row.jValues[i] === 0) {
-                    validationState.setError(`j${i}-${rowId}`, 'All J-values must be filled');
-                    hasErrors = true;
-                }
-                else {
-                    validationState.clearError(`j${i}-${rowId}`);
-                }
-            }
-        }
-        else {
-            // All filled or all empty - clear all errors
-            for (let i = 0; i < requiredJCount; i++) {
-                validationState.clearError(`j${i}-${rowId}`);
-            }
-        }
+    // Validate multiplicity using field validator
+    const multResult = field_validators_1.multiplicityValidator.validate(row.multiplicity, { is1HNMR });
+    if (!multResult.isValid) {
+        validationState.setError(`mult-${rowId}`, multResult.errorMessage || 'Invalid multiplicity');
+        hasErrors = true;
     }
     else {
-        // Not optional: all must be filled
-        for (let i = 0; i < requiredJCount; i++) {
-            if (!row.jValues[i] || row.jValues[i] === 0) {
-                validationState.setError(`j${i}-${rowId}`, 'J-value is required');
-                hasErrors = true;
-            }
-            else {
-                validationState.clearError(`j${i}-${rowId}`);
-            }
+        validationState.clearError(`mult-${rowId}`);
+    }
+    // Validate integration using field validator
+    const intResult = field_validators_1.integrationValidator.validate(row.integration, { is1HNMR });
+    if (!intResult.isValid) {
+        validationState.setError(`int-${rowId}`, intResult.errorMessage || 'Invalid integration');
+        hasErrors = true;
+    }
+    else {
+        validationState.clearError(`int-${rowId}`);
+    }
+    // Validate J-values using field validator
+    const multiplicity = (0, conversion_1.convertMultiplicityToText)(row.multiplicity);
+    let requiredJCount = 0;
+    try {
+        const jCounts = NMRPeak_1.NMRPeak.multipletnumbers(multiplicity);
+        requiredJCount = (jCounts === null || jCounts === void 0 ? void 0 : jCounts.length) || 0;
+    }
+    catch (error) {
+        // Invalid multiplicity - skip J-value validation
+    }
+    for (let i = 0; i < requiredJCount; i++) {
+        const jResult = field_validators_1.jValueValidator.validate(row.jValues[i] || 0, {
+            multiplicity: row.multiplicity,
+            jIndex: i,
+            allJValues: row.jValues
+        });
+        if (!jResult.isValid) {
+            validationState.setError(`j${i}-${rowId}`, jResult.errorMessage || 'Invalid J-value');
+            hasErrors = true;
         }
+        else {
+            validationState.clearError(`j${i}-${rowId}`);
+        }
+    }
+    // Clear errors for J-values beyond required count
+    for (let i = requiredJCount; i < row.jValues.length; i++) {
+        validationState.clearError(`j${i}-${rowId}`);
     }
     return hasErrors;
 }
