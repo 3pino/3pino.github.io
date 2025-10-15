@@ -16,6 +16,7 @@ const FocusManager_1 = require("./navigation/FocusManager");
 const conversion_1 = require("../utils/conversion");
 const sorting_1 = require("../utils/sorting");
 const form_validation_1 = require("../utils/form-validation");
+const formatter_1 = require("../utils/formatter");
 // Import from existing modules
 const Metadata_1 = require("../models/Metadata");
 const NMRPeak_1 = require("../models/NMRPeak");
@@ -116,8 +117,7 @@ class NMRFormatterApp {
             (0, sorting_1.sortPeaksByShift)(peaks, metadataData.sortOrder);
             const nmrData = new NMRData_1.NMRData(peaks, metadata);
             // Generate formatted text
-            const generateFormattedText = window.generateFormattedText;
-            const formattedText = generateFormattedText(nmrData, metadataData.shiftPrecision, metadataData.jPrecision, 0);
+            const formattedText = (0, formatter_1.generateFormattedText)(nmrData, metadataData.shiftPrecision, metadataData.jPrecision, 0);
             this.richTextEditor.setContent(formattedText);
             if (hasErrors) {
                 console.log('Generated text with validation errors present');

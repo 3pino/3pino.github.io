@@ -5,6 +5,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetadataForm = void 0;
+const constants_1 = require("../../core/constants");
 class MetadataForm {
     constructor(metadataState, validationState, onNavigateNext, onSortOrderChange) {
         // AbortController for cleaning up event listeners
@@ -274,8 +275,8 @@ class MetadataForm {
         }, { signal: this.abortController.signal });
     }
     initializeDropdowns() {
-        this.setupDropdown('nuclei', window.NUCLEI_PRESETS || []);
-        this.setupDropdown('solvent', window.SOLVENT_PRESETS || []);
+        this.setupDropdown('nuclei', constants_1.NUCLEI_PRESETS);
+        this.setupDropdown('solvent', constants_1.SOLVENT_PRESETS);
     }
     setupDropdown(field, presets) {
         const input = this.elements[field];

@@ -5,6 +5,7 @@
 
 import { MetadataState } from '../../state/MetadataState';
 import { ValidationState } from '../../state/ValidationState';
+import { NUCLEI_PRESETS, SOLVENT_PRESETS } from '../../core/constants';
 
 export class MetadataForm {
     private metadataState: MetadataState;
@@ -338,8 +339,8 @@ export class MetadataForm {
     }
 
     private initializeDropdowns(): void {
-        this.setupDropdown('nuclei', (window as any).NUCLEI_PRESETS || []);
-        this.setupDropdown('solvent', (window as any).SOLVENT_PRESETS || []);
+        this.setupDropdown('nuclei', NUCLEI_PRESETS);
+        this.setupDropdown('solvent', SOLVENT_PRESETS);
     }
 
     private setupDropdown(field: 'nuclei' | 'solvent', presets: any[]): void {

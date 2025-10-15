@@ -6,6 +6,7 @@
 import { TableState, TableRowData } from '../../state/TableState';
 import { ValidationState } from '../../state/ValidationState';
 import { KeyboardNav } from '../navigation/KeyboardNav';
+import { NMRPeak } from '../../models/NMRPeak';
 import { isTSVData } from '../../utils/tsv-parser';
 import { filterNumericInput, filterHTMLTags, filterChemicalShiftInput } from '../../utils/validators/input-filters';
 
@@ -941,8 +942,8 @@ export class NMRTable {
         }
 
         try {
-            // 直接 multipletnumbers() を呼び出す（変換不要）
-            const jCounts = (window as any).multipletnumbers(multiplicity.trim());
+            // Use NMRPeak.multipletnumbers directly
+            const jCounts = NMRPeak.multipletnumbers(multiplicity.trim());
             if (jCounts === null) {
                 return 0;
             }

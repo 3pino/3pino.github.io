@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseChemicalShift = parseChemicalShift;
 exports.convertMultiplicityToText = convertMultiplicityToText;
 exports.calculateRequiredJColumns = calculateRequiredJColumns;
+const NMRPeak_1 = require("../models/NMRPeak");
 /**
  * Parse chemical shift string to number or range
  * Supports formats: "7.53", "7.53-7.50", "7.53–7.50"
@@ -65,13 +66,7 @@ function calculateRequiredJColumns(multiplicity) {
         return 0;
     }
     try {
-        const w = window;
-        // Type guard: ensure the function exists
-        if (typeof w.multipletnumbers !== 'function') {
-            console.warn('multipletnumbers function not found on window');
-            return 0;
-        }
-        const jCounts = w.multipletnumbers(multiplicity);
+        const jCounts = NMRPeak_1.NMRPeak.multipletnumbers(multiplicity);
         // Validate return value
         if (jCounts === null || !Array.isArray(jCounts)) {
             return 0;

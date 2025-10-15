@@ -14,6 +14,7 @@ import { FocusManager } from './navigation/FocusManager';
 import { parseChemicalShift, convertMultiplicityToText } from '../utils/conversion';
 import { sortPeaksByShift } from '../utils/sorting';
 import { validateMetadata, validateTableRows } from '../utils/form-validation';
+import { generateFormattedText } from '../utils/formatter';
 
 // Import from existing modules
 import { Metadata } from '../models/Metadata';
@@ -167,7 +168,6 @@ export class NMRFormatterApp {
             const nmrData = new NMRData(peaks, metadata);
 
             // Generate formatted text
-            const generateFormattedText = (window as any).generateFormattedText;
             const formattedText = generateFormattedText(
                 nmrData,
                 metadataData.shiftPrecision,

@@ -433,13 +433,7 @@ function calculateRequiredJColumns(multiplicity) {
         return 0;
     }
     try {
-        const w = window;
-        // Type guard: ensure the function exists
-        if (typeof w.multipletnumbers !== 'function') {
-            console.warn('multipletnumbers function not found on window');
-            return 0;
-        }
-        const jCounts = w.multipletnumbers(multiplicity);
+        const jCounts = NMRPeak.multipletnumbers(multiplicity);
         // Validate return value
         if (jCounts === null || !Array.isArray(jCounts)) {
             return 0;
@@ -1472,8 +1466,8 @@ class MetadataForm {
         }, { signal: this.abortController.signal });
     }
     initializeDropdowns() {
-        this.setupDropdown('nuclei', window.NUCLEI_PRESETS || []);
-        this.setupDropdown('solvent', window.SOLVENT_PRESETS || []);
+        this.setupDropdown('nuclei', NUCLEI_PRESETS);
+        this.setupDropdown('solvent', SOLVENT_PRESETS);
     }
     setupDropdown(field, presets) {
         const input = this.elements[field];
@@ -2683,8 +2677,8 @@ class NMRTable {
             return 0;
         }
         try {
-            // 直接 multipletnumbers() を呼び出す（変換不要）
-            const jCounts = window.multipletnumbers(multiplicity.trim());
+            // Use NMRPeak.multipletnumbers directly
+            const jCounts = NMRPeak.multipletnumbers(multiplicity.trim());
             if (jCounts === null) {
                 return 0;
             }
@@ -3495,7 +3489,6 @@ class NMRFormatterApp {
             sortPeaksByShift(peaks, metadataData.sortOrder);
             const nmrData = new NMRData(peaks, metadata);
             // Generate formatted text
-            const generateFormattedText = window.generateFormattedText;
             const formattedText = generateFormattedText(nmrData, metadataData.shiftPrecision, metadataData.jPrecision, 0);
             this.richTextEditor.setContent(formattedText);
             if (hasErrors) {

@@ -6,6 +6,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NMRTable = void 0;
 const KeyboardNav_1 = require("../navigation/KeyboardNav");
+const NMRPeak_1 = require("../../models/NMRPeak");
 const tsv_parser_1 = require("../../utils/tsv-parser");
 const input_filters_1 = require("../../utils/validators/input-filters");
 class NMRTable {
@@ -847,8 +848,8 @@ class NMRTable {
             return 0;
         }
         try {
-            // 直接 multipletnumbers() を呼び出す（変換不要）
-            const jCounts = window.multipletnumbers(multiplicity.trim());
+            // Use NMRPeak.multipletnumbers directly
+            const jCounts = NMRPeak_1.NMRPeak.multipletnumbers(multiplicity.trim());
             if (jCounts === null) {
                 return 0;
             }

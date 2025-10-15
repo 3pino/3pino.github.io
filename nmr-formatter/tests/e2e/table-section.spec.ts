@@ -39,7 +39,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       await shiftInput.fill('7.53a');
 
       const value = await helper.getInputValue(shiftInput);
-      expect(value).toBe('7.53a');
+      expect(value).toBe('7.53');
     });
   });
 
@@ -617,7 +617,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       // Initially no multiplicity, so no J-columns
       const colSpan = await helper.getAddRowCellColSpan();
       const expected = await helper.getExpectedAddRowColSpan();
-      
+
       expect(colSpan).toBe(expected); // Should be 4 (shift + mult + int + assignment)
     });
 

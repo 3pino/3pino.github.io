@@ -2,6 +2,8 @@
  * Utility functions for data parsing and conversion
  */
 
+import { NMRPeak } from '../models/NMRPeak';
+
 /**
  * Parse chemical shift string to number or range
  * Supports formats: "7.53", "7.53-7.50", "7.53–7.50"
@@ -70,15 +72,7 @@ export function calculateRequiredJColumns(multiplicity: string): number {
     }
 
     try {
-        const w = window as unknown as import('../core/types').WindowWithNMRFunctions;
-        
-        // Type guard: ensure the function exists
-        if (typeof w.multipletnumbers !== 'function') {
-            console.warn('multipletnumbers function not found on window');
-            return 0;
-        }
-        
-        const jCounts = w.multipletnumbers(multiplicity);
+        const jCounts = NMRPeak.multipletnumbers(multiplicity);
         
         // Validate return value
         if (jCounts === null || !Array.isArray(jCounts)) {
