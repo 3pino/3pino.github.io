@@ -27,6 +27,23 @@ export function filterNumericInput(value: string): string {
 }
 
 /**
+ * Filter chemical shift input to allow numbers, decimal points, and range indicators
+ * Used for Chemical Shift (δ) field which can be a single value or a range
+ * Allows: digits, decimal points, minus sign (-), en dash (–), negative numbers
+ * @param value - The input value to filter
+ * @returns Filtered value for chemical shift input
+ * @example
+ * filterChemicalShiftInput("7.25-7.30") // "7.25-7.30"
+ * filterChemicalShiftInput("7.25–7.30") // "7.25–7.30"
+ * filterChemicalShiftInput("-1.5") // "-1.5"
+ * filterChemicalShiftInput("abc7.25") // "7.25"
+ */
+export function filterChemicalShiftInput(value: string): string {
+  // Allow: digits (0-9), decimal point (.), hyphen-minus (-), en dash (–)
+  return value.replace(/[^0-9.\-–]/g, '');
+}
+
+/**
  * Filter HTML content to allow only specific tags
  * Used for Assignment field to restrict rich text formatting
  * @param container - DOM element containing HTML to filter

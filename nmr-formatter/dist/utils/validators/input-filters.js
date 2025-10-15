@@ -5,6 +5,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterNumericInput = filterNumericInput;
+exports.filterChemicalShiftInput = filterChemicalShiftInput;
 exports.filterHTMLTags = filterHTMLTags;
 exports.noFilter = noFilter;
 /**
@@ -26,6 +27,22 @@ function filterNumericInput(value) {
         filtered = parts[0] + '.' + parts.slice(1).join('');
     }
     return filtered;
+}
+/**
+ * Filter chemical shift input to allow numbers, decimal points, and range indicators
+ * Used for Chemical Shift (δ) field which can be a single value or a range
+ * Allows: digits, decimal points, minus sign (-), en dash (–), negative numbers
+ * @param value - The input value to filter
+ * @returns Filtered value for chemical shift input
+ * @example
+ * filterChemicalShiftInput("7.25-7.30") // "7.25-7.30"
+ * filterChemicalShiftInput("7.25–7.30") // "7.25–7.30"
+ * filterChemicalShiftInput("-1.5") // "-1.5"
+ * filterChemicalShiftInput("abc7.25") // "7.25"
+ */
+function filterChemicalShiftInput(value) {
+    // Allow: digits (0-9), decimal point (.), hyphen-minus (-), en dash (–)
+    return value.replace(/[^0-9.\-–]/g, '');
 }
 /**
  * Filter HTML content to allow only specific tags

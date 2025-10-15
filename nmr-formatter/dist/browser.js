@@ -772,6 +772,22 @@ function filterNumericInput(value) {
     return filtered;
 }
 /**
+ * Filter chemical shift input to allow numbers, decimal points, and range indicators
+ * Used for Chemical Shift (δ) field which can be a single value or a range
+ * Allows: digits, decimal points, minus sign (-), en dash (–), negative numbers
+ * @param value - The input value to filter
+ * @returns Filtered value for chemical shift input
+ * @example
+ * filterChemicalShiftInput("7.25-7.30") // "7.25-7.30"
+ * filterChemicalShiftInput("7.25–7.30") // "7.25–7.30"
+ * filterChemicalShiftInput("-1.5") // "-1.5"
+ * filterChemicalShiftInput("abc7.25") // "7.25"
+ */
+function filterChemicalShiftInput(value) {
+    // Allow: digits (0-9), decimal point (.), hyphen-minus (-), en dash (–)
+    return value.replace(/[^0-9.\-–]/g, '');
+}
+/**
  * Filter HTML content to allow only specific tags
  * Used for Assignment field to restrict rich text formatting
  * @param container - DOM element containing HTML to filter
@@ -2217,7 +2233,12 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            this.tableState.updateRow(rowId, { shift: input.value });
+            // Filter to allow numbers, decimal points, and range indicators (-–)
+            const filtered = filterChemicalShiftInput(input.value);
+            if (filtered !== input.value) {
+                input.value = filtered;
+            }
+            this.tableState.updateRow(rowId, { shift: filtered });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
         }, { signal: this.abortController.signal });

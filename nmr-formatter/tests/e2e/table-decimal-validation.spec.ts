@@ -193,6 +193,82 @@ test.describe('Table Section - Decimal Point Validation', () => {
     });
   });
 
+  test.describe('Chemical Shift Input - Range and Negative Values', () => {
+    test('should accept single positive value', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('7.25');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('7.25');
+    });
+
+    test('should accept negative value', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('-1.5');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('-1.5');
+    });
+
+    test('should accept range with hyphen', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('7.25-7.30');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('7.25-7.30');
+    });
+
+    test('should accept range with en dash', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('7.25–7.30');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('7.25–7.30');
+    });
+
+    test('should filter out invalid characters', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('7.25abc-7.30xyz');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('7.25-7.30');
+      expect(value).toMatch(/^[0-9.\-–]+$/);
+    });
+
+    test('should allow only valid characters [0-9.-–]', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('test7.25@#$-7.30!');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('7.25-7.30');
+      expect(value).toMatch(/^[0-9.\-–]+$/);
+    });
+
+    test('should handle negative range', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('-2.5--1.0');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('-2.5--1.0');
+    });
+
+    test('should accept multiple decimal points in range values', async () => {
+      const shiftInput = helper.getShiftInput(0);
+
+      await shiftInput.fill('1.23-4.56');
+
+      const value = await helper.getInputValue(shiftInput);
+      expect(value).toBe('1.23-4.56');
+    });
+  });
+
   test.describe('Edge Cases', () => {
     test('should handle only decimal points (no numbers)', async () => {
       const intInput = helper.getIntegrationInput(0);

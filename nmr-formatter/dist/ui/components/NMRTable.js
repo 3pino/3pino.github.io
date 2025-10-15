@@ -411,7 +411,12 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            this.tableState.updateRow(rowId, { shift: input.value });
+            // Filter to allow numbers, decimal points, and range indicators (-–)
+            const filtered = (0, input_filters_1.filterChemicalShiftInput)(input.value);
+            if (filtered !== input.value) {
+                input.value = filtered;
+            }
+            this.tableState.updateRow(rowId, { shift: filtered });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
         }, { signal: this.abortController.signal });

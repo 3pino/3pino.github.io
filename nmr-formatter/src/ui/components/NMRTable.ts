@@ -7,7 +7,7 @@ import { TableState, TableRowData } from '../../state/TableState';
 import { ValidationState } from '../../state/ValidationState';
 import { KeyboardNav } from '../navigation/KeyboardNav';
 import { isTSVData } from '../../utils/tsv-parser';
-import { filterNumericInput, filterHTMLTags } from '../../utils/validators/input-filters';
+import { filterNumericInput, filterHTMLTags, filterChemicalShiftInput } from '../../utils/validators/input-filters';
 
 export class NMRTable {
     private tableState: TableState;
@@ -473,7 +473,12 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            this.tableState.updateRow(rowId, { shift: input.value });
+            // Filter to allow numbers, decimal points, and range indicators (-–)
+            const filtered = filterChemicalShiftInput(input.value);
+            if (filtered !== input.value) {
+                input.value = filtered;
+            }
+            this.tableState.updateRow(rowId, { shift: filtered });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
         }, { signal: this.abortController.signal });
