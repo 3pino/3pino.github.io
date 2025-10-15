@@ -199,5 +199,27 @@ describe('NMRPeak', () => {
         expect(errors[0].message).toContain('found 2');
       });
     });
+
+    describe('Integration validation', () => {
+      it('should return error for integration less than 0.5', () => {
+        const peak = new NMRPeak(7.25, 's', [], 0.3);
+
+        const errors = peak.validate();
+        expect(errors).toHaveLength(1);
+        expect(errors[0].field).toBe('integration');
+        expect(errors[0].message).toContain('Integration must be at least 0.5');
+        expect(errors[0].message).toContain('0.3');
+      });
+
+      it('should accept integration equal to 0.5', () => {
+        const peak = new NMRPeak(7.25, 's', [], 0.5);
+        expect(peak.validate()).toEqual([]);
+      });
+
+      it('should accept integration greater than 0.5', () => {
+        const peak = new NMRPeak(7.25, 's', [], 1);
+        expect(peak.validate()).toEqual([]);
+      });
+    });
   });
 });

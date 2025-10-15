@@ -154,6 +154,22 @@ export class NMRPeak {
     validate(): ValidationError[] {
         const errors: ValidationError[] = [];
 
+        // Validate Integration: must be >= 0.5
+        if (this.integration !== null && this.integration !== '') {
+            const integrationValue = typeof this.integration === 'string' 
+                ? parseFloat(this.integration) 
+                : this.integration;
+            
+            if (!isNaN(integrationValue) && integrationValue < 0.5) {
+                errors.push({
+                    type: 'peak',
+                    index: 0,
+                    field: 'integration',
+                    message: `Integration must be at least 0.5, but found ${integrationValue}`
+                });
+            }
+        }
+
         if (this.multiplicity) {
             try {
                 const expectedJCounts = NMRPeak.multipletnumbers(this.multiplicity);
