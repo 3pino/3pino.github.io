@@ -38,7 +38,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isJValuesOptional = exports.multipletnumbers = exports.getValidator = exports.assignmentValidator = exports.integrationValidator = exports.jValueValidator = exports.multiplicityValidator = exports.shiftValidator = exports.noFilter = exports.filterHTMLTags = exports.filterNumericInput = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
+exports.isJValuesOptional = exports.multipletnumbers = exports.NMRFormatterApp = exports.DragDropHandler = exports.ErrorNotification = exports.getValidator = exports.assignmentValidator = exports.integrationValidator = exports.jValueValidator = exports.multiplicityValidator = exports.shiftValidator = exports.noFilter = exports.filterHTMLTags = exports.filterNumericInput = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
 // Core types and constants
 __exportStar(require("./core/types"), exports);
 __exportStar(require("./core/logger"), exports);
@@ -96,6 +96,13 @@ Object.defineProperty(exports, "jValueValidator", { enumerable: true, get: funct
 Object.defineProperty(exports, "integrationValidator", { enumerable: true, get: function () { return field_validators_1.integrationValidator; } });
 Object.defineProperty(exports, "assignmentValidator", { enumerable: true, get: function () { return field_validators_1.assignmentValidator; } });
 Object.defineProperty(exports, "getValidator", { enumerable: true, get: function () { return field_validators_1.getValidator; } });
+// UI Components
+var ErrorNotification_1 = require("./ui/components/ErrorNotification");
+Object.defineProperty(exports, "ErrorNotification", { enumerable: true, get: function () { return ErrorNotification_1.ErrorNotification; } });
+var DragDropHandler_1 = require("./ui/components/DragDropHandler");
+Object.defineProperty(exports, "DragDropHandler", { enumerable: true, get: function () { return DragDropHandler_1.DragDropHandler; } });
+var App_1 = require("./ui/App");
+Object.defineProperty(exports, "NMRFormatterApp", { enumerable: true, get: function () { return App_1.NMRFormatterApp; } });
 // Re-export validation functions for backward compatibility
 exports.multipletnumbers = NMRPeak_2.NMRPeak.multipletnumbers;
 exports.isJValuesOptional = NMRPeak_2.NMRPeak.isJValuesOptional;
@@ -109,6 +116,9 @@ const Parser = __importStar(require("./utils/parser"));
 const Formatter = __importStar(require("./utils/formatter"));
 const TableConverter = __importStar(require("./utils/table-converter"));
 const TSVParser = __importStar(require("./utils/tsv-parser"));
+const ErrorNotification_2 = require("./ui/components/ErrorNotification");
+const DragDropHandler_2 = require("./ui/components/DragDropHandler");
+const App_2 = require("./ui/App");
 if (typeof window !== 'undefined') {
     const w = window;
     // Core
@@ -149,5 +159,9 @@ if (typeof window !== 'undefined') {
     // Validators (from NMRPeak static methods)
     w.multipletnumbers = NMRPeak_2.NMRPeak.multipletnumbers;
     w.isJValuesOptional = NMRPeak_2.NMRPeak.isJValuesOptional;
+    // UI Components
+    w.ErrorNotification = ErrorNotification_2.ErrorNotification;
+    w.DragDropHandler = DragDropHandler_2.DragDropHandler;
+    w.NMRFormatterApp = App_2.NMRFormatterApp;
 }
 //# sourceMappingURL=index.js.map

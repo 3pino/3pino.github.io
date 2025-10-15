@@ -10,6 +10,8 @@ const MetadataForm_1 = require("./components/MetadataForm");
 const NMRTable_1 = require("./components/NMRTable");
 const RichTextEditor_1 = require("./components/RichTextEditor");
 const Toolbar_1 = require("./components/Toolbar");
+const ErrorNotification_1 = require("./components/ErrorNotification");
+const DragDropHandler_1 = require("./components/DragDropHandler");
 const FocusManager_1 = require("./navigation/FocusManager");
 const conversion_1 = require("../utils/conversion");
 const sorting_1 = require("../utils/sorting");
@@ -54,6 +56,19 @@ class NMRFormatterApp {
         this.richTextEditor = new RichTextEditor_1.RichTextEditor();
         // Initialize toolbar
         this.toolbar = new Toolbar_1.Toolbar();
+        // Initialize error notification system
+        this.errorNotification = new ErrorNotification_1.ErrorNotification();
+        // Initialize drag-drop handler for table container
+        const tableContainer = document.querySelector('.table-container');
+        if (tableContainer) {
+            this.dragDropHandler = new DragDropHandler_1.DragDropHandler({
+                targetElement: tableContainer,
+                errorNotification: this.errorNotification,
+                onFilesDropped: (files) => {
+                    console.log('Files dropped:', files.map(f => f.name));
+                }
+            });
+        }
         // Initialize event listeners
         this.initializeEventListeners();
     }

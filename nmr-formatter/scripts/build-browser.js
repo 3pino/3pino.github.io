@@ -38,6 +38,8 @@ const metadataFormCode = fs.readFileSync(path.join(distDir, 'ui', 'components', 
 const nmrTableCode = fs.readFileSync(path.join(distDir, 'ui', 'components', 'NMRTable.js'), 'utf8');
 const richTextEditorCode = fs.readFileSync(path.join(distDir, 'ui', 'components', 'RichTextEditor.js'), 'utf8');
 const toolbarCode = fs.readFileSync(path.join(distDir, 'ui', 'components', 'Toolbar.js'), 'utf8');
+const errorNotificationCode = fs.readFileSync(path.join(distDir, 'ui', 'components', 'ErrorNotification.js'), 'utf8');
+const dragDropHandlerCode = fs.readFileSync(path.join(distDir, 'ui', 'components', 'DragDropHandler.js'), 'utf8');
 
 // Read Navigation files
 const focusManagerCode = fs.readFileSync(path.join(distDir, 'ui', 'navigation', 'FocusManager.js'), 'utf8');
@@ -145,6 +147,10 @@ ${convertToBrowserCode(richTextEditorCode)}
 
 ${convertToBrowserCode(toolbarCode)}
 
+${convertToBrowserCode(errorNotificationCode)}
+
+${convertToBrowserCode(dragDropHandlerCode)}
+
 // ========== NAVIGATION ==========
 ${convertToBrowserCode(focusManagerCode)}
 
@@ -190,6 +196,8 @@ window.MetadataForm = MetadataForm;
 window.NMRTable = NMRTable;
 window.RichTextEditor = RichTextEditor;
 window.Toolbar = Toolbar;
+window.ErrorNotification = ErrorNotification;
+window.DragDropHandler = DragDropHandler;
 window.FocusManager = FocusManager;
 window.KeyboardNav = KeyboardNav;
 window.NMRFormatterApp = NMRFormatterApp;

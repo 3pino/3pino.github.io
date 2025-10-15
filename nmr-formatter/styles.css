@@ -16,6 +16,7 @@
 @import url('styles/components/table.css');
 @import url('styles/components/editor.css');
 @import url('styles/components/buttons.css');
+@import url('styles/components/notifications.css');
 
 /* Utilities & Responsive */
 @import url('styles/utilities.css');

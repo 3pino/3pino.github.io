@@ -70,6 +70,13 @@ export {
 
 export type { FieldValidator, FieldValidationResult } from './utils/validators/field-validators';
 
+// UI Components
+export { ErrorNotification } from './ui/components/ErrorNotification';
+export type { NotificationOptions } from './ui/components/ErrorNotification';
+export { DragDropHandler } from './ui/components/DragDropHandler';
+export type { DragDropOptions } from './ui/components/DragDropHandler';
+export { NMRFormatterApp } from './ui/App';
+
 // Re-export validation functions for backward compatibility
 export const multipletnumbers = NMRPeak.multipletnumbers;
 export const isJValuesOptional = NMRPeak.isJValuesOptional;
@@ -84,6 +91,9 @@ import * as Parser from './utils/parser';
 import * as Formatter from './utils/formatter';
 import * as TableConverter from './utils/table-converter';
 import * as TSVParser from './utils/tsv-parser';
+import { ErrorNotification } from './ui/components/ErrorNotification';
+import { DragDropHandler } from './ui/components/DragDropHandler';
+import { NMRFormatterApp } from './ui/App';
 
 if (typeof window !== 'undefined') {
     const w = window as any;
@@ -133,4 +143,9 @@ if (typeof window !== 'undefined') {
     // Validators (from NMRPeak static methods)
     w.multipletnumbers = NMRPeak.multipletnumbers;
     w.isJValuesOptional = NMRPeak.isJValuesOptional;
+
+    // UI Components
+    w.ErrorNotification = ErrorNotification;
+    w.DragDropHandler = DragDropHandler;
+    w.NMRFormatterApp = NMRFormatterApp;
 }

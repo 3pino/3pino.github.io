@@ -8,6 +8,8 @@ import { MetadataForm } from './components/MetadataForm';
 import { NMRTable } from './components/NMRTable';
 import { RichTextEditor } from './components/RichTextEditor';
 import { Toolbar } from './components/Toolbar';
+import { ErrorNotification } from './components/ErrorNotification';
+import { DragDropHandler } from './components/DragDropHandler';
 import { FocusManager } from './navigation/FocusManager';
 import { parseChemicalShift, convertMultiplicityToText } from '../utils/conversion';
 import { sortPeaksByShift } from '../utils/sorting';
@@ -25,6 +27,8 @@ export class NMRFormatterApp {
     private richTextEditor: RichTextEditor;
     private toolbar: Toolbar;
     private focusManager: FocusManager;
+    private errorNotification: ErrorNotification;
+    private dragDropHandler?: DragDropHandler;
 
     constructor() {
         this.appState = new AppState();
@@ -79,6 +83,21 @@ export class NMRFormatterApp {
 
         // Initialize toolbar
         this.toolbar = new Toolbar();
+
+        // Initialize error notification system
+        this.errorNotification = new ErrorNotification();
+
+        // Initialize drag-drop handler for table container
+        const tableContainer = document.querySelector('.table-container') as HTMLElement;
+        if (tableContainer) {
+            this.dragDropHandler = new DragDropHandler({
+                targetElement: tableContainer,
+                errorNotification: this.errorNotification,
+                onFilesDropped: (files) => {
+                    console.log('Files dropped:', files.map(f => f.name));
+                }
+            });
+        }
 
         // Initialize event listeners
         this.initializeEventListeners();
