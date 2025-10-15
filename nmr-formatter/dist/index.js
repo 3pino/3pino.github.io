@@ -38,7 +38,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isJValuesOptional = exports.multipletnumbers = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
+exports.isJValuesOptional = exports.multipletnumbers = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
 // Core types and constants
 __exportStar(require("./core/types"), exports);
 __exportStar(require("./core/logger"), exports);
@@ -81,6 +81,9 @@ var table_converter_1 = require("./utils/table-converter");
 Object.defineProperty(exports, "dataToTable", { enumerable: true, get: function () { return table_converter_1.dataToTable; } });
 Object.defineProperty(exports, "tableToData", { enumerable: true, get: function () { return table_converter_1.tableToData; } });
 Object.defineProperty(exports, "getMaxJValues", { enumerable: true, get: function () { return table_converter_1.getMaxJValues; } });
+var tsv_parser_1 = require("./utils/tsv-parser");
+Object.defineProperty(exports, "isTSVData", { enumerable: true, get: function () { return tsv_parser_1.isTSVData; } });
+Object.defineProperty(exports, "parseTSV", { enumerable: true, get: function () { return tsv_parser_1.parseTSV; } });
 // Re-export validation functions for backward compatibility
 exports.multipletnumbers = NMRPeak_2.NMRPeak.multipletnumbers;
 exports.isJValuesOptional = NMRPeak_2.NMRPeak.isJValuesOptional;
@@ -93,6 +96,7 @@ const NMRData_2 = require("./models/NMRData");
 const Parser = __importStar(require("./utils/parser"));
 const Formatter = __importStar(require("./utils/formatter"));
 const TableConverter = __importStar(require("./utils/table-converter"));
+const TSVParser = __importStar(require("./utils/tsv-parser"));
 if (typeof window !== 'undefined') {
     const w = window;
     // Core
@@ -127,6 +131,9 @@ if (typeof window !== 'undefined') {
     w.dataToTable = TableConverter.dataToTable;
     w.tableToData = TableConverter.tableToData;
     w.getMaxJValues = TableConverter.getMaxJValues;
+    // TSV Parser
+    w.isTSVData = TSVParser.isTSVData;
+    w.parseTSV = TSVParser.parseTSV;
     // Validators (from NMRPeak static methods)
     w.multipletnumbers = NMRPeak_2.NMRPeak.multipletnumbers;
     w.isJValuesOptional = NMRPeak_2.NMRPeak.isJValuesOptional;

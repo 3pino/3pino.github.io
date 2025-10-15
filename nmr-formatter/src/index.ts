@@ -47,6 +47,11 @@ export {
     getMaxJValues
 } from './utils/table-converter';
 
+export {
+    isTSVData,
+    parseTSV
+} from './utils/tsv-parser';
+
 // Re-export validation functions for backward compatibility
 export const multipletnumbers = NMRPeak.multipletnumbers;
 export const isJValuesOptional = NMRPeak.isJValuesOptional;
@@ -60,6 +65,7 @@ import { NMRData } from './models/NMRData';
 import * as Parser from './utils/parser';
 import * as Formatter from './utils/formatter';
 import * as TableConverter from './utils/table-converter';
+import * as TSVParser from './utils/tsv-parser';
 
 if (typeof window !== 'undefined') {
     const w = window as any;
@@ -101,6 +107,10 @@ if (typeof window !== 'undefined') {
     w.dataToTable = TableConverter.dataToTable;
     w.tableToData = TableConverter.tableToData;
     w.getMaxJValues = TableConverter.getMaxJValues;
+
+    // TSV Parser
+    w.isTSVData = TSVParser.isTSVData;
+    w.parseTSV = TSVParser.parseTSV;
 
     // Validators (from NMRPeak static methods)
     w.multipletnumbers = NMRPeak.multipletnumbers;

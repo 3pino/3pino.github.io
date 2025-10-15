@@ -21,6 +21,7 @@ const conversionCode = fs.readFileSync(path.join(distDir, 'utils', 'conversion.j
 const sortingCode = fs.readFileSync(path.join(distDir, 'utils', 'sorting.js'), 'utf8');
 const formValidationCode = fs.readFileSync(path.join(distDir, 'utils', 'form-validation.js'), 'utf8');
 const formatterCode = fs.readFileSync(path.join(distDir, 'utils', 'formatter.js'), 'utf8');
+const tsvParserCode = fs.readFileSync(path.join(distDir, 'utils', 'tsv-parser.js'), 'utf8');
 
 // Read State Management files
 const metadataStateCode = fs.readFileSync(path.join(distDir, 'state', 'MetadataState.js'), 'utf8');
@@ -112,6 +113,8 @@ ${convertToBrowserCode(formValidationCode)}
 
 ${convertToBrowserCode(formatterCode)}
 
+${convertToBrowserCode(tsvParserCode)}
+
 // ========== STATE MANAGEMENT ==========
 ${convertToBrowserCode(metadataStateCode)}
 
@@ -178,6 +181,10 @@ window.Toolbar = Toolbar;
 window.FocusManager = FocusManager;
 window.KeyboardNav = KeyboardNav;
 window.NMRFormatterApp = NMRFormatterApp;
+
+// Export TSV Parser utilities
+window.isTSVData = isTSVData;
+window.parseTSV = parseTSV;
 
 console.log('NMR Formatter browser bundle loaded (TypeScript refactored version)');
 `;

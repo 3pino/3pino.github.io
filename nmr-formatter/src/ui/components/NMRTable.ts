@@ -6,6 +6,7 @@
 import { TableState, TableRowData } from '../../state/TableState';
 import { ValidationState } from '../../state/ValidationState';
 import { KeyboardNav } from '../navigation/KeyboardNav';
+import { isTSVData } from '../../utils/tsv-parser';
 
 export class NMRTable {
     private tableState: TableState;
@@ -103,6 +104,196 @@ export class NMRTable {
                 }
             });
         });
+    }
+
+    /**
+     * Get the column type from a cell element
+     * @param cell - The cell element (td or the input element inside it)
+     * @returns Column type string (e.g., 'shift', 'multiplicity', 'j-0', 'integration', 'assignment') or null
+     */
+    private getCellColumnType(cell: HTMLElement): string | null {
+        // If cell is an input element, get its parent td
+        const tdElement = cell.tagName === 'TD' ? cell : cell.closest('td');
+        if (!tdElement) return null;
+
+        // Check for shift input
+        if (tdElement.querySelector('.shift-input')) return 'shift';
+        
+        // Check for multiplicity input
+        if (tdElement.querySelector('.mult-input')) return 'multiplicity';
+        
+        // Check for J input
+        const jInput = tdElement.querySelector('.j-input');
+        if (jInput) {
+            const jIndex = jInput.getAttribute('data-j-index');
+            return jIndex !== null ? `j-${jIndex}` : null;
+        }
+        
+        // Check for integration input
+        if (tdElement.querySelector('.int-input')) return 'integration';
+        
+        // Check for assignment input
+        if (tdElement.querySelector('.assignment-input')) return 'assignment';
+        
+        return null;
+    }
+
+    /**
+     * Handle TSV paste operation
+     * @param startElement - The input element where paste was initiated
+     * @param startRow - The row where paste was initiated
+     * @param tsvText - The TSV text to paste
+     */
+    private async handleTSVPaste(startElement: HTMLElement, startRow: HTMLTableRowElement, tsvText: string): Promise<void> {
+        console.log('[TSV Paste] Starting with text:', tsvText);
+        
+        // Parse TSV data
+        const rows = tsvText.split(/\r?\n/).map(line => line.split('\t'));
+        console.log('[TSV Paste] Parsed into rows:', rows.length, rows);
+        
+        // Filter out empty rows
+        const validRows = rows.filter(row => row.length > 0 && row.some(cell => cell.trim() !== ''));
+        console.log('[TSV Paste] Valid rows:', validRows.length, validRows);
+        
+        // Get the starting cell and determine which column we're starting from
+        const startCell = startElement.closest('td');
+        if (!startCell) {
+            console.log('[TSV Paste] No start cell found');
+            return;
+        }
+        
+        // Get the column index of the start cell
+        const startCells = Array.from(startRow.querySelectorAll('td'));
+        const startColumnIndex = startCells.indexOf(startCell as HTMLTableCellElement);
+        console.log('[TSV Paste] Start column index in row:', startColumnIndex);
+        
+        // Get all table rows
+        let currentRow: HTMLTableRowElement | null = startRow;
+        
+        // Process each TSV row
+        for (let rowIdx = 0; rowIdx < validRows.length; rowIdx++) {
+            const tsvRow = validRows[rowIdx];
+            console.log(`[TSV Paste] Processing row ${rowIdx}/${validRows.length}:`, tsvRow);
+            
+            // If we need more rows, add them
+            if (!currentRow) {
+                console.log('[TSV Paste] Current row is null, adding new row');
+                const newId = this.tableState.addRow();
+                // Wait for the row to be rendered
+                await new Promise<void>(resolve => {
+                    requestAnimationFrame(() => {
+                        const newRowElement = this.rowElements.get(newId);
+                        if (newRowElement) {
+                            console.log('[TSV Paste] New row rendered, applying data');
+                            // Find the corresponding cell in the new row at the same column index
+                            const newRowCells = Array.from(newRowElement.querySelectorAll('td'));
+                            const newStartCell = newRowCells[startColumnIndex];
+                            if (newStartCell) {
+                                this.applyTSVRowDataSequentially(newRowElement, newStartCell as HTMLElement, tsvRow).then(resolve);
+                            } else {
+                                console.log('[TSV Paste] Could not find start cell in new row');
+                                resolve();
+                            }
+                        } else {
+                            console.log('[TSV Paste] New row not found in rowElements');
+                            resolve();
+                        }
+                    });
+                });
+            } else {
+                console.log('[TSV Paste] Applying data to existing row');
+                // For existing rows, find the start cell at the same column index
+                const rowCells = Array.from(currentRow.querySelectorAll('td'));
+                const rowStartCell = rowCells[startColumnIndex];
+                if (rowStartCell) {
+                    await this.applyTSVRowDataSequentially(currentRow, rowStartCell as HTMLElement, tsvRow);
+                }
+                
+                // Move to next row
+                const nextRow = currentRow.nextElementSibling as HTMLTableRowElement | null;
+                console.log('[TSV Paste] Looking for next row:', nextRow?.tagName, nextRow?.classList.toString());
+                if (nextRow && !nextRow.classList.contains('add-row-footer')) {
+                    currentRow = nextRow;
+                    console.log('[TSV Paste] Moving to next existing row');
+                } else {
+                    currentRow = null;
+                    console.log('[TSV Paste] No more existing rows, will create new ones');
+                }
+            }
+        }
+        console.log('[TSV Paste] Completed all rows');
+    }
+    
+    /**
+     * Apply TSV row data to a table row
+     * @param row - The table row element
+     * @param columnTypes - Array of column type strings
+     * @param startColIndex - Starting column index
+     * @param data - Array of cell values
+     */
+    private async applyTSVRowDataSequentially(row: HTMLTableRowElement, startCell: HTMLElement, data: string[]): Promise<void> {
+        // Build column type map dynamically as we go
+        const startCellElement = startCell.closest('td');
+        if (!startCellElement) return;
+        
+        // Get all cells
+        let allCells = Array.from(row.querySelectorAll('td'));
+        let currentCellIndex = allCells.indexOf(startCellElement as HTMLTableCellElement);
+        
+        if (currentCellIndex === -1) return;
+        
+        // Apply each data value sequentially
+        for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
+            const value = data[dataIdx];
+            
+            // Find next visible cell from current position
+            let targetCell: HTMLTableCellElement | null = null;
+            for (let i = currentCellIndex; i < allCells.length; i++) {
+                const cell = allCells[i] as HTMLTableCellElement;
+                const computedStyle = window.getComputedStyle(cell);
+                if (computedStyle.display !== 'none') {
+                    targetCell = cell;
+                    currentCellIndex = i + 1; // Move to next for next iteration
+                    break;
+                }
+            }
+            
+            if (!targetCell) break; // No more visible cells
+            
+            // Get the input element in this cell
+            const inputElement = targetCell.querySelector('input, [contenteditable="true"]') as HTMLInputElement | HTMLElement;
+            if (!inputElement) continue;
+            
+            // Determine column type
+            const colType = this.getCellColumnType(targetCell);
+            
+            // Set value
+            if (colType === 'assignment') {
+                inputElement.innerHTML = value;
+            } else {
+                (inputElement as HTMLInputElement).value = value;
+            }
+            
+            // Dispatch input event to trigger validation and state update
+            inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // If this is multiplicity, wait for J columns to update
+            if (colType === 'multiplicity') {
+                // Wait for DOM updates to complete
+                await new Promise<void>(resolve => {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            resolve();
+                        });
+                    });
+                });
+                
+                // Rebuild the cell list with updated visibility
+                allCells = Array.from(row.querySelectorAll('td'));
+                // Find current position in updated list
+                currentCellIndex = allCells.indexOf(targetCell) + 1;
+            }
+        }
     }
 
     private initializeEventListeners(
@@ -268,6 +459,18 @@ export class NMRTable {
     }
 
     private setupShiftInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
+        // Handle paste event
+        input.addEventListener('paste', (e) => {
+            const clipboardData = (e as ClipboardEvent).clipboardData;
+            const text = clipboardData?.getData('text/plain') || '';
+            
+            if (isTSVData(text)) {
+                e.preventDefault();
+                this.handleTSVPaste(input, row, text);
+            }
+            // Otherwise, allow default paste behavior
+        }, { signal: this.abortController.signal });
+
         input.addEventListener('input', () => {
             this.tableState.updateRow(rowId, { shift: input.value });
             // Clear error on input (real-time clearing, no new errors shown)
@@ -304,6 +507,18 @@ export class NMRTable {
     }
 
     private setupMultiplicityInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
+        // Handle paste event
+        input.addEventListener('paste', (e) => {
+            const clipboardData = (e as ClipboardEvent).clipboardData;
+            const text = clipboardData?.getData('text/plain') || '';
+            
+            if (isTSVData(text)) {
+                e.preventDefault();
+                this.handleTSVPaste(input, row, text);
+            }
+            // Otherwise, allow default paste behavior
+        }, { signal: this.abortController.signal });
+
         input.addEventListener('input', () => {
             this.tableState.updateRow(rowId, { multiplicity: input.value });
             // Clear error on input (real-time clearing, no new errors shown)
@@ -343,6 +558,18 @@ export class NMRTable {
     }
 
     private setupJInput(input: HTMLInputElement, rowId: string, index: number, row: HTMLTableRowElement): void {
+        // Handle paste event
+        input.addEventListener('paste', (e) => {
+            const clipboardData = (e as ClipboardEvent).clipboardData;
+            const text = clipboardData?.getData('text/plain') || '';
+            
+            if (isTSVData(text)) {
+                e.preventDefault();
+                this.handleTSVPaste(input, row, text);
+            }
+            // Otherwise, allow default paste behavior
+        }, { signal: this.abortController.signal });
+
         input.addEventListener('input', () => {
             // Filter to allow only numbers and ONE decimal point
             let filtered = input.value.replace(/[^0-9.]/g, '');
@@ -406,6 +633,18 @@ export class NMRTable {
     }
 
     private setupIntegrationInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
+        // Handle paste event
+        input.addEventListener('paste', (e) => {
+            const clipboardData = (e as ClipboardEvent).clipboardData;
+            const text = clipboardData?.getData('text/plain') || '';
+            
+            if (isTSVData(text)) {
+                e.preventDefault();
+                this.handleTSVPaste(input, row, text);
+            }
+            // Otherwise, allow default paste behavior
+        }, { signal: this.abortController.signal });
+
         input.addEventListener('input', () => {
             // Filter to allow only numbers and ONE decimal point
             let filtered = input.value.replace(/[^0-9.]/g, '');
@@ -458,11 +697,21 @@ export class NMRTable {
     private setupAssignmentInput(input: HTMLElement, rowId: string, row: HTMLTableRowElement): void {
         // Paste filtering
         input.addEventListener('paste', (e) => {
-            e.preventDefault();
             const clipboardData = (e as ClipboardEvent).clipboardData;
-            const text = clipboardData?.getData('text/html') || clipboardData?.getData('text/plain') || '';
+            const text = clipboardData?.getData('text/plain') || '';
+            
+            // Check if TSV data
+            if (isTSVData(text)) {
+                e.preventDefault();
+                this.handleTSVPaste(input, row, text);
+                return;
+            }
+            
+            // Otherwise, handle as rich text paste (existing behavior)
+            e.preventDefault();
+            const htmlText = clipboardData?.getData('text/html') || clipboardData?.getData('text/plain') || '';
             const temp = document.createElement('div');
-            temp.innerHTML = text;
+            temp.innerHTML = htmlText;
             const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
             document.execCommand('insertHTML', false, filtered);
         }, { signal: this.abortController.signal });
