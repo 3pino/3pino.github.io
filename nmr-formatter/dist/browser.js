@@ -220,7 +220,7 @@ class NMRPeak {
             [/quartets?/g, '4'],
             [/triplets?/g, '3'],
             [/doublets?/g, '2'],
-            [/singlets?/g, 's'],
+            [/singlets?/g, '1'],
             [/multiplets?/g, 'm'],
             // Abbreviations - keep s and m
             [/non(?!et)/g, '9'],
@@ -231,7 +231,7 @@ class NMRPeak {
             [/q(?!u)/g, '4'],
             [/t(?!r|e)/g, '3'],
             [/d(?!o)/g, '2'],
-            [/s(?!i)/g, 's'],
+            [/s(?!i)/g, '1'],
             [/m(?!u)/g, 'm'],
             [/b(?!r|o)/g, ''],
             [/\s+/g, ''],
@@ -241,12 +241,12 @@ class NMRPeak {
         });
         normalized = normalized.trim();
         // Validate s/m combinations
-        if (/s/.test(normalized) || /m/.test(normalized)) {
+        if (/1/.test(normalized) || /m/.test(normalized)) {
             // Check for invalid s patterns
-            if (/[sm][sm]/.test(normalized)) {
+            if (/[1m][1m]/.test(normalized)) {
                 throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (multiple s / m)`);
             }
-            if (/s\d|\ds/.test(normalized)) {
+            if (/1\d|\d1/.test(normalized)) {
                 throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (s cannot combine with other multiplicities)`);
             }
             // Check for invalid m patterns
@@ -254,7 +254,7 @@ class NMRPeak {
                 throw new Error(`Invalid multiplicity combination: "${multiplicityText}" (m must be at the beginning)`);
             }
             // Single s or m is OK
-            if (normalized === 's' || normalized === 'm') {
+            if (normalized === '1' || normalized === 'm') {
                 return null;
             }
             // m + digits is OK (e.g., "m23" from "m(dt)")
