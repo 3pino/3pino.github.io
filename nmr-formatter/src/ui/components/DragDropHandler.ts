@@ -41,7 +41,8 @@ export class DragDropHandler {
       </div>
     `;
     overlay.style.display = 'none';
-    this.targetElement.appendChild(overlay);
+    // Append to body instead of target element to avoid scroll issues
+    document.body.appendChild(overlay);
     return overlay;
   }
 
@@ -236,6 +237,16 @@ export class DragDropHandler {
    * Show the drag-drop overlay
    */
   private showOverlay(): void {
+    // Get target element's position and size
+    const rect = this.targetElement.getBoundingClientRect();
+    
+    // Position overlay to match target element
+    this.overlay.style.position = 'fixed';
+    this.overlay.style.top = `${rect.top}px`;
+    this.overlay.style.left = `${rect.left}px`;
+    this.overlay.style.width = `${rect.width}px`;
+    this.overlay.style.height = `${rect.height}px`;
+    
     this.overlay.style.display = 'flex';
     // Trigger reflow for CSS transition
     void this.overlay.offsetHeight;
