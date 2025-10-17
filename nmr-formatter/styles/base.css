@@ -36,3 +36,7 @@ body {
   vertical-align: super;
   font-size: smaller;
 }
+
+body>div.markdown-body>h1:first-child:has(>a){
+  display:none;
+}

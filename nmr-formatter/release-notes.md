@@ -1,8 +1,24 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.1 (2025-10-18)
+
+### UI/UX Improvements
+
+- Limited chemical shift precision to 5 significant figures in TopSpin import
+
+### Bug Fixes
+
+- Fixed drag-drop overlay being hidden by scrolled table container
+- Fixed multiplicity '1' now properly treated as singlet (disables J-value editing)
+
+### Minor Changes
+
+- Minor changes in release-notes.md
+
 ## ver 1.4 (2025-10-17)
 
-### TopSpin Data Drag & Drop Support
+### ✨TopSpin Data Drag & Drop Support
+
 You can now import TopSpin NMR data simply by dragging and dropping the entire folder.
 
 ### UI/UX Improvements
@@ -18,10 +34,12 @@ You can now import TopSpin NMR data simply by dragging and dropping the entire f
 ## ver 1.3.3 (2025-10-17)
 
 ### UI/UX Enhancements
+
 - Added drag-and-drop file import UI with error notifications
 - Enhanced user experience for file imports
 
 ### Validation
+
 - Added minimum integration value validation
 - Added input filtering for chemical shift field
 - Extracted validation logic into dedicated validators module
@@ -30,14 +48,10 @@ You can now import TopSpin NMR data simply by dragging and dropping the entire f
 
 ### UI/UX Improvements
 
-**Layout and Design:**
 - Fixed page layout to prevent vertical overflow
 - Changed app container from min-height to fixed height (100vh)
 - Made table section independently scrollable
 - Set rich text editor to max 30vh height with internal scrolling
-- Improved overall page responsiveness
-
-**Visual Enhancements:**
 - Added favicon support with ICO and SVG formats
 - Better visual identity for the application
 
@@ -50,26 +64,28 @@ You can now import TopSpin NMR data simply by dragging and dropping the entire f
 
 ## ver 1.3 (2025-10-12)
 
-### UI/UX Improvements
+### Layout and Design Improvements
 
-**Layout and Design:**
 - Unified toolbar and metadata sections for cleaner interface
 - Reorganized metadata fields with improved grouping
 - Updated icon font for modern, consistent look
 
-**Table Enhancements:**
+### Table Enhancements
+
 - Replaced "Add Peak" button with inline '+' cell for intuitive row addition
 - Sort order control now uses icon toggle button instead of dropdown
 - Automatic output update when sort order changes
 - Improved add-row footer behavior with dynamic column adjustment
 
-**Keyboard Navigation:**
+### Enhanced Keyboard Navigation
+
 - Enhanced metadata form navigation with group-based focus
 - Fixed navigation issues in numeric fields
 - Improved keyboard navigation consistency across the table
 - Better Enter key handling throughout the application
 
-**Validation and Data Entry:**
+### Validation and Data Entry Improvements
+
 - Improved validation error state management
 - Enhanced J-value sorting behavior (triggered on Generate Text)
 - Fixed numeric field handling and removed confusing default values
@@ -79,12 +95,11 @@ You can now import TopSpin NMR data simply by dragging and dropping the entire f
 
 ### Precision and Input Handling Improvements
 
-**Significant Figures:**
 - Changed from fixed precision to significant figures for chemical shift and J-values
-- More accurate representation of measurement precision
 - Updated UI labels to reflect "Shift Sig. Figs." and "J Sig. Figs."
 
-**UI/UX Enhancements:**
+### UI/UX Enhancements
+
 - Improved metadata input field behavior
 - Fixed Enter key behavior to prevent unwanted line breaks in input fields
 - Fixed empty value handling in assignment field (removes placeholder, prevents extra commas/newlines)
@@ -93,20 +108,11 @@ You can now import TopSpin NMR data simply by dragging and dropping the entire f
 
 ### Enhanced Multiplicity Support
 
-**Extended Multiplicity Types:**
 - Added support for sextet (6), septet (7), octet (8), nonet (9)
-- Both abbreviations (sext, sept, oct, non) and full words (sextet, septet, octet, nonet) are supported
 - Support for broad + multiplicity patterns: `br s`, `bs`, `br d`, `bd`, `broad triplet`
 - Support for multiplet with parentheses: `m(tt)`, `m(dt)`, `m(dd)`
-
-**Invalid Pattern Detection:**
-- Detects and rejects invalid combinations:
-  - Multiple singlet/multiplet: `ss`, `mm`, `sm`, `ms`
-  - Singlet + other multiplicities: `sd`, `ds`
-  - Multiplet in wrong position: `tm`, `dtm`
-- Clear error messages for invalid patterns (Devtools)
+- Detects and rejects invalid combinations like `ss`
 
 ## ver 1.0 (2025-10-06)
 Initial release
-
 
