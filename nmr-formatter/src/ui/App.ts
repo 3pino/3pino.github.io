@@ -277,8 +277,11 @@ export class NMRFormatterApp {
                 });
             });
 
-            // Generate formatted text
-            this.generateFormattedText();
+            // Remove any empty rows (including the initial empty row)
+            this.appState.table.removeEmptyRows();
+
+            // Don't auto-generate formatted text - let user review and edit first
+            // this.generateFormattedText();
 
             console.log(`Successfully imported ${peaks.length} peaks from TopSpin data`);
         } catch (error) {

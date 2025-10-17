@@ -44,6 +44,11 @@ function formatIntegration(integration: number | string, decimalPlaces: number =
     if (integration === 0 || integration === "" || integration === null || integration === undefined) {
         return "";
     }
+    
+    // Check if integration rounds to 0 or less (< 0.5)
+    if (typeof integration === "number" && Math.round(integration) <= 0) {
+        return "";
+    }
 
     // Extract the atom symbol from nuclei (e.g., "1H" -> "H", "13C" -> "C", "<sup>1</sup>H" -> "H")
     const nucleiText = nuclei.replace(/<[^>]+>/g, ""); // Remove HTML tags
@@ -136,7 +141,8 @@ function formatMetadata(metadata: Metadata): string {
 
     // Frequency
     if (metadata.frequency && !isNaN(metadata.frequency)) {
-        const freqPart = parts.length > 1 ? `, ${metadata.frequency} MHz)` : `(${metadata.frequency} MHz)`;
+        const frequencyInt = Math.round(metadata.frequency);
+        const freqPart = parts.length > 1 ? `, ${frequencyInt} MHz)` : `(${frequencyInt} MHz)`;
         if (parts.length > 1) {
             parts[parts.length - 1] += freqPart;
         } else {
@@ -168,7 +174,14 @@ export function generateFormattedText(data: NMRData, shiftSigFigs: number = 3, j
 
     // Add delta symbol and peaks
     const nuclei = data.metadata?.nuclei || "1H";
-    const peakStrings = data.peaks.map(peak => formatSinglePeak(peak, shiftSigFigs, jValueSigFigs, integrationDecimalPlaces, nuclei));
+    // Filter out peaks with integration < 0.5 (rounds to 0)
+    const filteredPeaks = data.peaks.filter(peak => {
+        if (typeof peak.integration === 'number') {
+            return Math.round(peak.integration) > 0;
+        }
+        return true; // Keep string integrations
+    });
+    const peakStrings = filteredPeaks.map(peak => formatSinglePeak(peak, shiftSigFigs, jValueSigFigs, integrationDecimalPlaces, nuclei));
     const peaksSection = "δ " + peakStrings.join(", ");
     result.push(peaksSection);
 

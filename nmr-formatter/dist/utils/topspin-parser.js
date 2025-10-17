@@ -77,6 +77,9 @@ async function parseTopSpinDirectory(files) {
     // Parse all three files
     const integrals = parseIntegrals(integralContent);
     const chemicalShifts = parseTopSpinXML(peaklistContent);
+    const metadata = parseTopSpinMetadata(parmContent);
+    // Extract frequency (default to 1 if not found, to avoid breaking the calculation)
+    const frequency = metadata.frequency || 1;
     // Create NMRPeak objects by matching F1 values to integration ranges
     const peaks = [];
     for (const integral of integrals) {
@@ -103,8 +106,8 @@ async function parseTopSpinDirectory(files) {
         }
         // Calculate multiplicity
         const multiplicity = getMultiplicityLabel(f1InRange.length);
-        // Calculate J-values
-        const jValues = calculateJValues(f1InRange);
+        // Calculate J-values (pass frequency for Hz conversion)
+        const jValues = calculateJValues(f1InRange, frequency);
         // Create NMRPeak object
         const peak = new NMRPeak_1.NMRPeak(shift, multiplicity, jValues, integral.integral, '' // assignment is empty
         );
@@ -180,17 +183,18 @@ function getMultiplicityLabel(count) {
 }
 /**
  * Calculate J-coupling value from F1 peak distribution
- * @param f1Values - Array of F1 values in the integration range
+ * @param f1Values - Array of F1 values in the integration range (in ppm)
+ * @param frequency - NMR frequency in MHz
  * @returns J-coupling value in Hz, or empty array if not applicable
  */
-function calculateJValues(f1Values) {
+function calculateJValues(f1Values, frequency) {
     if (f1Values.length < 2 || f1Values.length >= 10) {
         return [];
     }
     // Calculate (max - min) / (count - 1)
     const min = Math.min(...f1Values);
     const max = Math.max(...f1Values);
-    const jValue = (max - min) / (f1Values.length - 1);
+    const jValue = (max - min) / (f1Values.length - 1) * frequency;
     return [jValue];
 }
 function parseTopSpinMetadata(parmContent) {

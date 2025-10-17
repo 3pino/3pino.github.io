@@ -623,6 +623,10 @@ function formatIntegration(integration, decimalPlaces = 1, nuclei = "1H") {
     if (integration === 0 || integration === "" || integration === null || integration === undefined) {
         return "";
     }
+    // Check if integration rounds to 0 or less (< 0.5)
+    if (typeof integration === "number" && Math.round(integration) <= 0) {
+        return "";
+    }
     // Extract the atom symbol from nuclei (e.g., "1H" -> "H", "13C" -> "C", "<sup>1</sup>H" -> "H")
     const nucleiText = nuclei.replace(/<[^>]+>/g, ""); // Remove HTML tags
     const atomSymbol = nucleiText.replace(/\d+/g, "") || "H"; // Remove all numbers
@@ -706,7 +710,8 @@ function formatMetadata(metadata) {
     }
     // Frequency
     if (metadata.frequency && !isNaN(metadata.frequency)) {
-        const freqPart = parts.length > 1 ? `, ${metadata.frequency} MHz)` : `(${metadata.frequency} MHz)`;
+        const frequencyInt = Math.round(metadata.frequency);
+        const freqPart = parts.length > 1 ? `, ${frequencyInt} MHz)` : `(${frequencyInt} MHz)`;
         if (parts.length > 1) {
             parts[parts.length - 1] += freqPart;
         }
@@ -735,7 +740,14 @@ function generateFormattedText(data, shiftSigFigs = 3, jValueSigFigs = 2, integr
     }
     // Add delta symbol and peaks
     const nuclei = ((_a = data.metadata) === null || _a === void 0 ? void 0 : _a.nuclei) || "1H";
-    const peakStrings = data.peaks.map(peak => formatSinglePeak(peak, shiftSigFigs, jValueSigFigs, integrationDecimalPlaces, nuclei));
+    // Filter out peaks with integration < 0.5 (rounds to 0)
+    const filteredPeaks = data.peaks.filter(peak => {
+        if (typeof peak.integration === 'number') {
+            return Math.round(peak.integration) > 0;
+        }
+        return true; // Keep string integrations
+    });
+    const peakStrings = filteredPeaks.map(peak => formatSinglePeak(peak, shiftSigFigs, jValueSigFigs, integrationDecimalPlaces, nuclei));
     const peaksSection = "δ " + peakStrings.join(", ");
     result.push(peaksSection);
     // Join with space
@@ -841,6 +853,9 @@ async function parseTopSpinDirectory(files) {
     // Parse all three files
     const integrals = parseIntegrals(integralContent);
     const chemicalShifts = parseTopSpinXML(peaklistContent);
+    const metadata = parseTopSpinMetadata(parmContent);
+    // Extract frequency (default to 1 if not found, to avoid breaking the calculation)
+    const frequency = metadata.frequency || 1;
     // Create NMRPeak objects by matching F1 values to integration ranges
     const peaks = [];
     for (const integral of integrals) {
@@ -867,8 +882,8 @@ async function parseTopSpinDirectory(files) {
         }
         // Calculate multiplicity
         const multiplicity = getMultiplicityLabel(f1InRange.length);
-        // Calculate J-values
-        const jValues = calculateJValues(f1InRange);
+        // Calculate J-values (pass frequency for Hz conversion)
+        const jValues = calculateJValues(f1InRange, frequency);
         // Create NMRPeak object
         const peak = new NMRPeak(shift, multiplicity, jValues, integral.integral, '' // assignment is empty
         );
@@ -944,17 +959,18 @@ function getMultiplicityLabel(count) {
 }
 /**
  * Calculate J-coupling value from F1 peak distribution
- * @param f1Values - Array of F1 values in the integration range
+ * @param f1Values - Array of F1 values in the integration range (in ppm)
+ * @param frequency - NMR frequency in MHz
  * @returns J-coupling value in Hz, or empty array if not applicable
  */
-function calculateJValues(f1Values) {
+function calculateJValues(f1Values, frequency) {
     if (f1Values.length < 2 || f1Values.length >= 10) {
         return [];
     }
     // Calculate (max - min) / (count - 1)
     const min = Math.min(...f1Values);
     const max = Math.max(...f1Values);
-    const jValue = (max - min) / (f1Values.length - 1);
+    const jValue = (max - min) / (f1Values.length - 1) * frequency;
     return [jValue];
 }
 function parseTopSpinMetadata(parmContent) {
@@ -3897,8 +3913,10 @@ class NMRFormatterApp {
                     assignment: peak.assignment
                 });
             });
-            // Generate formatted text
-            this.generateFormattedText();
+            // Remove any empty rows (including the initial empty row)
+            this.appState.table.removeEmptyRows();
+            // Don't auto-generate formatted text - let user review and edit first
+            // this.generateFormattedText();
             console.log(`Successfully imported ${peaks.length} peaks from TopSpin data`);
         }
         catch (error) {
