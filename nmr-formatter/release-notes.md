@@ -1,18 +1,27 @@
 # NMR Formatter Release Notes
 
+## ver 1.4 (2025-10-17)
+
+### TopSpin Data Drag & Drop Support
+You can now import TopSpin NMR data simply by dragging and dropping the entire folder.
+
+### UI/UX Improvements
+
+- Enhanced numerical precision for J-values and frequency display
+- Round J-value calculations to 5 decimal places
+
+### Bug Fixes
+
+-Fix frequency display rounded to integer in formatted output
+- Filter out peaks with integration < 0.5 from generated text
+
 ## ver 1.3.3 (2025-10-17)
 
-### Code Quality Improvements
-
-**Architecture:**
-- Removed window object dependencies from codebase for better modularity
-- Improved code organization and separation of concerns
-
-**UI/UX Enhancements:**
+### UI/UX Enhancements
 - Added drag-and-drop file import UI with error notifications
 - Enhanced user experience for file imports
 
-**Validation:**
+### Validation
 - Added minimum integration value validation
 - Added input filtering for chemical shift field
 - Extracted validation logic into dedicated validators module
@@ -99,3 +108,5 @@
 
 ## ver 1.0 (2025-10-06)
 Initial release
+
+
