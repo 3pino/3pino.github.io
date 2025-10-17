@@ -59,6 +59,21 @@ function findTopSpinDirectory(files: File[]): {
 }
 
 /**
+ * Round a number to the specified number of significant figures
+ * @param num - The number to round
+ * @param sigFigs - The number of significant figures
+ * @returns The rounded number
+ */
+function roundToSignificantFigures(num: number, sigFigs: number): number {
+  if (num === 0) return 0;
+  
+  const magnitude = Math.floor(Math.log10(Math.abs(num)));
+  const scale = Math.pow(10, sigFigs - magnitude - 1);
+  
+  return Math.round(num * scale) / scale;
+}
+
+/**
  * Check if the given files contain TopSpin data
  * TopSpin data is identified by the presence of specific files like peaklist.xml and acqus
  * @param files - Array of files to check
@@ -120,6 +135,9 @@ export async function parseTopSpinDirectory(files: File[]): Promise<NMRPeak[]> {
       const mid = sorted.length / 2;
       shift = (sorted[mid - 1] + sorted[mid]) / 2;
     }
+
+    // Limit chemical shift to 5 significant figures
+    shift = roundToSignificantFigures(shift, 5);
 
     // Calculate multiplicity
     const multiplicity = getMultiplicityLabel(f1InRange.length);

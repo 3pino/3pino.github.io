@@ -215,7 +215,7 @@ NUC1                 1H`;
       expect(peaks).toHaveLength(2);
       
       // First peak: 2 F1 values in range 8.549-8.591
-      expect(peaks[0].chemicalShift).toBeCloseTo(8.572149, 5); // Average of 8.580136 and 8.564162
+      expect(peaks[0].chemicalShift).toBeCloseTo(8.5721, 4); // Average of 8.580136 and 8.564162, rounded to 5 sig figs
       expect(peaks[0].multiplicity).toBe('2'); // 2 peaks = doublet
       expect(peaks[0].integration).toBe(2.21014);
       expect(peaks[0].jValues).toHaveLength(1);
