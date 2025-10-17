@@ -6,6 +6,9 @@ docs/
 CLAUDE.md
 playwright-config.json
 
+# Sample files
+**/.sample
+
 # Ignore TS build output
 **/dist/**/*.d.ts
 **/dist/**/*.d.ts.map
