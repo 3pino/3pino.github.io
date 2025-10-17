@@ -16,14 +16,18 @@ test.describe('Integration Tests - Formatted Output', () => {
   });
 
   test('sort-order button should auto-update formatted output', async () => {
-    // Setup: Enter data in first row (shift = 1)
+    // Setup: Enter data in first row (shift = 1, integration = 1)
     const shift1 = tableHelper.getShiftInput(0);
     await shift1.fill('1');
+    const integration1 = tableHelper.getIntegrationInput(0);
+    await integration1.fill('1');
 
-    // Setup: Add second row and enter data (shift = 2)
+    // Setup: Add second row and enter data (shift = 2, integration = 1)
     await tableHelper.addRow();
     const shift2 = tableHelper.getShiftInput(1);
     await shift2.fill('2');
+    const integration2 = tableHelper.getIntegrationInput(1);
+    await integration2.fill('1');
 
     // Step 1: Click Generate Text button
     await tableHelper.generateText();
@@ -69,10 +73,12 @@ test.describe('Integration Tests - Formatted Output', () => {
   });
 
   test('sort-order keyboard toggle (Enter) should auto-update formatted output', async () => {
-    // Setup: Enter data in two rows
+    // Setup: Enter data in two rows (shift + integration)
     await tableHelper.getShiftInput(0).fill('3');
+    await tableHelper.getIntegrationInput(0).fill('1');
     await tableHelper.addRow();
     await tableHelper.getShiftInput(1).fill('1');
+    await tableHelper.getIntegrationInput(1).fill('1');
 
     // Generate initial text (descending: 3, 1)
     await tableHelper.generateText();
@@ -100,10 +106,12 @@ test.describe('Integration Tests - Formatted Output', () => {
   });
 
   test('sort-order Space key should auto-update formatted output', async () => {
-    // Setup: Enter data in two rows
+    // Setup: Enter data in two rows (shift + integration)
     await tableHelper.getShiftInput(0).fill('5');
+    await tableHelper.getIntegrationInput(0).fill('1');
     await tableHelper.addRow();
     await tableHelper.getShiftInput(1).fill('2');
+    await tableHelper.getIntegrationInput(1).fill('1');
 
     // Generate initial text (descending: 5, 2)
     await tableHelper.generateText();
