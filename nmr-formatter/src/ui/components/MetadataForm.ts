@@ -722,6 +722,14 @@ export class MetadataForm {
      * Clean up event listeners and resources
      * Should be called when the component is destroyed
      */
+    /**
+     * Update form fields from current metadata state
+     * Public method to refresh UI when state changes externally
+     */
+    updateFromState(): void {
+        this.initializeValues();
+    }
+
     public destroy(): void {
         // Abort all event listeners attached with AbortController
         this.abortController.abort();

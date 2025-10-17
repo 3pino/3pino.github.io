@@ -12,6 +12,7 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DragDropHandler = void 0;
+const topspin_parser_1 = require("../../utils/topspin-parser");
 class DragDropHandler {
     constructor(options) {
         this.dragCounter = 0;
@@ -194,7 +195,12 @@ class DragDropHandler {
      * Currently rejects all files as per step 2 (skip for now)
      */
     validateFiles(files) {
-        // For now, reject all files with an error message
+        // Check if this is TopSpin data
+        if ((0, topspin_parser_1.isTopSpinData)(files)) {
+            // TopSpin data detected - will be handled by onFilesDropped callback
+            return;
+        }
+        // For now, reject all other files with an error message
         for (const file of files) {
             this.errorNotification.show({
                 message: `File "${file.name}" is not supported.`,

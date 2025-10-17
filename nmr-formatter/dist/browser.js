@@ -119,27 +119,43 @@ function getSolventPatterns() {
 }
 // Type-safe extraction functions
 function extractNucleiFromText(text) {
-    for (const [nuclei, pattern] of Object.entries(NUCLEI_CONFIG)) {
-        if (pattern && pattern.test(text)) {
-            return nuclei;
+    for (const preset of NUCLEI_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.id;
         }
     }
     return "";
 }
 function extractSolventFromText(text) {
-    for (const [solvent, pattern] of Object.entries(SOLVENT_CONFIG)) {
-        if (pattern && pattern.test(text)) {
-            return solvent;
+    for (const preset of SOLVENT_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.id;
+        }
+    }
+    return "";
+}
+function extractNucleiHTMLFromText(text) {
+    for (const preset of NUCLEI_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.displayHTML;
+        }
+    }
+    return "";
+}
+function extractSolventHTMLFromText(text) {
+    for (const preset of SOLVENT_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.displayHTML;
         }
     }
     return "";
 }
 // Type safety validation functions
 function isValidNucleiType(value) {
-    return Object.keys(NUCLEI_CONFIG).includes(value);
+    return NUCLEI_PRESETS.some(preset => preset.id === value) || value === "";
 }
 function isValidSolventType(value) {
-    return Object.keys(SOLVENT_CONFIG).includes(value);
+    return SOLVENT_PRESETS.some(preset => preset.id === value) || value === "";
 }
 
 // Metadata model for NMR data
@@ -754,6 +770,235 @@ function parseTSV(text) {
     return lines.map(line => line.split('\t'));
 }
 
+/**
+ * TopSpin data parser utilities
+ * Handles parsing of Bruker TopSpin NMR data files
+ */
+/**
+ * Internal helper: Find the first valid TopSpin directory from the given files
+ * @param files - Array of files to check
+ * @returns Object containing the directory path and the three required files, or null if not found
+ */
+function findTopSpinDirectory(files) {
+    const requiredFiles = ['integrals.txt', 'parm.txt', 'peaklist.xml'];
+    // Extract directory path from file path
+    // File.webkitRelativePath gives us the full path for dropped directories
+    const getDirectoryPath = (file) => {
+        const path = file.webkitRelativePath || file.name;
+        const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        return lastSlash >= 0 ? path.substring(0, lastSlash) : '';
+    };
+    // Group files by directory path
+    const filesByDirectory = new Map();
+    for (const file of files) {
+        const dirPath = getDirectoryPath(file);
+        const fileName = file.name;
+        if (!filesByDirectory.has(dirPath)) {
+            filesByDirectory.set(dirPath, new Map());
+        }
+        filesByDirectory.get(dirPath).set(fileName, file);
+    }
+    // Find first directory with all three required files
+    for (const [dirPath, fileMap] of filesByDirectory.entries()) {
+        const hasAllRequired = requiredFiles.every(required => fileMap.has(required));
+        if (hasAllRequired) {
+            console.log("TopSpin directory found:", dirPath);
+            return {
+                dirPath,
+                integralFile: fileMap.get('integrals.txt'),
+                parmFile: fileMap.get('parm.txt'),
+                peaklistFile: fileMap.get('peaklist.xml')
+            };
+        }
+    }
+    return null;
+}
+/**
+ * Check if the given files contain TopSpin data
+ * TopSpin data is identified by the presence of specific files like peaklist.xml and acqus
+ * @param files - Array of files to check
+ * @returns True if files contain TopSpin data structure
+ */
+function isTopSpinData(files) {
+    return findTopSpinDirectory(files) !== null;
+}
+/**
+ * Parse TopSpin directory structure and extract NMR peaks
+ * @param files - Array of files from TopSpin directory
+ * @returns Array of parsed NMR peaks
+ */
+async function parseTopSpinDirectory(files) {
+    const topspinDir = findTopSpinDirectory(files);
+    if (!topspinDir) {
+        throw new Error('TopSpin data not found in provided files');
+    }
+    // Read all three files asynchronously
+    const [integralContent, parmContent, peaklistContent] = await Promise.all([
+        topspinDir.integralFile.text(),
+        topspinDir.parmFile.text(),
+        topspinDir.peaklistFile.text()
+    ]);
+    // Parse all three files
+    const integrals = parseIntegrals(integralContent);
+    const chemicalShifts = parseTopSpinXML(peaklistContent);
+    // Create NMRPeak objects by matching F1 values to integration ranges
+    const peaks = [];
+    for (const integral of integrals) {
+        // Find F1 values within this integration range
+        const min = Math.min(integral.rangeStart, integral.rangeEnd);
+        const max = Math.max(integral.rangeStart, integral.rangeEnd);
+        const f1InRange = chemicalShifts.filter(f1 => f1 >= min && f1 <= max);
+        // Calculate shift (chemical shift position)
+        let shift;
+        if (f1InRange.length === 0) {
+            // No F1 values found, use average of integration range
+            shift = (integral.rangeStart + integral.rangeEnd) / 2;
+        }
+        else if (f1InRange.length % 2 === 1) {
+            // Odd number: use median (middle value)
+            const sorted = [...f1InRange].sort((a, b) => a - b);
+            shift = sorted[Math.floor(sorted.length / 2)];
+        }
+        else {
+            // Even number: use average of two middle values
+            const sorted = [...f1InRange].sort((a, b) => a - b);
+            const mid = sorted.length / 2;
+            shift = (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+        // Calculate multiplicity
+        const multiplicity = getMultiplicityLabel(f1InRange.length);
+        // Calculate J-values
+        const jValues = calculateJValues(f1InRange);
+        // Create NMRPeak object
+        const peak = new NMRPeak(shift, multiplicity, jValues, integral.integral, '' // assignment is empty
+        );
+        peaks.push(peak);
+    }
+    return peaks;
+}
+/**
+ * Parse TopSpin XML peaklist file into NMR peaks
+ * @param xmlContent - Content of peaklist.xml file
+ * @returns Array of parsed NMR peaks
+ */
+function parseTopSpinXML(xmlContent) {
+    const chemicalShifts = [];
+    // Use regex to extract all F1 attribute values from Peak1D elements
+    // Pattern: <Peak1D F1="value" .../>
+    const peak1DPattern = /<Peak1D\s+F1="([\d.]+)"/g;
+    let match;
+    while ((match = peak1DPattern.exec(xmlContent)) !== null) {
+        const f1Value = parseFloat(match[1]);
+        if (!isNaN(f1Value)) {
+            chemicalShifts.push(f1Value);
+        }
+    }
+    return chemicalShifts;
+}
+/**
+ * Parse TopSpin acqus file to extract metadata
+ * @param acqusContent - Content of acqus parameter file
+ * @returns Partial metadata object with nuclei, solvent, and frequency
+ */
+/**
+ * Parse integrals.txt to extract integration ranges and values
+ * @param integralsContent - Content of integrals.txt file
+ * @returns Array of integration data with range and value
+ */
+function parseIntegrals(integralsContent) {
+    const integrals = [];
+    const lines = integralsContent.split('\n');
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        // Skip header lines and empty lines
+        if (!trimmedLine || trimmedLine.startsWith('Current') ||
+            trimmedLine.startsWith('NAME') || trimmedLine.startsWith('DU') ||
+            trimmedLine.startsWith('Number')) {
+            continue;
+        }
+        // Parse line format: "Number   Start   End   Integral"
+        // Example: "    1      8.591      8.549         2.21014"
+        const parts = trimmedLine.split(/\s+/);
+        if (parts.length >= 4) {
+            const rangeStart = parseFloat(parts[1]);
+            const rangeEnd = parseFloat(parts[2]);
+            const integral = parseFloat(parts[3]);
+            if (!isNaN(rangeStart) && !isNaN(rangeEnd) && !isNaN(integral)) {
+                integrals.push({ rangeStart, rangeEnd, integral });
+            }
+        }
+    }
+    return integrals;
+}
+/**
+ * Calculate multiplicity label from number of F1 peaks
+ * @param count - Number of F1 peaks in the integration range
+ * @returns Multiplicity label (s, d, t, q, etc., or m for many)
+ */
+function getMultiplicityLabel(count) {
+    if (count === 0)
+        return 's';
+    if (count >= 10)
+        return 'm';
+    return count.toString();
+}
+/**
+ * Calculate J-coupling value from F1 peak distribution
+ * @param f1Values - Array of F1 values in the integration range
+ * @returns J-coupling value in Hz, or empty array if not applicable
+ */
+function calculateJValues(f1Values) {
+    if (f1Values.length < 2 || f1Values.length >= 10) {
+        return [];
+    }
+    // Calculate (max - min) / (count - 1)
+    const min = Math.min(...f1Values);
+    const max = Math.max(...f1Values);
+    const jValue = (max - min) / (f1Values.length - 1);
+    return [jValue];
+}
+function parseTopSpinMetadata(parmContent) {
+    const metadata = {};
+    // Split into lines
+    const lines = parmContent.split('\n');
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        // Extract SOLVENT (format: "SOLVENT            DMSO")
+        if (trimmedLine.startsWith('SOLVENT')) {
+            const parts = trimmedLine.split(/\s+/);
+            if (parts.length >= 2) {
+                const solventText = parts[1];
+                const solvent = extractSolventHTMLFromText(solventText);
+                if (solvent) {
+                    metadata.solvent = solvent;
+                }
+            }
+        }
+        // Extract SFO1 (format: "SFO1        500.1730885 MHz")
+        if (trimmedLine.startsWith('SFO1')) {
+            const parts = trimmedLine.split(/\s+/);
+            if (parts.length >= 2) {
+                const frequency = parseFloat(parts[1]);
+                if (!isNaN(frequency)) {
+                    metadata.frequency = frequency;
+                }
+            }
+        }
+        // Extract NUC1 (format: "NUC1                 1H")
+        if (trimmedLine.startsWith('NUC1')) {
+            const parts = trimmedLine.split(/\s+/);
+            if (parts.length >= 2) {
+                const nucleiText = parts[1];
+                const nuclei = extractNucleiHTMLFromText(nucleiText);
+                if (nuclei) {
+                    metadata.nuclei = nuclei;
+                }
+            }
+        }
+    }
+    return metadata;
+}
+
 // ========== VALIDATORS ==========
 /**
  * Input filtering utilities for real-time input restriction
@@ -951,11 +1196,11 @@ const assignmentValidator = {
  */
 function getValidator(fieldType) {
     const validators = {
-        'shift': exports.shiftValidator,
-        'multiplicity': exports.multiplicityValidator,
-        'jValue': exports.jValueValidator,
-        'integration': exports.integrationValidator,
-        'assignment': exports.assignmentValidator
+        'shift': shiftValidator,
+        'multiplicity': multiplicityValidator,
+        'jValue': jValueValidator,
+        'integration': integrationValidator,
+        'assignment': assignmentValidator
     };
     return validators[fieldType] || null;
 }
@@ -1826,6 +2071,13 @@ class MetadataForm {
      * Clean up event listeners and resources
      * Should be called when the component is destroyed
      */
+    /**
+     * Update form fields from current metadata state
+     * Public method to refresh UI when state changes externally
+     */
+    updateFromState() {
+        this.initializeValues();
+    }
     destroy() {
         // Abort all event listeners attached with AbortController
         this.abortController.abort();
@@ -3155,7 +3407,12 @@ class DragDropHandler {
      * Currently rejects all files as per step 2 (skip for now)
      */
     validateFiles(files) {
-        // For now, reject all files with an error message
+        // Check if this is TopSpin data
+        if (isTopSpinData(files)) {
+            // TopSpin data detected - will be handled by onFilesDropped callback
+            return;
+        }
+        // For now, reject all other files with an error message
         for (const file of files) {
             this.errorNotification.show({
                 message: `File "${file.name}" is not supported.`,
@@ -3505,8 +3762,9 @@ class NMRFormatterApp {
             this.dragDropHandler = new DragDropHandler({
                 targetElement: tableContainer,
                 errorNotification: this.errorNotification,
-                onFilesDropped: (files) => {
+                onFilesDropped: async (files) => {
                     console.log('Files dropped:', files.map(f => f.name));
+                    await this.handleTopSpinImport(files);
                 }
             });
         }
@@ -3585,6 +3843,72 @@ class NMRFormatterApp {
         }
         return hasErrors;
     }
+    /**
+     * Handle TopSpin data import
+     * @param files - Array of files from drag-and-drop
+     */
+    async handleTopSpinImport(files) {
+        try {
+            // Check if files contain TopSpin data
+            if (!isTopSpinData(files)) {
+                console.log('Not TopSpin data');
+                return;
+            }
+            // Parse TopSpin directory to extract peaks and metadata
+            const peaks = await parseTopSpinDirectory(files);
+            if (peaks.length === 0) {
+                this.errorNotification.show({
+                    message: 'No peaks found in TopSpin data.',
+                    duration: 5000
+                });
+                return;
+            }
+            // Extract metadata from parm.txt
+            const parmFile = files.find(f => f.name === 'parm.txt');
+            if (parmFile) {
+                const parmContent = await parmFile.text();
+                const metadata = parseTopSpinMetadata(parmContent);
+                // Update metadata state
+                if (metadata.nuclei) {
+                    this.appState.metadata.setNuclei(metadata.nuclei);
+                }
+                if (metadata.solvent) {
+                    this.appState.metadata.setSolvent(metadata.solvent);
+                }
+                if (metadata.frequency) {
+                    this.appState.metadata.setFrequency(metadata.frequency);
+                }
+                // Update form fields from state
+                this.metadataForm.updateFromState();
+            }
+            // Sort peaks by chemical shift (descending order - high to low ppm)
+            sortPeaksByShift(peaks, 'desc');
+            // Clear existing rows and add new peaks
+            // Remove all existing rows
+            const existingRows = this.appState.table.getRows();
+            this.appState.table.removeRows(existingRows.map(row => row.id));
+            // Add each peak as a new row
+            peaks.forEach(peak => {
+                this.appState.table.addRow({
+                    shift: peak.shift.toString(),
+                    multiplicity: peak.multiplicity,
+                    jValues: peak.jValues,
+                    integration: typeof peak.integration === 'number' ? peak.integration : parseFloat(peak.integration),
+                    assignment: peak.assignment
+                });
+            });
+            // Generate formatted text
+            this.generateFormattedText();
+            console.log(`Successfully imported ${peaks.length} peaks from TopSpin data`);
+        }
+        catch (error) {
+            console.error('Error importing TopSpin data:', error);
+            this.errorNotification.show({
+                message: 'Error importing TopSpin data. Please try again.',
+                duration: 5000
+            });
+        }
+    }
     copyFormattedText() {
         const richTextContent = this.richTextEditor.getContent();
         if (!richTextContent || richTextContent.trim() === '') {
@@ -3647,6 +3971,8 @@ window.getNucleiPatterns = getNucleiPatterns;
 window.getSolventPatterns = getSolventPatterns;
 window.extractNucleiFromText = extractNucleiFromText;
 window.extractSolventFromText = extractSolventFromText;
+window.extractNucleiHTMLFromText = extractNucleiHTMLFromText;
+window.extractSolventHTMLFromText = extractSolventHTMLFromText;
 window.isValidNucleiType = isValidNucleiType;
 window.isValidSolventType = isValidSolventType;
 window.Metadata = Metadata;
@@ -3681,5 +4007,11 @@ window.NMRFormatterApp = NMRFormatterApp;
 // Export TSV Parser utilities
 window.isTSVData = isTSVData;
 window.parseTSV = parseTSV;
+
+// Export TopSpin Parser utilities
+window.isTopSpinData = isTopSpinData;
+window.parseTopSpinDirectory = parseTopSpinDirectory;
+window.parseTopSpinXML = parseTopSpinXML;
+window.parseTopSpinMetadata = parseTopSpinMetadata;
 
 console.log('NMR Formatter browser bundle loaded (TypeScript refactored version)');

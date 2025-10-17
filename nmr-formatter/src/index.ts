@@ -11,6 +11,8 @@ export {
     getSolventPatterns,
     extractNucleiFromText,
     extractSolventFromText,
+    extractNucleiHTMLFromText,
+    extractSolventHTMLFromText,
     isValidNucleiType,
     isValidSolventType
 } from './core/constants';
@@ -52,6 +54,13 @@ export {
     parseTSV
 } from './utils/tsv-parser';
 
+export {
+    isTopSpinData,
+    parseTopSpinDirectory,
+    parseTopSpinXML,
+    parseTopSpinMetadata
+} from './utils/topspin-parser';
+
 // Validators
 export {
     filterNumericInput,
@@ -91,6 +100,7 @@ import * as Parser from './utils/parser';
 import * as Formatter from './utils/formatter';
 import * as TableConverter from './utils/table-converter';
 import * as TSVParser from './utils/tsv-parser';
+import * as TopSpinParser from './utils/topspin-parser';
 import { ErrorNotification } from './ui/components/ErrorNotification';
 import { DragDropHandler } from './ui/components/DragDropHandler';
 import { NMRFormatterApp } from './ui/App';
@@ -112,6 +122,9 @@ if (typeof window !== 'undefined') {
     // Constants
     w.extractNucleiFromText = Constants.extractNucleiFromText;
     w.extractSolventFromText = Constants.extractSolventFromText;
+    w.extractNucleiHTMLFromText = Constants.extractNucleiHTMLFromText;
+    w.extractSolventHTMLFromText = Constants.extractSolventHTMLFromText;
+
 
     // Parser
     w.parseNMRText = Parser.parseNMRText;
@@ -139,6 +152,12 @@ if (typeof window !== 'undefined') {
     // TSV Parser
     w.isTSVData = TSVParser.isTSVData;
     w.parseTSV = TSVParser.parseTSV;
+
+    // TopSpin Parser
+    w.isTopSpinData = TopSpinParser.isTopSpinData;
+    w.parseTopSpinDirectory = TopSpinParser.parseTopSpinDirectory;
+    w.parseTopSpinXML = TopSpinParser.parseTopSpinXML;
+    w.parseTopSpinMetadata = TopSpinParser.parseTopSpinMetadata;
 
     // Validators (from NMRPeak static methods)
     w.multipletnumbers = NMRPeak.multipletnumbers;

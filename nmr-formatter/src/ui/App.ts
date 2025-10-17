@@ -10,6 +10,7 @@ import { RichTextEditor } from './components/RichTextEditor';
 import { Toolbar } from './components/Toolbar';
 import { ErrorNotification } from './components/ErrorNotification';
 import { DragDropHandler } from './components/DragDropHandler';
+import { isTopSpinData, parseTopSpinDirectory, parseTopSpinMetadata } from '../utils/topspin-parser';
 import { FocusManager } from './navigation/FocusManager';
 import { parseChemicalShift, convertMultiplicityToText } from '../utils/conversion';
 import { sortPeaksByShift } from '../utils/sorting';
@@ -94,8 +95,9 @@ export class NMRFormatterApp {
             this.dragDropHandler = new DragDropHandler({
                 targetElement: tableContainer,
                 errorNotification: this.errorNotification,
-                onFilesDropped: (files) => {
+                onFilesDropped: async (files) => {
                     console.log('Files dropped:', files.map(f => f.name));
+                    await this.handleTopSpinImport(files);
                 }
             });
         }
@@ -209,6 +211,83 @@ export class NMRFormatterApp {
         }
 
         return hasErrors;
+    }
+
+
+    /**
+     * Handle TopSpin data import
+     * @param files - Array of files from drag-and-drop
+     */
+    private async handleTopSpinImport(files: File[]): Promise<void> {
+        try {
+            // Check if files contain TopSpin data
+            if (!isTopSpinData(files)) {
+                console.log('Not TopSpin data');
+                return;
+            }
+
+            // Parse TopSpin directory to extract peaks and metadata
+            const peaks = await parseTopSpinDirectory(files);
+            
+            if (peaks.length === 0) {
+                this.errorNotification.show({
+                    message: 'No peaks found in TopSpin data.',
+                    duration: 5000
+                });
+                return;
+            }
+
+            // Extract metadata from parm.txt
+            const parmFile = files.find(f => f.name === 'parm.txt');
+            if (parmFile) {
+                const parmContent = await parmFile.text();
+                const metadata = parseTopSpinMetadata(parmContent);
+                
+                // Update metadata state
+                if (metadata.nuclei) {
+                    this.appState.metadata.setNuclei(metadata.nuclei);
+                }
+                if (metadata.solvent) {
+                    this.appState.metadata.setSolvent(metadata.solvent);
+                }
+                if (metadata.frequency) {
+                    this.appState.metadata.setFrequency(metadata.frequency);
+                }
+                
+                // Update form fields from state
+                this.metadataForm.updateFromState();
+            }
+
+            // Sort peaks by chemical shift (descending order - high to low ppm)
+            sortPeaksByShift(peaks, 'desc');
+
+            // Clear existing rows and add new peaks
+            // Remove all existing rows
+            const existingRows = this.appState.table.getRows();
+            this.appState.table.removeRows(existingRows.map(row => row.id));
+
+            // Add each peak as a new row
+            peaks.forEach(peak => {
+                this.appState.table.addRow({
+                    shift: peak.shift.toString(),
+                    multiplicity: peak.multiplicity,
+                    jValues: peak.jValues,
+                    integration: typeof peak.integration === 'number' ? peak.integration : parseFloat(peak.integration),
+                    assignment: peak.assignment
+                });
+            });
+
+            // Generate formatted text
+            this.generateFormattedText();
+
+            console.log(`Successfully imported ${peaks.length} peaks from TopSpin data`);
+        } catch (error) {
+            console.error('Error importing TopSpin data:', error);
+            this.errorNotification.show({
+                message: 'Error importing TopSpin data. Please try again.',
+                duration: 5000
+            });
+        }
     }
 
 

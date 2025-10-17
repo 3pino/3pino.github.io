@@ -9,7 +9,9 @@ import {
     getNucleiPatterns,
     getSolventPatterns,
     extractNucleiFromText,
-    extractSolventFromText
+    extractSolventFromText,
+    extractNucleiHTMLFromText,
+    extractSolventHTMLFromText
 } from '../core/constants';
 
 // Import pattern functions

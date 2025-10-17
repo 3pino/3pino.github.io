@@ -22,6 +22,7 @@ const sortingCode = fs.readFileSync(path.join(distDir, 'utils', 'sorting.js'), '
 const formValidationCode = fs.readFileSync(path.join(distDir, 'utils', 'form-validation.js'), 'utf8');
 const formatterCode = fs.readFileSync(path.join(distDir, 'utils', 'formatter.js'), 'utf8');
 const tsvParserCode = fs.readFileSync(path.join(distDir, 'utils', 'tsv-parser.js'), 'utf8');
+const topspinParserCode = fs.readFileSync(path.join(distDir, 'utils', 'topspin-parser.js'), 'utf8');
 
 // Read Validators files
 const inputFiltersCode = fs.readFileSync(path.join(distDir, 'utils', 'validators', 'input-filters.js'), 'utf8');
@@ -71,6 +72,9 @@ function convertToBrowserCode(code) {
     // Fix references to exports in Object.entries and similar patterns
     code = code.replace(/Object\.entries\(exports\.(\w+)\)/g, 'Object.entries($1)');
     code = code.replace(/Object\.keys\(exports\.(\w+)\)/g, 'Object.keys($1)');
+
+    // Fix all remaining exports.XXX references (e.g., exports.SOLVENT_PRESETS -> SOLVENT_PRESETS)
+    code = code.replace(/\bexports\.(\w+)/g, '$1');
 
     // Fix function calls with exports - e.g., (0, constants_1.isValidNucleiType)
     code = code.replace(/\(0,\s*\w+_\d+\.(\w+)\)/g, '$1');
@@ -124,6 +128,8 @@ ${convertToBrowserCode(formatterCode)}
 
 ${convertToBrowserCode(tsvParserCode)}
 
+${convertToBrowserCode(topspinParserCode)}
+
 // ========== VALIDATORS ==========
 ${convertToBrowserCode(inputFiltersCode)}
 
@@ -171,6 +177,8 @@ window.getNucleiPatterns = getNucleiPatterns;
 window.getSolventPatterns = getSolventPatterns;
 window.extractNucleiFromText = extractNucleiFromText;
 window.extractSolventFromText = extractSolventFromText;
+window.extractNucleiHTMLFromText = extractNucleiHTMLFromText;
+window.extractSolventHTMLFromText = extractSolventHTMLFromText;
 window.isValidNucleiType = isValidNucleiType;
 window.isValidSolventType = isValidSolventType;
 window.Metadata = Metadata;
@@ -205,6 +213,12 @@ window.NMRFormatterApp = NMRFormatterApp;
 // Export TSV Parser utilities
 window.isTSVData = isTSVData;
 window.parseTSV = parseTSV;
+
+// Export TopSpin Parser utilities
+window.isTopSpinData = isTopSpinData;
+window.parseTopSpinDirectory = parseTopSpinDirectory;
+window.parseTopSpinXML = parseTopSpinXML;
+window.parseTopSpinMetadata = parseTopSpinMetadata;
 
 console.log('NMR Formatter browser bundle loaded (TypeScript refactored version)');
 `;

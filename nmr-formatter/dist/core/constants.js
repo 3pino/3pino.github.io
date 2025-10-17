@@ -6,6 +6,8 @@ exports.getNucleiPatterns = getNucleiPatterns;
 exports.getSolventPatterns = getSolventPatterns;
 exports.extractNucleiFromText = extractNucleiFromText;
 exports.extractSolventFromText = extractSolventFromText;
+exports.extractNucleiHTMLFromText = extractNucleiHTMLFromText;
+exports.extractSolventHTMLFromText = extractSolventHTMLFromText;
 exports.isValidNucleiType = isValidNucleiType;
 exports.isValidSolventType = isValidSolventType;
 // Nuclei preset configurations
@@ -87,26 +89,42 @@ function getSolventPatterns() {
 }
 // Type-safe extraction functions
 function extractNucleiFromText(text) {
-    for (const [nuclei, pattern] of Object.entries(exports.NUCLEI_CONFIG)) {
-        if (pattern && pattern.test(text)) {
-            return nuclei;
+    for (const preset of exports.NUCLEI_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.id;
         }
     }
     return "";
 }
 function extractSolventFromText(text) {
-    for (const [solvent, pattern] of Object.entries(exports.SOLVENT_CONFIG)) {
-        if (pattern && pattern.test(text)) {
-            return solvent;
+    for (const preset of exports.SOLVENT_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.id;
+        }
+    }
+    return "";
+}
+function extractNucleiHTMLFromText(text) {
+    for (const preset of exports.NUCLEI_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.displayHTML;
+        }
+    }
+    return "";
+}
+function extractSolventHTMLFromText(text) {
+    for (const preset of exports.SOLVENT_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.displayHTML;
         }
     }
     return "";
 }
 // Type safety validation functions
 function isValidNucleiType(value) {
-    return Object.keys(exports.NUCLEI_CONFIG).includes(value);
+    return exports.NUCLEI_PRESETS.some(preset => preset.id === value) || value === "";
 }
 function isValidSolventType(value) {
-    return Object.keys(exports.SOLVENT_CONFIG).includes(value);
+    return exports.SOLVENT_PRESETS.some(preset => preset.id === value) || value === "";
 }
 //# sourceMappingURL=constants.js.map

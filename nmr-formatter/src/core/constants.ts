@@ -95,28 +95,47 @@ export function getSolventPatterns(): Record<string, RegExp> {
 
 // Type-safe extraction functions
 export function extractNucleiFromText(text: string): NucleiType {
-    for (const [nuclei, pattern] of Object.entries(NUCLEI_CONFIG)) {
-        if (pattern && pattern.test(text)) {
-            return nuclei as NucleiType;
+    for (const preset of NUCLEI_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.id as NucleiType;
         }
     }
     return "";
 }
 
 export function extractSolventFromText(text: string): SolventType {
-    for (const [solvent, pattern] of Object.entries(SOLVENT_CONFIG)) {
-        if (pattern && pattern.test(text)) {
-            return solvent as SolventType;
+    for (const preset of SOLVENT_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.id as SolventType;
         }
     }
     return "";
 }
 
+export function extractNucleiHTMLFromText(text: string): NucleiType {
+    for (const preset of NUCLEI_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.displayHTML as NucleiType;
+        }
+    }
+    return "";
+}
+
+export function extractSolventHTMLFromText(text: string): SolventType {
+    for (const preset of SOLVENT_PRESETS) {
+        if (preset.pattern.test(text)) {
+            return preset.displayHTML as SolventType;
+        }
+    }
+    return "";
+}
+
+
 // Type safety validation functions
 export function isValidNucleiType(value: string): value is NucleiType {
-    return Object.keys(NUCLEI_CONFIG).includes(value);
+    return NUCLEI_PRESETS.some(preset => preset.id === value) || value === "";
 }
 
 export function isValidSolventType(value: string): value is SolventType {
-    return Object.keys(SOLVENT_CONFIG).includes(value);
+    return SOLVENT_PRESETS.some(preset => preset.id === value) || value === "";
 }

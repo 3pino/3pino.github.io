@@ -4,6 +4,7 @@
  */
 
 import { ErrorNotification } from './ErrorNotification';
+import { isTopSpinData, parseTopSpinDirectory } from '../../utils/topspin-parser';
 
 export interface DragDropOptions {
   targetElement: HTMLElement;
@@ -216,7 +217,13 @@ export class DragDropHandler {
    * Currently rejects all files as per step 2 (skip for now)
    */
   private validateFiles(files: File[]): void {
-    // For now, reject all files with an error message
+    // Check if this is TopSpin data
+    if (isTopSpinData(files)) {
+      // TopSpin data detected - will be handled by onFilesDropped callback
+      return;
+    }
+
+    // For now, reject all other files with an error message
     for (const file of files) {
       this.errorNotification.show({
         message: `File "${file.name}" is not supported.`,

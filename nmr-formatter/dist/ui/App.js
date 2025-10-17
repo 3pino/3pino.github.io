@@ -12,6 +12,7 @@ const RichTextEditor_1 = require("./components/RichTextEditor");
 const Toolbar_1 = require("./components/Toolbar");
 const ErrorNotification_1 = require("./components/ErrorNotification");
 const DragDropHandler_1 = require("./components/DragDropHandler");
+const topspin_parser_1 = require("../utils/topspin-parser");
 const FocusManager_1 = require("./navigation/FocusManager");
 const conversion_1 = require("../utils/conversion");
 const sorting_1 = require("../utils/sorting");
@@ -65,8 +66,9 @@ class NMRFormatterApp {
             this.dragDropHandler = new DragDropHandler_1.DragDropHandler({
                 targetElement: tableContainer,
                 errorNotification: this.errorNotification,
-                onFilesDropped: (files) => {
+                onFilesDropped: async (files) => {
                     console.log('Files dropped:', files.map(f => f.name));
+                    await this.handleTopSpinImport(files);
                 }
             });
         }
@@ -144,6 +146,72 @@ class NMRFormatterApp {
             hasErrors = true;
         }
         return hasErrors;
+    }
+    /**
+     * Handle TopSpin data import
+     * @param files - Array of files from drag-and-drop
+     */
+    async handleTopSpinImport(files) {
+        try {
+            // Check if files contain TopSpin data
+            if (!(0, topspin_parser_1.isTopSpinData)(files)) {
+                console.log('Not TopSpin data');
+                return;
+            }
+            // Parse TopSpin directory to extract peaks and metadata
+            const peaks = await (0, topspin_parser_1.parseTopSpinDirectory)(files);
+            if (peaks.length === 0) {
+                this.errorNotification.show({
+                    message: 'No peaks found in TopSpin data.',
+                    duration: 5000
+                });
+                return;
+            }
+            // Extract metadata from parm.txt
+            const parmFile = files.find(f => f.name === 'parm.txt');
+            if (parmFile) {
+                const parmContent = await parmFile.text();
+                const metadata = (0, topspin_parser_1.parseTopSpinMetadata)(parmContent);
+                // Update metadata state
+                if (metadata.nuclei) {
+                    this.appState.metadata.setNuclei(metadata.nuclei);
+                }
+                if (metadata.solvent) {
+                    this.appState.metadata.setSolvent(metadata.solvent);
+                }
+                if (metadata.frequency) {
+                    this.appState.metadata.setFrequency(metadata.frequency);
+                }
+                // Update form fields from state
+                this.metadataForm.updateFromState();
+            }
+            // Sort peaks by chemical shift (descending order - high to low ppm)
+            (0, sorting_1.sortPeaksByShift)(peaks, 'desc');
+            // Clear existing rows and add new peaks
+            // Remove all existing rows
+            const existingRows = this.appState.table.getRows();
+            this.appState.table.removeRows(existingRows.map(row => row.id));
+            // Add each peak as a new row
+            peaks.forEach(peak => {
+                this.appState.table.addRow({
+                    shift: peak.shift.toString(),
+                    multiplicity: peak.multiplicity,
+                    jValues: peak.jValues,
+                    integration: typeof peak.integration === 'number' ? peak.integration : parseFloat(peak.integration),
+                    assignment: peak.assignment
+                });
+            });
+            // Generate formatted text
+            this.generateFormattedText();
+            console.log(`Successfully imported ${peaks.length} peaks from TopSpin data`);
+        }
+        catch (error) {
+            console.error('Error importing TopSpin data:', error);
+            this.errorNotification.show({
+                message: 'Error importing TopSpin data. Please try again.',
+                duration: 5000
+            });
+        }
     }
     copyFormattedText() {
         const richTextContent = this.richTextEditor.getContent();

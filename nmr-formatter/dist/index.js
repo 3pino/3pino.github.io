@@ -38,7 +38,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isJValuesOptional = exports.multipletnumbers = exports.NMRFormatterApp = exports.DragDropHandler = exports.ErrorNotification = exports.getValidator = exports.assignmentValidator = exports.integrationValidator = exports.jValueValidator = exports.multiplicityValidator = exports.shiftValidator = exports.noFilter = exports.filterHTMLTags = exports.filterNumericInput = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
+exports.NMRFormatterApp = exports.DragDropHandler = exports.ErrorNotification = exports.getValidator = exports.assignmentValidator = exports.integrationValidator = exports.jValueValidator = exports.multiplicityValidator = exports.shiftValidator = exports.noFilter = exports.filterHTMLTags = exports.filterNumericInput = exports.parseTopSpinMetadata = exports.parseTopSpinXML = exports.parseTopSpinDirectory = exports.isTopSpinData = exports.parseTSV = exports.isTSVData = exports.getMaxJValues = exports.tableToData = exports.dataToTable = exports.formatMetadata = exports.formatSinglePeak = exports.formatMultiplicity = exports.formatIntegration = exports.formatJValues = exports.formatChemicalShift = exports.generateFormattedText = exports.isMetadataSegment = exports.parseJValues = exports.parseSinglePeak = exports.SOLVENT_PATTERNS = exports.NUCLEI_PATTERNS = exports.NMR_PATTERNS = exports.parseNMRText = exports.NMRData = exports.NMRPeak = exports.validateSolventType = exports.validateNucleiType = exports.Metadata = exports.isValidSolventType = exports.isValidNucleiType = exports.extractSolventHTMLFromText = exports.extractNucleiHTMLFromText = exports.extractSolventFromText = exports.extractNucleiFromText = exports.getSolventPatterns = exports.getNucleiPatterns = exports.SOLVENT_CONFIG = exports.NUCLEI_CONFIG = void 0;
+exports.isJValuesOptional = exports.multipletnumbers = void 0;
 // Core types and constants
 __exportStar(require("./core/types"), exports);
 __exportStar(require("./core/logger"), exports);
@@ -49,6 +50,8 @@ Object.defineProperty(exports, "getNucleiPatterns", { enumerable: true, get: fun
 Object.defineProperty(exports, "getSolventPatterns", { enumerable: true, get: function () { return constants_1.getSolventPatterns; } });
 Object.defineProperty(exports, "extractNucleiFromText", { enumerable: true, get: function () { return constants_1.extractNucleiFromText; } });
 Object.defineProperty(exports, "extractSolventFromText", { enumerable: true, get: function () { return constants_1.extractSolventFromText; } });
+Object.defineProperty(exports, "extractNucleiHTMLFromText", { enumerable: true, get: function () { return constants_1.extractNucleiHTMLFromText; } });
+Object.defineProperty(exports, "extractSolventHTMLFromText", { enumerable: true, get: function () { return constants_1.extractSolventHTMLFromText; } });
 Object.defineProperty(exports, "isValidNucleiType", { enumerable: true, get: function () { return constants_1.isValidNucleiType; } });
 Object.defineProperty(exports, "isValidSolventType", { enumerable: true, get: function () { return constants_1.isValidSolventType; } });
 // Models
@@ -84,6 +87,11 @@ Object.defineProperty(exports, "getMaxJValues", { enumerable: true, get: functio
 var tsv_parser_1 = require("./utils/tsv-parser");
 Object.defineProperty(exports, "isTSVData", { enumerable: true, get: function () { return tsv_parser_1.isTSVData; } });
 Object.defineProperty(exports, "parseTSV", { enumerable: true, get: function () { return tsv_parser_1.parseTSV; } });
+var topspin_parser_1 = require("./utils/topspin-parser");
+Object.defineProperty(exports, "isTopSpinData", { enumerable: true, get: function () { return topspin_parser_1.isTopSpinData; } });
+Object.defineProperty(exports, "parseTopSpinDirectory", { enumerable: true, get: function () { return topspin_parser_1.parseTopSpinDirectory; } });
+Object.defineProperty(exports, "parseTopSpinXML", { enumerable: true, get: function () { return topspin_parser_1.parseTopSpinXML; } });
+Object.defineProperty(exports, "parseTopSpinMetadata", { enumerable: true, get: function () { return topspin_parser_1.parseTopSpinMetadata; } });
 // Validators
 var input_filters_1 = require("./utils/validators/input-filters");
 Object.defineProperty(exports, "filterNumericInput", { enumerable: true, get: function () { return input_filters_1.filterNumericInput; } });
@@ -116,6 +124,7 @@ const Parser = __importStar(require("./utils/parser"));
 const Formatter = __importStar(require("./utils/formatter"));
 const TableConverter = __importStar(require("./utils/table-converter"));
 const TSVParser = __importStar(require("./utils/tsv-parser"));
+const TopSpinParser = __importStar(require("./utils/topspin-parser"));
 const ErrorNotification_2 = require("./ui/components/ErrorNotification");
 const DragDropHandler_2 = require("./ui/components/DragDropHandler");
 const App_2 = require("./ui/App");
@@ -133,6 +142,8 @@ if (typeof window !== 'undefined') {
     // Constants
     w.extractNucleiFromText = Constants.extractNucleiFromText;
     w.extractSolventFromText = Constants.extractSolventFromText;
+    w.extractNucleiHTMLFromText = Constants.extractNucleiHTMLFromText;
+    w.extractSolventHTMLFromText = Constants.extractSolventHTMLFromText;
     // Parser
     w.parseNMRText = Parser.parseNMRText;
     w.NMR_PATTERNS = Parser.NMR_PATTERNS;
@@ -156,6 +167,11 @@ if (typeof window !== 'undefined') {
     // TSV Parser
     w.isTSVData = TSVParser.isTSVData;
     w.parseTSV = TSVParser.parseTSV;
+    // TopSpin Parser
+    w.isTopSpinData = TopSpinParser.isTopSpinData;
+    w.parseTopSpinDirectory = TopSpinParser.parseTopSpinDirectory;
+    w.parseTopSpinXML = TopSpinParser.parseTopSpinXML;
+    w.parseTopSpinMetadata = TopSpinParser.parseTopSpinMetadata;
     // Validators (from NMRPeak static methods)
     w.multipletnumbers = NMRPeak_2.NMRPeak.multipletnumbers;
     w.isJValuesOptional = NMRPeak_2.NMRPeak.isJValuesOptional;
