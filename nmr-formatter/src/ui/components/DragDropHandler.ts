@@ -100,55 +100,116 @@ export class DragDropHandler {
   /**
    * Handle drop event
    */
-  private handleDrop(e: DragEvent): void {
+  private async handleDrop(e: DragEvent): Promise<void> {
     e.preventDefault();
     e.stopPropagation();
 
     this.dragCounter = 0;
     this.hideOverlay();
 
-    const files = this.extractFiles(e);
+    try {
+      const files = await this.extractFilesFromDrop(e);
 
-    if (files.length === 0) {
+      if (files.length === 0) {
+        this.errorNotification.show({
+          message: 'No File Found.',
+          duration: 3000
+        });
+        return;
+      }
+
+      // Log all file names
+      console.log('Dropped files:');
+      files.forEach(file => console.log(file.name));
+
+      // Validate files (currently all files are rejected as specified)
+      this.validateFiles(files);
+
+      // Call the callback if provided
+      if (this.onFilesDropped) {
+        this.onFilesDropped(files);
+      }
+    } catch (error) {
+      console.error('Error processing dropped files:', error);
       this.errorNotification.show({
-        message: 'No File Found.',
-        duration: 3000
+        message: 'Error reading files. Please try again.',
+        duration: 5000
       });
-      return;
-    }
-
-    // Validate files (currently all files are rejected as specified)
-    this.validateFiles(files);
-
-    // Call the callback if provided
-    if (this.onFilesDropped) {
-      this.onFilesDropped(files);
     }
   }
 
   /**
    * Extract files from drag event
    */
-  private extractFiles(e: DragEvent): File[] {
+  private async extractFilesFromDrop(e: DragEvent): Promise<File[]> {
     const files: File[] = [];
 
-    if (e.dataTransfer?.items) {
-      // Use DataTransferItemList interface
-      for (let i = 0; i < e.dataTransfer.items.length; i++) {
-        if (e.dataTransfer.items[i].kind === 'file') {
-          const file = e.dataTransfer.items[i].getAsFile();
-          if (file) files.push(file);
+    if (!e.dataTransfer?.items) {
+      return files;
+    }
+
+    const items = Array.from(e.dataTransfer.items);
+
+    for (const item of items) {
+      if (item.kind !== 'file') continue;
+
+      try {
+        // Use File System Access API
+        const handle = await (item as any).getAsFileSystemHandle();
+        
+        if (handle.kind === 'directory') {
+          // Recursively read directory
+          const dirFiles = await this.readDirectoryHandle(handle);
+          files.push(...dirFiles);
+        } else if (handle.kind === 'file') {
+          // Read single file
+          const file = await handle.getFile();
+          files.push(file);
         }
-      }
-    } else if (e.dataTransfer?.files) {
-      // Use DataTransferFileList interface
-      for (let i = 0; i < e.dataTransfer.files.length; i++) {
-        files.push(e.dataTransfer.files[i]);
+      } catch (error) {
+        console.error('Error reading dropped item:', error);
+        // Fallback: try getAsFile() for single files
+        const file = item.getAsFile();
+        if (file) files.push(file);
       }
     }
 
     return files;
   }
+
+
+
+  /**
+   * Read directory using File System Access API (modern)
+   */
+  private async readDirectoryHandle(dirHandle: any): Promise<File[]> {
+    const files: File[] = [];
+    
+    try {
+      for await (const entry of dirHandle.values()) {
+        if (entry.kind === 'file') {
+          const file = await entry.getFile();
+          files.push(file);
+        } else if (entry.kind === 'directory') {
+          // Recursively read subdirectory
+          const subFiles = await this.readDirectoryHandle(entry);
+          files.push(...subFiles);
+        }
+      }
+    } catch (error) {
+      console.error(`Error reading directory ${dirHandle.name}:`, error);
+    }
+    
+    return files;
+  }
+
+
+
+
+
+
+
+
 
   /**
    * Validate dropped files

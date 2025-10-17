@@ -2966,6 +2966,13 @@ class ErrorNotification {
  * DragDropHandler Component
  * Manages drag-and-drop functionality for file import with visual feedback
  */
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 class DragDropHandler {
     constructor(options) {
         this.dragCounter = 0;
@@ -3038,47 +3045,108 @@ class DragDropHandler {
     /**
      * Handle drop event
      */
-    handleDrop(e) {
+    async handleDrop(e) {
         e.preventDefault();
         e.stopPropagation();
         this.dragCounter = 0;
         this.hideOverlay();
-        const files = this.extractFiles(e);
-        if (files.length === 0) {
-            this.errorNotification.show({
-                message: 'No File Found.',
-                duration: 3000
-            });
-            return;
+        try {
+            const files = await this.extractFilesFromDrop(e);
+            if (files.length === 0) {
+                this.errorNotification.show({
+                    message: 'No File Found.',
+                    duration: 3000
+                });
+                return;
+            }
+            // Log all file names
+            console.log('Dropped files:');
+            files.forEach(file => console.log(file.name));
+            // Validate files (currently all files are rejected as specified)
+            this.validateFiles(files);
+            // Call the callback if provided
+            if (this.onFilesDropped) {
+                this.onFilesDropped(files);
+            }
         }
-        // Validate files (currently all files are rejected as specified)
-        this.validateFiles(files);
-        // Call the callback if provided
-        if (this.onFilesDropped) {
-            this.onFilesDropped(files);
+        catch (error) {
+            console.error('Error processing dropped files:', error);
+            this.errorNotification.show({
+                message: 'Error reading files. Please try again.',
+                duration: 5000
+            });
         }
     }
     /**
      * Extract files from drag event
      */
-    extractFiles(e) {
-        var _a, _b;
+    async extractFilesFromDrop(e) {
+        var _a;
         const files = [];
-        if ((_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.items) {
-            // Use DataTransferItemList interface
-            for (let i = 0; i < e.dataTransfer.items.length; i++) {
-                if (e.dataTransfer.items[i].kind === 'file') {
-                    const file = e.dataTransfer.items[i].getAsFile();
-                    if (file)
-                        files.push(file);
+        if (!((_a = e.dataTransfer) === null || _a === void 0 ? void 0 : _a.items)) {
+            return files;
+        }
+        const items = Array.from(e.dataTransfer.items);
+        for (const item of items) {
+            if (item.kind !== 'file')
+                continue;
+            try {
+                // Use File System Access API
+                const handle = await item.getAsFileSystemHandle();
+                if (handle.kind === 'directory') {
+                    // Recursively read directory
+                    const dirFiles = await this.readDirectoryHandle(handle);
+                    files.push(...dirFiles);
+                }
+                else if (handle.kind === 'file') {
+                    // Read single file
+                    const file = await handle.getFile();
+                    files.push(file);
                 }
             }
-        }
-        else if ((_b = e.dataTransfer) === null || _b === void 0 ? void 0 : _b.files) {
-            // Use DataTransferFileList interface
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                files.push(e.dataTransfer.files[i]);
+            catch (error) {
+                console.error('Error reading dropped item:', error);
+                // Fallback: try getAsFile() for single files
+                const file = item.getAsFile();
+                if (file)
+                    files.push(file);
             }
+        }
+        return files;
+    }
+    /**
+     * Read directory using File System Access API (modern)
+     */
+    async readDirectoryHandle(dirHandle) {
+        var _a, e_1, _b, _c;
+        const files = [];
+        try {
+            try {
+                for (var _d = true, _e = __asyncValues(dirHandle.values()), _f; _f = await _e.next(), _a = _f.done, !_a; _d = true) {
+                    _c = _f.value;
+                    _d = false;
+                    const entry = _c;
+                    if (entry.kind === 'file') {
+                        const file = await entry.getFile();
+                        files.push(file);
+                    }
+                    else if (entry.kind === 'directory') {
+                        // Recursively read subdirectory
+                        const subFiles = await this.readDirectoryHandle(entry);
+                        files.push(...subFiles);
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (!_d && !_a && (_b = _e.return)) await _b.call(_e);
+                }
+                finally { if (e_1) throw error; }
+            }
+        }
+        catch (error) {
+            console.error(`Error reading directory ${dirHandle.name}:`, error);
         }
         return files;
     }
