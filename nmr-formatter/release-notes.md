@@ -1,5 +1,22 @@
 # NMR Formatter Release Notes
 
+## ver 1.3.3 (2025-10-17)
+
+### Code Quality Improvements
+
+**Architecture:**
+- Removed window object dependencies from codebase for better modularity
+- Improved code organization and separation of concerns
+
+**UI/UX Enhancements:**
+- Added drag-and-drop file import UI with error notifications
+- Enhanced user experience for file imports
+
+**Validation:**
+- Added minimum integration value validation
+- Added input filtering for chemical shift field
+- Extracted validation logic into dedicated validators module
+
 ## ver 1.3.2 (2025-10-13)
 
 ### UI/UX Improvements
