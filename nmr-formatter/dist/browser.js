@@ -971,7 +971,9 @@ function calculateJValues(f1Values, frequency) {
     const min = Math.min(...f1Values);
     const max = Math.max(...f1Values);
     const jValue = (max - min) / (f1Values.length - 1) * frequency;
-    return [jValue];
+    // Round to 5 decimal places
+    const roundedJ = Math.round(jValue * 1e5) / 1e5;
+    return [roundedJ];
 }
 function parseTopSpinMetadata(parmContent) {
     const metadata = {};
