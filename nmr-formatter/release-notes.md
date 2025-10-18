@@ -1,5 +1,11 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.3 (2025-10-18)
+
+### Minor Changes
+
+- Changed favicon and its formats
+
 ## ver 1.4.2 (2025-10-18)
 
 ### UI/UX Improvements
@@ -121,8 +127,6 @@ You can now import TopSpin NMR data simply by dragging and dropping the entire f
 
 ## ver 1.0 (2025-10-06)
 Initial release
-
-
 
 <style>
 body>div.markdown-body>h1:first-child:has(>a){
