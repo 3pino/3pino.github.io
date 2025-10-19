@@ -2,10 +2,10 @@
    Metadata Component - Form Layout
    ============================================ */
 
-/* Metadata Grid Layout */
+/* Metadata Flex Layout */
 .metadata {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-10);
   max-width: 100%;
 }

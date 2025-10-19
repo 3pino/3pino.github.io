@@ -3,7 +3,7 @@
    ============================================ */
 
 /* Common base styles for all button-like elements */
-button, a[role="button"]{
+a[role="button"]{
   /* Reset and base styles */
   border: none;
   text-decoration: none;
@@ -43,14 +43,16 @@ button, a[role="button"]{
     outline-offset: var(--focus-outline-offset);
   }
 
+  /* Text button styles */
+  &.btn-txt {
+    padding: var(--space-6) var(--space-16);
+    width: auto;
+    height: auto;
+  }
+
 }
 
-/* Text button styles */
-a[role="button"].btn-txt {
-  padding: var(--space-6) var(--space-16);
-  width: auto;
-  height: auto;
-}
+
 
 /* Icon-only button styles
    icon: `i.fi`
