@@ -160,6 +160,40 @@ export class KeyboardNav {
         if (currentIndex === -1) return;
 
         const targetIndex = direction === 'right' ? currentIndex + 1 : currentIndex - 1;
+
+        // Handle wrap to previous row when at leftmost cell
+        if (direction === 'left' && targetIndex < 0) {
+            const currentInput = currentCell.querySelector('input, [contenteditable="true"]') as HTMLInputElement | HTMLElement;
+            const cursorAtStart = this.isCursorAtStart(currentInput);
+
+            if (cursorAtStart) {
+                // Navigate to previous row's rightmost cell
+                const prevRow = currentRow.previousElementSibling as HTMLTableRowElement;
+                if (prevRow) {
+                    const prevCells = Array.from(prevRow.querySelectorAll('td:not(.checkbox-cell)')) as HTMLTableCellElement[];
+                    const prevVisibleCells = prevCells.filter(cell => {
+                        if (cell.style.display === 'none') return false;
+                        const input = cell.querySelector('input, [contenteditable="true"]') as HTMLInputElement | HTMLElement;
+                        if (!input) return false;
+                        if ((input as HTMLInputElement).disabled) return false;
+                        return true;
+                    });
+
+                    if (prevVisibleCells.length > 0) {
+                        const lastCell = prevVisibleCells[prevVisibleCells.length - 1];
+                        const targetInput = lastCell.querySelector('input:not([disabled]), [contenteditable="true"]') as HTMLElement;
+                        
+                        if (targetInput) {
+                            targetInput.focus();
+                            // Set cursor to end
+                            this.setCursorToEnd(targetInput);
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
         if (targetIndex < 0 || targetIndex >= visibleCells.length) return;
 
         const targetCell = visibleCells[targetIndex];
@@ -194,6 +228,46 @@ export class KeyboardNav {
                     input.setSelectionRange(len, len);
                 }
             }
+        }
+    }
+
+    /**
+     * Check if cursor is at the start of the input
+     */
+    private isCursorAtStart(input: HTMLInputElement | HTMLElement): boolean {
+        if (input.getAttribute('contenteditable') === 'true') {
+            const selection = window.getSelection();
+            const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+            return range ? range.startOffset === 0 : false;
+        } else if ((input as HTMLInputElement).type === 'number') {
+            // Number inputs don't support selection, so always return false
+            return false;
+        } else {
+            const textInput = input as HTMLInputElement;
+            return (textInput.selectionStart || 0) === 0;
+        }
+    }
+
+    /**
+     * Set cursor to the end of the input
+     */
+    private setCursorToEnd(input: HTMLElement): void {
+        if (input.getAttribute('contenteditable') === 'true') {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            const textNode = input.firstChild;
+
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                const length = textNode.textContent?.length || 0;
+                range.setStart(textNode, length);
+                range.collapse(true);
+                sel?.removeAllRanges();
+                sel?.addRange(range);
+            }
+        } else if ((input as HTMLInputElement).type !== 'number') {
+            const textInput = input as HTMLInputElement;
+            const len = textInput.value.length;
+            textInput.setSelectionRange(len, len);
         }
     }
 }

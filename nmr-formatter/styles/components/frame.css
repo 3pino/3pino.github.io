@@ -1,0 +1,14 @@
+/* ============================================
+   Frame Component
+   ============================================ */
+
+
+.frame{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  padding: var(--space-10) var(--space-16);
+
+  background-color: var(--color-frame-bg);
+  border-radius: var(--radius-md);
+}

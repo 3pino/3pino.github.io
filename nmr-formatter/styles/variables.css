@@ -5,33 +5,90 @@
 :root {
   /* ========== Colors ========== */
 
-  /* Primary (Blue) */
-  --color-primary: #007acc;
-  --color-primary-dark: #005a9e;
-  --color-primary-hover: #0056b3;
-  --color-primary-light: #e3f2fd;
-  --color-primary-lighter: #bbdefb;
+  /* Primary Colors*/
+  --color-primary-100: oklch(0.97 0.020 15);
+  --color-primary-200: oklch(0.93 0.044 15);
+  --color-primary-300: oklch(0.87 0.084 15);
+  --color-primary-400: oklch(0.80 0.144 15);
+  --color-primary-500: oklch(0.72 0.158 15);
+  --color-primary-600: oklch(0.62 0.136 15);
+  --color-primary-700: oklch(0.51 0.111 15);
+  --color-primary-800: oklch(0.40 0.086 15);
+  --color-primary-900: oklch(0.30 0.066 15);
+
+  /* Grays */
+  --color-white: oklch(1 0 0);
+  --color-gray-100: oklch(0.96 0 0);
+  --color-gray-200: oklch(0.92 0 0);
+  --color-gray-300: oklch(0.85 0 0);
+  --color-gray-400: oklch(0.76 0 0);
+  --color-gray-500: oklch(0.68 0 0);
+  --color-gray-600: oklch(0.59 0 0);
+  --color-gray-700: oklch(0.48 0 0);
+  --color-gray-800: oklch(0.37 0 0);
+  --color-gray-900: oklch(0.29 0 0);
+  --color-black: oklch(0.20 0 0);
+
+
+  /* ========== Colors With Light-Dark ========== */
+  /* Base colors */
+  --color-bg-base: light-dark(var(--color-white), var(--color-black));
+  --color-text: light-dark(var(--color-gray-900), var(--color-gray-100));
+  --color-text-disabled: light-dark(var(--color-gray-700), var(--color-gray-300));
+
+  /* Button colors */
+  --color-btn-bg: light-dark(var(--color-primary-600), var(--color-primary-600));
+  --color-btn-bg-hover: light-dark(var(--color-primary-700), var(--color-primary-700));
+  --color-btn-txt: var(--color-white);
+  --color-btn-trans-hover: light-dark(var(--color-primary-300), var(--color-primary-300));
+
+  /* Entry colors */
+  --color-entry-bg: light-dark(var(--color-white), var(--color-black));
+  --color-entry-bg-disabled: light-dark(var(--color-gray-100), var(--color-gray-900));
+  --color-entry-border: light-dark(var(--color-gray-300), var(--color-gray-700));
+  --color-entry-border-focus: light-dark(var(--color-primary), var(--color-primary));
+  --color-entry-placeholder: light-dark(var(--color-gray-300), var(--color-gray-700));
+
+
+  /* Frame colors*/
+  --color-frame-bg: light-dark(var(--color-gray-100), var(--color-gray-900));
+
+  /* Hover/Active states */
+  --color-primary: var(--color-primary-600);
+  --color-primary-hover: var(--color-primary-700);
+  --color-primary-light: light-dark(var(--color-primary-100), var(--color-primary-900));
+  --color-primary-lighter: light-dark(var(--color-primary-200), var(--color-primary-800));
+
+
+
+
 
   /* Error (Red) */
-  --color-error: #f44336;
-  --color-error-bg: #ffebee;
-  --color-error-dark: #d32f2f;
-  --color-danger: #dc3545;
+  --color-error: oklch(0.59 0.22 25);
+  --color-error-bg: oklch(0.95 0.01 25);
+  --color-error-dark: oklch(0.4 0.22 25);
+  --color-danger: oklch(0.59 0.22 25);
 
-  /* Grays - 5 levels */
-  --color-gray-100: #fafafa;  /* Lightest (backgrounds) */
-  --color-gray-300: #e0e0e0;  /* Light (borders, disabled) */
-  --color-gray-500: #ccc;     /* Medium (hover states) */
-  --color-gray-700: #bbb;     /* Dark (placeholders) */
-  --color-gray-900: #555;     /* Darkest (labels) */
-  --color-text: #333;
-  --color-text-secondary: #495057;
+  /* Borders */
+  --color-border: light-dark(var(--color-gray-300), var(--color-gray-700));
 
-  /* Table borders */
-  --color-border: #dee2e6;
+  /* Input colors */
+  --color-input-bg: light-dark(var(--color-white), var(--color-black));
+  --color-input-bg-disabled: light-dark(var(--color-gray-100), var(--color-gray-900));
+  --color-input-border-focus: light-dark(var(--color-primary-600), var(--color-primary-600));
 
-  /* White */
-  --color-white: white;
+  /* Dropdown colors */
+  --color-primary-pale: light-dark(var(--color-primary-100), var(--color-primary-900));
+
+  /* Notification colors */
+  --color-notification-error-bg: oklch(0.59 0.22 25); /* Red for error notifications */
+  --color-notification-overlay: rgba(33, 150, 243, 0.2); /* Blue overlay for drag-drop */
+  --color-notification-border: var(--color-primary-500); /* Blue border for drag-drop */
+  --color-notification-text: var(--color-primary-500); /* Blue text for drag-drop */
+
+  /* Shadow colors for notifications */
+  --color-shadow-notification: rgba(0, 0, 0, 0.2);
+  --color-shadow-notification-focus: rgba(255, 255, 255, 0.5);
 
 
   /* ========== Spacing ========== */
@@ -83,7 +140,16 @@
   /* ========== Shadows ========== */
   --shadow-container: 0 0 10px rgba(0, 0, 0, 0.1);
   --shadow-dropdown: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-focus: 0 0 0 2px rgba(0, 122, 204, 0.2);
+
+
+  /* ========== Focus Styles ========== */
+  /* Unified focus ring for all interactive elements */
+  --focus-ring-color: var(--color-entry-border-focus);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  --focus-outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  --focus-outline-offset: var(--focus-ring-offset);
 
 
   /* ========== Z-Index ========== */
@@ -98,6 +164,5 @@
 
   /* ========== Line Heights ========== */
   --line-height-tight: 1;
-  --line-height-base: 1.4;
-  --line-height-relaxed: 1.6;
+  --line-height-base: 1.5;
 }

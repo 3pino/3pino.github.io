@@ -5,7 +5,7 @@
 .nmr-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: var(--color-white);
+  background-color: var(--color-bg-base);
   margin-top: var(--space-8);
 }
 
@@ -69,11 +69,16 @@
 
 .delete-row-btn:hover {
   background-color: var(--color-danger);
-  color: var(--color-white);
+  color: var(--color-btn-txt);
 }
 
 .delete-row-btn:active {
   transform: scale(0.95);
+}
+
+.delete-row-btn:focus {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* Column Width Constraints */
@@ -110,50 +115,8 @@
   background-color: var(--color-primary-light);
 }
 
-/* Table Inputs */
-.nmr-table input {
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: var(--font-base);
-  padding: var(--space-2);
-  outline: none;
-}
+/* Table Inputs - Styles moved to entry.css */
 
-.nmr-table input:focus {
-  background-color: var(--color-white);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-}
-
-.nmr-table input::placeholder {
-  color: var(--color-gray-700);
-}
-
-/* Assignment Cell (Contenteditable) */
-.assignment-input {
-  width: 100%;
-  min-height: 20px;
-  border: none;
-  background: transparent;
-  font-size: var(--font-base);
-  padding: var(--space-2);
-  outline: none;
-  cursor: text;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.assignment-input:focus {
-  background-color: var(--color-white);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-}
-
-.assignment-input:empty:before {
-  content: attr(data-placeholder);
-  color: var(--color-gray-700);
-}
 
 /* J-Value Columns */
 .nmr-table .j-column {
@@ -162,11 +125,11 @@
 
 /* Disabled J-value Cells */
 .j-input-cell.disabled {
-  background-color: var(--color-gray-300);
+  background-color: var(--color-input-bg-disabled);
 }
 
 .j-input-cell.disabled input {
-  background-color: var(--color-gray-300);
+  background-color: var(--color-input-bg-disabled);
 }
 
 /* Add Row Footer */
@@ -183,27 +146,11 @@
   text-align: center;
 }
 
-.add-row-btn {
+td>a[role="button"].add-row-btn {
   width: 100%;
   height: var(--height-sm);
-  background: transparent;
-  border: none;
-  color: var(--color-primary);
-  font-size: var(--font-xl);
-  font-weight: 300;
   line-height: var(--line-height-tight);
-  cursor: pointer;
-  transition: all var(--transition);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.add-row-btn:hover {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-hover);
-}
-
-.add-row-btn:active {
-  background-color: var(--color-primary-lighter);
 }

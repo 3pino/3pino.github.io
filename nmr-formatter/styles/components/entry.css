@@ -1,0 +1,117 @@
+/* ============================================
+   Entry Component - Unified Input System
+   ============================================ */
+
+/* ----------------
+   Base Entry Class
+   ---------------- */
+.entry {
+  border: 2px solid var(--color-entry-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-entry-bg);
+  padding: var(--space-2);
+  outline: none;
+  transition: border-color var(--transition);
+
+  /* Contenteditable default behavior */
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 20px;
+  box-sizing: border-box;
+}
+
+.entry:focus {
+  border-color: var(--focus-ring-color);
+  outline: none;
+}
+
+/* Placeholder for contenteditable elements */
+.entry:empty:before {
+  content: attr(data-placeholder);
+  color: var(--color-entry-placeholder);
+  font-style: italic;
+}
+
+/* Disabled state */
+.entry[contenteditable="false"] {
+  background-color: var(--color-entry-bg-disabled);
+  cursor: default;
+}
+
+/* ----------------
+   Entry Variants
+   ---------------- */
+
+/* Metadata Inputs (nuclei, solvent, frequency) */
+.entry.metadata-input {
+  padding: var(--space-6) var(--space-8);
+  min-height: var(--height-md);
+  height: var(--height-md);
+  line-height: var(--line-height-base);
+}
+
+/* Setting Inputs (shift-precision, j-precision) */
+.entry.setting-input {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-sm);
+  min-height: var(--height-sm);
+  height: var(--height-sm);
+  line-height: var(--font-base);
+  min-width: 50px;
+}
+
+/* Table Inputs - Transparent base, focus shows border */
+.nmr-table .entry {
+  width: 100%;
+  border-width: 0px;
+  padding: var(--space-2);
+
+  &:focus{
+    border-width: 2px;
+
+  }
+}
+
+
+/* Rich Text Editor */
+.entry.rich-text-editor {
+  flex: 1;
+  white-space: normal; /* Override nowrap */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-12);
+  line-height: var(--line-height-base);
+  font-size: var(--font-base);
+  min-height: 30px;
+}
+
+.entry.rich-text-editor:empty:before {
+  content: "Formatted NMR text will appear here...";
+}
+
+/* ----------------
+   Input Type Classes
+   ---------------- */
+
+/* Numeric inputs */
+.entry.metadata-number,
+.entry.shift-input,
+.entry.j-input,
+.entry.int-input {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Text inputs */
+.entry.metadata-editable,
+.entry.mult-input,
+.entry.assignment-input {
+  text-align: left;
+}
+
+/* Assignment specific styles */
+.entry.assignment-input {
+  min-height: 20px;
+  white-space: nowrap;
+}

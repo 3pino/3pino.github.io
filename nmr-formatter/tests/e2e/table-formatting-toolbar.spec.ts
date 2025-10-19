@@ -14,7 +14,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
 
       // Select all text
       await assign0.press('Control+A');
@@ -32,7 +32,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
 
       // Select all text
       await assign0.press('Control+A');
@@ -49,7 +49,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
 
       // Select all text
       await assign0.press('Control+A');
@@ -67,7 +67,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
 
       // Select all text
       await assign0.press('Control+A');
@@ -84,7 +84,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H2O');
+      await helper.typeIntoInput(assign0, 'H2O');
 
       // Select '2'
       await assign0.press('ArrowLeft');
@@ -103,7 +103,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('x2');
+      await helper.typeIntoInput(assign0, 'x2');
 
       // Select '2'
       await assign0.press('ArrowLeft');
@@ -122,7 +122,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H8');
+      await helper.typeIntoInput(assign0, 'H8');
 
       // Move cursor between H and 8
       await assign0.press('ArrowLeft');
@@ -140,7 +140,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
 
       // Apply bold
@@ -161,7 +161,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
 
       // Apply bold
@@ -180,7 +180,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H8-carbon');
+      await helper.typeIntoInput(assign0, 'H8-carbon');
 
       // Select 'H'
       await assign0.press('Home');
@@ -206,7 +206,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
     test('should not affect Shift input field', async () => {
       const shiftInput = helper.getShiftInput(0);
 
-      await shiftInput.fill('7.53');
+      await helper.fillInput(shiftInput, '7.53');
       await shiftInput.click();
 
       // Select text
@@ -226,7 +226,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
     test('should not affect Multiplicity input field', async () => {
       const multInput = helper.getMultiplicityInput(0);
 
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await multInput.click();
       await multInput.press('Control+A');
 
@@ -240,12 +240,14 @@ test.describe('Table Section - Formatting Toolbar', () => {
 
     test('should not affect J-value input field', async () => {
       // Set up J-column
-      await helper.getMultiplicityInput(0).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'd');
+      
+      // Wait for J-column to become visible and editable
+      const jInput = helper.getJInput(0, 0);
+      await jInput.waitFor({ state: 'visible' });
       await helper.page.waitForTimeout(100);
 
-      const jInput = helper.getJInput(0, 0);
-
-      await jInput.fill('7.5');
+      await helper.fillInput(jInput, '7.5');
       await jInput.click();
       await jInput.press('Control+A');
 
@@ -260,7 +262,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
     test('should not affect Integration input field', async () => {
       const intInput = helper.getIntegrationInput(0);
 
-      await intInput.fill('3');
+      await helper.fillInput(intInput, '3');
       await intInput.click();
       await intInput.press('Control+A');
 
@@ -275,7 +277,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
     test('Ctrl+B should not affect Shift input', async () => {
       const shiftInput = helper.getShiftInput(0);
 
-      await shiftInput.fill('7.53');
+      await helper.fillInput(shiftInput, '7.53');
       await shiftInput.click();
       await shiftInput.press('Control+A');
 
@@ -290,7 +292,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
     test('Ctrl+I should not affect Multiplicity input', async () => {
       const multInput = helper.getMultiplicityInput(0);
 
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await multInput.click();
       await multInput.press('Control+A');
 
@@ -308,7 +310,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
       await helper.applyFormatting(assign0, 'bold');
 
@@ -327,7 +329,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
       await helper.applyFormatting(assign0, 'italic');
 
@@ -346,7 +348,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
       await helper.applyFormatting(assign0, 'bold');
 
@@ -364,7 +366,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
 
       // Apply bold
@@ -385,7 +387,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H2SO4');
+      await helper.typeIntoInput(assign0, 'H2SO4');
 
       // Make '2' subscript
       await assign0.press('Home');
@@ -410,7 +412,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Carbon-13');
+      await helper.typeIntoInput(assign0, 'Carbon-13');
 
       // Select '13' and make it superscript
       await assign0.press('End');
@@ -432,7 +434,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       await assign0.click();
       await helper.applyFormatting(assign0, 'endash');
 
-      await assign0.type('start');
+      await helper.typeIntoInput(assign0, 'start');
 
       // Insert in middle
       await assign0.press('Home');
@@ -461,7 +463,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       await helper.applyFormatting(assign0, 'bold');
 
       // Type after applying formatting
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
 
       const html = await helper.getAssignmentHTML(0);
 
@@ -474,7 +476,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Test');
+      await helper.typeIntoInput(assign0, 'Test');
       await assign0.press('Control+A');
 
       // Rapidly apply formatting
@@ -493,7 +495,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('First');
+      await helper.typeIntoInput(assign0, 'First');
       await assign0.press('Control+A');
       await helper.applyFormatting(assign0, 'bold');
 
@@ -501,7 +503,7 @@ test.describe('Table Section - Formatting Toolbar', () => {
       await helper.clearInput(assign0);
 
       // Retype
-      await assign0.type('Second');
+      await helper.typeIntoInput(assign0, 'Second');
       await assign0.press('Control+A');
       await helper.applyFormatting(assign0, 'italic');
 

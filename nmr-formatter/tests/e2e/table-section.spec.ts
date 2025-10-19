@@ -12,7 +12,7 @@ test.describe('Table Section - Data Input & Validation', () => {
   test.describe('Shift Input', () => {
     test('should accept single numeric value', async () => {
       const shiftInput = helper.getShiftInput(0);
-      await shiftInput.fill('7.53');
+      await helper.fillInput(shiftInput, '7.53');
 
       const value = await helper.getInputValue(shiftInput);
       expect(value).toBe('7.53');
@@ -20,7 +20,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should accept range input with en-dash', async () => {
       const shiftInput = helper.getShiftInput(0);
-      await shiftInput.fill('7.53–7.50');
+      await helper.fillInput(shiftInput, '7.53–7.50');
 
       const value = await helper.getInputValue(shiftInput);
       expect(value).toBe('7.53–7.50');
@@ -28,7 +28,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should accept range input with hyphen', async () => {
       const shiftInput = helper.getShiftInput(0);
-      await shiftInput.fill('7.53-7.50');
+      await helper.fillInput(shiftInput, '7.53-7.50');
 
       const value = await helper.getInputValue(shiftInput);
       expect(value).toBe('7.53-7.50');
@@ -36,7 +36,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should accept alphabetic characters (for complex ranges)', async () => {
       const shiftInput = helper.getShiftInput(0);
-      await shiftInput.fill('7.53a');
+      await helper.fillInput(shiftInput, '7.53a');
 
       const value = await helper.getInputValue(shiftInput);
       expect(value).toBe('7.53');
@@ -50,7 +50,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const standardValues = ['s', 'd', 't', 'q', 'm'];
 
       for (const mult of standardValues) {
-        await multInput.fill(mult);
+        await helper.fillInput(multInput, mult);
         const value = await helper.getInputValue(multInput);
         expect(value).toBe(mult);
       }
@@ -62,7 +62,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const complexValues = ['dd', 'dt', 'ddd', 'td', 'dddd'];
 
       for (const mult of complexValues) {
-        await multInput.fill(mult);
+        await helper.fillInput(multInput, mult);
         const value = await helper.getInputValue(multInput);
         expect(value).toBe(mult);
       }
@@ -71,7 +71,7 @@ test.describe('Table Section - Data Input & Validation', () => {
     test('should accept uppercase multiplicity', async () => {
       const multInput = helper.getMultiplicityInput(0);
 
-      await multInput.fill('DD');
+      await helper.fillInput(multInput, 'DD');
       const value = await helper.getInputValue(multInput);
       expect(value).toBe('DD');
     });
@@ -84,14 +84,14 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(visibleJCount).toBe(0);
 
       // Enter 'dd' - should show 2 J columns
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100); // Wait for update
 
       visibleJCount = await helper.getVisibleJColumnCount();
       expect(visibleJCount).toBe(2);
 
       // Enter 'd' - should show 1 J column
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
       await helper.page.waitForTimeout(100);
 
       visibleJCount = await helper.getVisibleJColumnCount();
@@ -102,11 +102,13 @@ test.describe('Table Section - Data Input & Validation', () => {
   test.describe('J-Value Input', () => {
     test('should accept numeric values', async () => {
       const multInput = helper.getMultiplicityInput(0);
-      await multInput.fill('d');
-      await helper.page.waitForTimeout(100);
-
+      await helper.fillInput(multInput, 'd');
+      
+      // Wait for J-column to become visible and editable
       const jInput = helper.getJInput(0, 0);
-      await jInput.fill('7.5');
+      await jInput.waitFor({ state: 'visible' });
+      await helper.page.waitForTimeout(100);
+      await helper.fillInput(jInput, '7.5');
 
       const value = await helper.getInputValue(jInput);
       expect(value).toBe('7.5');
@@ -114,11 +116,13 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should accept decimal values', async () => {
       const multInput = helper.getMultiplicityInput(0);
-      await multInput.fill('d');
-      await helper.page.waitForTimeout(100);
-
+      await helper.fillInput(multInput, 'd');
+      
+      // Wait for J-column to become visible and editable
       const jInput = helper.getJInput(0, 0);
-      await jInput.fill('7.53');
+      await jInput.waitFor({ state: 'visible' });
+      await helper.page.waitForTimeout(100);
+      await helper.fillInput(jInput, '7.53');
 
       const value = await helper.getInputValue(jInput);
       expect(value).toBe('7.53');
@@ -126,21 +130,23 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should accept values in valid range (0-999.9)', async () => {
       const multInput = helper.getMultiplicityInput(0);
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
+      
+      // Wait for J-column to become visible and editable
+      const jInput = helper.getJInput(0, 0);
+      await jInput.waitFor({ state: 'visible' });
       await helper.page.waitForTimeout(100);
 
-      const jInput = helper.getJInput(0, 0);
-
       // Test minimum
-      await jInput.fill('0');
+      await helper.fillInput(jInput, '0');
       expect(await helper.getInputValue(jInput)).toBe('0');
 
       // Test maximum
-      await jInput.fill('999.9');
+      await helper.fillInput(jInput, '999.9');
       expect(await helper.getInputValue(jInput)).toBe('999.9');
 
       // Test mid-range
-      await jInput.fill('15.5');
+      await helper.fillInput(jInput, '15.5');
       expect(await helper.getInputValue(jInput)).toBe('15.5');
     });
 
@@ -148,7 +154,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // dd = 2 J-values
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100);
 
       expect(await helper.isJCellVisible(0, 0)).toBe(true);
@@ -156,7 +162,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(await helper.isJCellVisible(0, 2)).toBe(false);
 
       // ddd = 3 J-values
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
       await helper.page.waitForTimeout(100);
 
       expect(await helper.isJCellVisible(0, 0)).toBe(true);
@@ -169,13 +175,13 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Start with 'ddd' (3 J-values)
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
       await helper.page.waitForTimeout(100);
 
       expect(await helper.getVisibleJColumnCount()).toBe(3);
 
       // Change to 'd' (1 J-value)
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
       await helper.page.waitForTimeout(100);
 
       expect(await helper.getVisibleJColumnCount()).toBe(1);
@@ -186,20 +192,20 @@ test.describe('Table Section - Data Input & Validation', () => {
     test('should accept positive integers', async () => {
       const intInput = helper.getIntegrationInput(0);
 
-      await intInput.fill('1');
+      await helper.fillInput(intInput, '1');
       expect(await helper.getInputValue(intInput)).toBe('1');
 
-      await intInput.fill('10');
+      await helper.fillInput(intInput, '10');
       expect(await helper.getInputValue(intInput)).toBe('10');
 
-      await intInput.fill('100');
+      await helper.fillInput(intInput, '100');
       expect(await helper.getInputValue(intInput)).toBe('100');
     });
 
     test('should accept zero', async () => {
       const intInput = helper.getIntegrationInput(0);
 
-      await intInput.fill('0');
+      await helper.fillInput(intInput, '0');
       expect(await helper.getInputValue(intInput)).toBe('0');
     });
 
@@ -211,7 +217,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const assignmentInput = helper.getAssignmentInput(0);
 
       await assignmentInput.click();
-      await assignmentInput.type('H-8');
+      await helper.typeIntoInput(assignmentInput, 'H-8');
 
       const text = await helper.getAssignmentText(0);
       expect(text).toBe('H-8');
@@ -233,7 +239,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
       // Type whitespace
       await assignmentInput.click();
-      await assignmentInput.type('   ');
+      await helper.typeIntoInput(assignmentInput, '   ');
 
       // Blur to trigger cleanup
       await assignmentInput.blur();
@@ -246,9 +252,9 @@ test.describe('Table Section - Data Input & Validation', () => {
       const assignmentInput = helper.getAssignmentInput(0);
 
       await assignmentInput.click();
-      await assignmentInput.type('Line1');
+      await helper.typeIntoInput(assignmentInput, 'Line1');
       await assignmentInput.press('Enter');
-      await assignmentInput.type('Line2');
+      await helper.typeIntoInput(assignmentInput, 'Line2');
 
       const html = await helper.getAssignmentHTML(0);
 
@@ -281,7 +287,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should add row with J-columns already visible (when existing rows have multiplicity)', async () => {
       const multInput = helper.getMultiplicityInput(0);
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add new row
@@ -323,12 +329,12 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should delete row and adjust J-columns accordingly', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       // Should have 2 J-columns visible (max of row0 and row1)
@@ -344,13 +350,13 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should preserve data in other rows after deletion', async () => {
       // Set data in row 0
-      await helper.getShiftInput(0).fill('7.53');
-      await helper.getMultiplicityInput(0).fill('d');
+      await helper.fillInput(helper.getShiftInput(0), '7.53');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'd');
 
       // Add row 1 with data
       await helper.addRow();
-      await helper.getShiftInput(1).fill('3.25');
-      await helper.getMultiplicityInput(1).fill('s');
+      await helper.fillInput(helper.getShiftInput(1), '3.25');
+      await helper.fillInput(helper.getMultiplicityInput(1), 's');
 
       // Delete row 0
       await helper.deleteRow(0);
@@ -364,12 +370,12 @@ test.describe('Table Section - Data Input & Validation', () => {
   test.describe('Dynamic J-Column Display & Disabled State', () => {
     test('should show max J-columns across all rows', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: ddd (3 J-values)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('ddd');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'ddd');
       await helper.page.waitForTimeout(100);
 
       // Should show 3 J-columns (max)
@@ -378,12 +384,12 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should disable J-inputs for rows that do not need them', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       // Row 0: J1, J2 should be enabled
@@ -397,12 +403,12 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should grey out disabled J-inputs', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       // Row 1's J2 should be disabled and greyed out
@@ -412,7 +418,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should disable all J-inputs for empty rows', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: empty
@@ -431,7 +437,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Start with 'ddd' (3 J-values)
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
       await helper.page.waitForTimeout(100);
 
       // Check headers
@@ -450,7 +456,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const shiftInput = helper.getShiftInput(0);
 
       // Leave shift empty (invalid for ¹H NMR)
-      await shiftInput.fill('');
+      await helper.fillInput(shiftInput, '');
 
       // Should not have error class
       expect(await helper.hasError(shiftInput)).toBe(false);
@@ -461,10 +467,10 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Enter multiplicity so row is not considered empty
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
 
       // Leave shift empty (invalid)
-      await shiftInput.fill('');
+      await helper.fillInput(shiftInput, '');
 
       // Click Generate Text
       await helper.generateText();
@@ -479,10 +485,10 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Enter multiplicity so row is not considered empty
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
 
       // Leave shift empty
-      await shiftInput.fill('');
+      await helper.fillInput(shiftInput, '');
 
       // Generate Text to trigger error
       await helper.generateText();
@@ -491,7 +497,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(await helper.hasError(shiftInput)).toBe(true);
 
       // Fix the error
-      await shiftInput.fill('7.53');
+      await helper.fillInput(shiftInput, '7.53');
 
       // Error should be cleared
       expect(await helper.hasError(shiftInput)).toBe(false);
@@ -502,10 +508,10 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Enter multiplicity so row is not considered empty
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
 
       // Step 1: Enter invalid data
-      await shiftInput.fill('');
+      await helper.fillInput(shiftInput, '');
 
       // Step 2: Generate Text - should show error
       await helper.generateText();
@@ -513,11 +519,11 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(await helper.hasError(shiftInput)).toBe(true);
 
       // Step 3: Fix the error
-      await shiftInput.fill('7.53');
+      await helper.fillInput(shiftInput, '7.53');
       expect(await helper.hasError(shiftInput)).toBe(false);
 
       // Step 4: Re-break - enter invalid data again
-      await shiftInput.fill('');
+      await helper.fillInput(shiftInput, '');
 
       // Step 5: Generate Text again - should show error again
       await helper.generateText();
@@ -534,8 +540,8 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Enter data
-      await shiftInput.fill('7.53');
-      await multInput.fill('d');
+      await helper.fillInput(shiftInput, '7.53');
+      await helper.fillInput(multInput, 'd');
 
       // Navigate away and back
       await helper.getIntegrationInput(0).click();
@@ -548,7 +554,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should preserve data after row addition', async () => {
       const shiftInput = helper.getShiftInput(0);
-      await shiftInput.fill('7.53');
+      await helper.fillInput(shiftInput, '7.53');
 
       // Add a new row
       await helper.addRow();
@@ -561,20 +567,24 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Enter 'dd' and fill J-values
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
+      
+      // Wait for J-columns to become visible
+      const jInput0 = helper.getJInput(0, 0);
+      await jInput0.waitFor({ state: 'visible' });
       await helper.page.waitForTimeout(100);
 
-      await helper.getJInput(0, 0).fill('7.5');
-      await helper.getJInput(0, 1).fill('1.2');
+      await helper.fillInput(helper.getJInput(0, 0), '7.5');
+      await helper.fillInput(helper.getJInput(0, 1), '1.2');
 
       // Change to 'd' (hides J2)
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
       await helper.page.waitForTimeout(100);
 
       expect(await helper.isJCellVisible(0, 1)).toBe(false);
 
       // Change back to 'dd' (shows J2 again)
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100);
 
       // J-values should be preserved
@@ -586,23 +596,27 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Start with 'ddd' and fill all 3 J-values
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
+      
+      // Wait for J-columns to become visible
+      const jInput0 = helper.getJInput(0, 0);
+      await jInput0.waitFor({ state: 'visible' });
       await helper.page.waitForTimeout(100);
 
-      await helper.getJInput(0, 0).fill('7.5');
-      await helper.getJInput(0, 1).fill('1.2');
-      await helper.getJInput(0, 2).fill('0.8');
+      await helper.fillInput(helper.getJInput(0, 0), '7.5');
+      await helper.fillInput(helper.getJInput(0, 1), '1.2');
+      await helper.fillInput(helper.getJInput(0, 2), '0.8');
 
       // Change to 'd' (only J1 visible)
-      await multInput.fill('d');
+      await helper.fillInput(multInput, 'd');
       await helper.page.waitForTimeout(100);
 
       // Change to 'dd' (J1, J2 visible)
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100);
 
       // Change back to 'ddd' (all 3 visible)
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
       await helper.page.waitForTimeout(100);
 
       // All J-values should be preserved
@@ -630,7 +644,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(colSpan).toBe(expected); // 4
 
       // Add 'dd' - 2 J-columns
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100);
 
       colSpan = await helper.getAddRowCellColSpan();
@@ -642,7 +656,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Start with 'dd' - 2 J-columns
-      await multInput.fill('dd');
+      await helper.fillInput(multInput, 'dd');
       await helper.page.waitForTimeout(100);
 
       let colSpan = await helper.getAddRowCellColSpan();
@@ -650,7 +664,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(colSpan).toBe(expected); // 6
 
       // Change to 'ddd' - 3 J-columns
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
       await helper.page.waitForTimeout(100);
 
       colSpan = await helper.getAddRowCellColSpan();
@@ -662,7 +676,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       const multInput = helper.getMultiplicityInput(0);
 
       // Start with 'ddd' - 3 J-columns
-      await multInput.fill('ddd');
+      await helper.fillInput(multInput, 'ddd');
       await helper.page.waitForTimeout(100);
 
       let colSpan = await helper.getAddRowCellColSpan();
@@ -670,7 +684,7 @@ test.describe('Table Section - Data Input & Validation', () => {
       expect(colSpan).toBe(expected); // 7
 
       // Clear multiplicity
-      await multInput.fill('');
+      await helper.fillInput(multInput, '');
       await helper.page.waitForTimeout(100);
 
       colSpan = await helper.getAddRowCellColSpan();
@@ -680,12 +694,12 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should update colspan when row with max J-columns is deleted', async () => {
       // Row 0: ddd (3 J-values)
-      await helper.getMultiplicityInput(0).fill('ddd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'ddd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       // Should have 3 J-columns visible (max)
@@ -705,7 +719,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
     test('should maintain correct colspan across multiple row additions', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       let colSpan = await helper.getAddRowCellColSpan();
@@ -722,7 +736,7 @@ test.describe('Table Section - Data Input & Validation', () => {
 
       // Add Row 2: ddd (3 J-values)
       await helper.addRow();
-      await helper.getMultiplicityInput(2).fill('ddd');
+      await helper.fillInput(helper.getMultiplicityInput(2), 'ddd');
       await helper.page.waitForTimeout(100);
 
       colSpan = await helper.getAddRowCellColSpan();

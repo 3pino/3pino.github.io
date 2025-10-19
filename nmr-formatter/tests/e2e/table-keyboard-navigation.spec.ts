@@ -80,12 +80,12 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('Enter should skip disabled J-columns', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value, J2 disabled)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       // From J2 of row 0, press Enter
@@ -165,7 +165,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const int1 = helper.getIntegrationInput(1);
 
       // Set initial value
-      await int0.fill('5');
+      await helper.fillInput(int0, '5');
 
       // ArrowDown should navigate, not increment value
       await int0.click();
@@ -184,7 +184,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign1 = helper.getAssignmentInput(1);
 
       await assign0.click();
-      await assign0.type('H-8');
+      await helper.typeIntoInput(assign0, 'H-8');
 
       await assign0.press('ArrowDown');
       await expect(assign1).toBeFocused();
@@ -196,7 +196,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const shift0 = helper.getShiftInput(0);
       const mult0 = helper.getMultiplicityInput(0);
 
-      await shift0.fill('7.53');
+      await helper.fillInput(shift0, '7.53');
       await shift0.click();
 
       // Move cursor to end
@@ -213,7 +213,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const shift0 = helper.getShiftInput(0);
       const mult0 = helper.getMultiplicityInput(0);
 
-      await mult0.fill('d');
+      await helper.fillInput(mult0, 'd');
       await mult0.click();
 
       // Move cursor to start
@@ -226,17 +226,137 @@ test.describe('Table Section - Keyboard Navigation', () => {
       await expect(shift0).toBeFocused();
     });
 
+    test('ArrowLeft at start of leftmost cell should move to previous row last cell', async () => {
+      // Create multiple rows with data
+      await helper.fillInput(helper.getShiftInput(0), '7.53');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'd');
+      await helper.fillInput(helper.getAssignmentInput(0), 'H-8');
+      
+      await helper.addRow();
+      await helper.fillInput(helper.getShiftInput(1), '6.42');
+      await helper.fillInput(helper.getMultiplicityInput(1), 's');
+      await helper.fillInput(helper.getAssignmentInput(1), 'H-5');
+
+      const shift1 = helper.getShiftInput(1);
+      const assign0 = helper.getAssignmentInput(0);
+
+      // Click on row 1's leftmost cell (Chemical Shift)
+      await shift1.click();
+
+      // Move cursor to start
+      await shift1.press('Home');
+
+      // Press ArrowLeft - should move to previous row's last cell
+      await shift1.press('ArrowLeft');
+
+      // Should focus on row 0's assignment cell
+      await expect(assign0).toBeFocused();
+
+      // Cursor should be at end of assignment text
+      const cursorPos = await assign0.evaluate((el) => {
+        const sel = window.getSelection();
+        return sel ? sel.focusOffset : -1;
+      });
+      const textLength = await assign0.evaluate((el) => el.textContent?.length || 0);
+      expect(cursorPos).toBe(textLength);
+    });
+
+    test('ArrowLeft at start of first row leftmost cell should not navigate', async () => {
+      await helper.fillInput(helper.getShiftInput(0), '7.53');
+      
+      const shift0 = helper.getShiftInput(0);
+
+      await shift0.click();
+
+      // Move cursor to start
+      await shift0.press('Home');
+
+      // Press ArrowLeft - should not navigate away
+      await shift0.press('ArrowLeft');
+
+      // Should remain focused on same cell
+      await expect(shift0).toBeFocused();
+    });
+
+    test('ArrowLeft in middle of leftmost cell should just move cursor', async () => {
+      await helper.fillInput(helper.getShiftInput(0), '7.53');
+      
+      const shift0 = helper.getShiftInput(0);
+
+      await shift0.click();
+
+      // Move cursor to position 2 (middle)
+      await shift0.press('Home');
+      await shift0.press('ArrowRight');
+      await shift0.press('ArrowRight');
+
+      // Get cursor position (should be 2)
+      let cursorPos = await shift0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
+      expect(cursorPos).toBe(2);
+
+      // Press ArrowLeft - should just move cursor within cell
+      await shift0.press('ArrowLeft');
+
+      // Should still be focused on same cell
+      await expect(shift0).toBeFocused();
+
+      // Cursor should have moved to position 1
+      cursorPos = await shift0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
+      expect(cursorPos).toBe(1);
+    });
+
+    test('ArrowLeft at start of leftmost cell with multiple rows should wrap correctly', async () => {
+      // Create 3 rows
+      await helper.fillInput(helper.getAssignmentInput(0), 'H-8');
+      await helper.addRow();
+      await helper.fillInput(helper.getAssignmentInput(1), 'H-5');
+      await helper.addRow();
+      await helper.fillInput(helper.getAssignmentInput(2), 'H-3');
+
+      const shift1 = helper.getShiftInput(1);
+      const shift2 = helper.getShiftInput(2);
+      const assign0 = helper.getAssignmentInput(0);
+      const assign1 = helper.getAssignmentInput(1);
+
+      // Test wrapping from row 2 to row 1
+      await shift2.click();
+      await shift2.press('Home');
+      await shift2.press('ArrowLeft');
+      await expect(assign1).toBeFocused();
+
+      // Test wrapping from row 1 to row 0
+      await shift1.click();
+      await shift1.press('Home');
+      await shift1.press('ArrowLeft');
+      await expect(assign0).toBeFocused();
+    });
+
     test('ArrowRight in middle of text should just move cursor', async () => {
       const shift0 = helper.getShiftInput(0);
 
-      await shift0.fill('7.53');
+      await helper.fillInput(shift0, '7.53');
       await shift0.click();
 
       // Move to start
       await shift0.press('Home');
 
       // Get initial cursor position (should be 0)
-      let cursorPos = await shift0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      let cursorPos = await shift0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(0);
 
       // Press ArrowRight (should move cursor within text)
@@ -246,21 +366,31 @@ test.describe('Table Section - Keyboard Navigation', () => {
       await expect(shift0).toBeFocused();
 
       // Cursor should have moved to position 1
-      cursorPos = await shift0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      cursorPos = await shift0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(1);
     });
 
     test('ArrowLeft in middle of text should just move cursor', async () => {
       const shift0 = helper.getShiftInput(0);
 
-      await shift0.fill('7.53');
+      await helper.fillInput(shift0, '7.53');
       await shift0.click();
 
       // Move to end
       await shift0.press('End');
 
       // Get initial cursor position (should be at end = 4)
-      let cursorPos = await shift0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      let cursorPos = await shift0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(4);
 
       // Press ArrowLeft (should move cursor within text)
@@ -270,7 +400,12 @@ test.describe('Table Section - Keyboard Navigation', () => {
       await expect(shift0).toBeFocused();
 
       // Cursor should have moved to position 3
-      cursorPos = await shift0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      cursorPos = await shift0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(3);
     });
   });
@@ -278,13 +413,15 @@ test.describe('Table Section - Keyboard Navigation', () => {
   test.describe('Arrow Key Navigation - Horizontal (Number Inputs)', () => {
     test('ArrowRight at end of number input should move to next cell', async () => {
       // Set up J-columns
-      await helper.getMultiplicityInput(0).fill('dd');
-      await helper.page.waitForTimeout(100);
-
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
+      
+      // Wait for J-columns to become visible
       const j0 = helper.getJInput(0, 0);
+      await j0.waitFor({ state: 'visible' });
+      await helper.page.waitForTimeout(100);
       const j1 = helper.getJInput(0, 1);
 
-      await j0.fill('7.5');
+      await helper.fillInput(j0, '7.5');
       await j0.click();
 
       // Move cursor to end
@@ -299,13 +436,15 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('ArrowLeft at start of number input should move to previous cell', async () => {
       // Set up J-columns
-      await helper.getMultiplicityInput(0).fill('dd');
-      await helper.page.waitForTimeout(100);
-
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
+      
+      // Wait for J-columns to become visible
       const j0 = helper.getJInput(0, 0);
+      await j0.waitFor({ state: 'visible' });
+      await helper.page.waitForTimeout(100);
       const j1 = helper.getJInput(0, 1);
 
-      await j1.fill('1.2');
+      await helper.fillInput(j1, '1.2');
       await j1.click();
 
       // Move cursor to start
@@ -321,14 +460,19 @@ test.describe('Table Section - Keyboard Navigation', () => {
     test('ArrowRight in middle of number should just move cursor', async () => {
       const int0 = helper.getIntegrationInput(0);
 
-      await int0.fill('123');
+      await helper.fillInput(int0, '123');
       await int0.click();
 
       // Move to start
       await int0.press('Home');
 
       // Get initial cursor position
-      let cursorPos = await int0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      let cursorPos = await int0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(0);
 
       // Press ArrowRight (should move cursor within number)
@@ -338,21 +482,31 @@ test.describe('Table Section - Keyboard Navigation', () => {
       await expect(int0).toBeFocused();
 
       // Cursor should have moved
-      cursorPos = await int0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      cursorPos = await int0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(1);
     });
 
     test('ArrowLeft in middle of number should just move cursor', async () => {
       const int0 = helper.getIntegrationInput(0);
 
-      await int0.fill('123');
+      await helper.fillInput(int0, '123');
       await int0.click();
 
       // Move to end
       await int0.press('End');
 
       // Get initial cursor position (at end = 3)
-      let cursorPos = await int0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      let cursorPos = await int0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(3);
 
       // Press ArrowLeft (should move cursor within number)
@@ -362,7 +516,12 @@ test.describe('Table Section - Keyboard Navigation', () => {
       await expect(int0).toBeFocused();
 
       // Cursor should have moved back
-      cursorPos = await int0.evaluate((el: HTMLInputElement) => el.selectionStart);
+      cursorPos = await int0.evaluate((el: HTMLElement) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return -1;
+        const range = selection.getRangeAt(0);
+        return range.startOffset;
+      });
       expect(cursorPos).toBe(2);
     });
   });
@@ -375,7 +534,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const shift1 = helper.getShiftInput(1);
 
       await assign0.click();
-      await assign0.type('H-8');
+      await helper.typeIntoInput(assign0, 'H-8');
 
       // Press ArrowRight (cursor should be at end after typing)
       await assign0.press('ArrowRight');
@@ -390,7 +549,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H-8');
+      await helper.typeIntoInput(assign0, 'H-8');
 
       // Press ArrowRight (cursor should be at end after typing)
       await assign0.press('ArrowRight');
@@ -408,7 +567,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H-8');
+      await helper.typeIntoInput(assign0, 'H-8');
 
       // Move cursor to start
       await assign0.press('Home');
@@ -424,7 +583,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('H-8-Test');
+      await helper.typeIntoInput(assign0, 'H-8-Test');
 
       // Move to start
       await assign0.press('Home');
@@ -468,7 +627,11 @@ test.describe('Table Section - Keyboard Navigation', () => {
   test.describe('Arrow Key Navigation - Skip Hidden/Disabled Columns', () => {
     test('should skip hidden J-columns when navigating horizontally', async () => {
       // Row has 'd' (only 1 J-column)
-      await helper.getMultiplicityInput(0).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'd');
+      
+      // Wait for J-columns to become visible
+      const jTemp = helper.getJInput(0, 0);
+      await jTemp.waitFor({ state: 'visible' });
       await helper.page.waitForTimeout(100);
 
       const mult0 = helper.getMultiplicityInput(0);
@@ -489,12 +652,12 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('should skip disabled J-columns when navigating horizontally', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value, J2 disabled)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       const j1_0 = helper.getJInput(1, 0);
@@ -510,12 +673,12 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('should skip disabled J-columns when navigating vertically', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value, J2 disabled)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       const j0_1 = helper.getJInput(0, 1);
@@ -576,7 +739,11 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('Tab should skip hidden J-columns', async () => {
       // Row has 'd' (only 1 J-column)
-      await helper.getMultiplicityInput(0).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'd');
+      
+      // Wait for J-columns to become visible
+      const jTemp = helper.getJInput(0, 0);
+      await jTemp.waitFor({ state: 'visible' });
       await helper.page.waitForTimeout(100);
 
       const mult0 = helper.getMultiplicityInput(0);
@@ -595,12 +762,12 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('Tab should skip disabled J-columns', async () => {
       // Row 0: dd (2 J-values)
-      await helper.getMultiplicityInput(0).fill('dd');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'dd');
       await helper.page.waitForTimeout(100);
 
       // Add Row 1: d (1 J-value, J2 disabled)
       await helper.addRow();
-      await helper.getMultiplicityInput(1).fill('d');
+      await helper.fillInput(helper.getMultiplicityInput(1), 'd');
       await helper.page.waitForTimeout(100);
 
       const j1_0 = helper.getJInput(1, 0);
@@ -619,7 +786,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Line1');
+      await helper.typeIntoInput(assign0, 'Line1');
       await assign0.press('Enter');
 
       const html = await helper.getAssignmentHTML(0);
@@ -635,7 +802,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign1 = helper.getAssignmentInput(1);
 
       await assign0.click();
-      await assign0.type('H-8');
+      await helper.typeIntoInput(assign0, 'H-8');
       await assign0.press('Enter');
 
       // Should move to next row's assignment
@@ -646,7 +813,7 @@ test.describe('Table Section - Keyboard Navigation', () => {
       const assign0 = helper.getAssignmentInput(0);
 
       await assign0.click();
-      await assign0.type('Text');
+      await helper.typeIntoInput(assign0, 'Text');
       await assign0.press('Enter');
       await assign0.press('Enter');
       await assign0.press('Enter');
@@ -706,9 +873,9 @@ test.describe('Table Section - Keyboard Navigation', () => {
 
     test('should maintain data while navigating', async () => {
       // Enter data in multiple cells
-      await helper.getShiftInput(0).fill('7.53');
-      await helper.getMultiplicityInput(0).fill('d');
-      await helper.getIntegrationInput(0).fill('3');
+      await helper.fillInput(helper.getShiftInput(0), '7.53');
+      await helper.fillInput(helper.getMultiplicityInput(0), 'd');
+      await helper.fillInput(helper.getIntegrationInput(0), '3');
 
       // Navigate around
       await helper.getShiftInput(0).click();

@@ -16,12 +16,12 @@ export class NMRTable {
     private tableBody: HTMLElement;
     private tableElement: HTMLElement;
     private keyboardNav: KeyboardNav;
-    
+
     private maxJColumns: number = 0;
 
     // Row ID to TR element mapping
     private rowElements: Map<string, HTMLTableRowElement> = new Map();
-    
+
     // AbortController for cleaning up event listeners
     private abortController: AbortController = new AbortController();
 
@@ -56,7 +56,7 @@ export class NMRTable {
         this.validationState.onChange((errors) => {
             this.rowElements.forEach((tr, rowId) => {
                 // Shift input
-                const shiftInput = tr.querySelector('.shift-input') as HTMLInputElement;
+                const shiftInput = tr.querySelector('.shift-input') as HTMLElement;
                 if (shiftInput) {
                     if (errors.has(`shift-${rowId}`)) {
                         shiftInput.classList.add('error');
@@ -66,7 +66,7 @@ export class NMRTable {
                 }
 
                 // Multiplicity input
-                const multInput = tr.querySelector('.mult-input') as HTMLInputElement;
+                const multInput = tr.querySelector('.mult-input') as HTMLElement;
                 if (multInput) {
                     if (errors.has(`mult-${rowId}`)) {
                         multInput.classList.add('error');
@@ -76,7 +76,7 @@ export class NMRTable {
                 }
 
                 // Integration input
-                const intInput = tr.querySelector('.int-input') as HTMLInputElement;
+                const intInput = tr.querySelector('.int-input') as HTMLElement;
                 if (intInput) {
                     if (errors.has(`int-${rowId}`)) {
                         intInput.classList.add('error');
@@ -86,7 +86,7 @@ export class NMRTable {
                 }
 
                 // J-value inputs
-                const jInputs = tr.querySelectorAll('.j-input') as NodeListOf<HTMLInputElement>;
+                const jInputs = tr.querySelectorAll('.j-input') as NodeListOf<HTMLElement>;
                 jInputs.forEach((jInput, index) => {
                     if (errors.has(`j${index}-${rowId}`)) {
                         jInput.classList.add('error');
@@ -120,23 +120,23 @@ export class NMRTable {
 
         // Check for shift input
         if (tdElement.querySelector('.shift-input')) return 'shift';
-        
+
         // Check for multiplicity input
         if (tdElement.querySelector('.mult-input')) return 'multiplicity';
-        
+
         // Check for J input
         const jInput = tdElement.querySelector('.j-input');
         if (jInput) {
             const jIndex = jInput.getAttribute('data-j-index');
             return jIndex !== null ? `j-${jIndex}` : null;
         }
-        
+
         // Check for integration input
         if (tdElement.querySelector('.int-input')) return 'integration';
-        
+
         // Check for assignment input
         if (tdElement.querySelector('.assignment-input')) return 'assignment';
-        
+
         return null;
     }
 
@@ -148,35 +148,35 @@ export class NMRTable {
      */
     private async handleTSVPaste(startElement: HTMLElement, startRow: HTMLTableRowElement, tsvText: string): Promise<void> {
         console.log('[TSV Paste] Starting with text:', tsvText);
-        
+
         // Parse TSV data
         const rows = tsvText.split(/\r?\n/).map(line => line.split('\t'));
         console.log('[TSV Paste] Parsed into rows:', rows.length, rows);
-        
+
         // Filter out empty rows
         const validRows = rows.filter(row => row.length > 0 && row.some(cell => cell.trim() !== ''));
         console.log('[TSV Paste] Valid rows:', validRows.length, validRows);
-        
+
         // Get the starting cell and determine which column we're starting from
         const startCell = startElement.closest('td');
         if (!startCell) {
             console.log('[TSV Paste] No start cell found');
             return;
         }
-        
+
         // Get the column index of the start cell
         const startCells = Array.from(startRow.querySelectorAll('td'));
         const startColumnIndex = startCells.indexOf(startCell as HTMLTableCellElement);
         console.log('[TSV Paste] Start column index in row:', startColumnIndex);
-        
+
         // Get all table rows
         let currentRow: HTMLTableRowElement | null = startRow;
-        
+
         // Process each TSV row
         for (let rowIdx = 0; rowIdx < validRows.length; rowIdx++) {
             const tsvRow = validRows[rowIdx];
             console.log(`[TSV Paste] Processing row ${rowIdx}/${validRows.length}:`, tsvRow);
-            
+
             // If we need more rows, add them
             if (!currentRow) {
                 console.log('[TSV Paste] Current row is null, adding new row');
@@ -210,7 +210,7 @@ export class NMRTable {
                 if (rowStartCell) {
                     await this.applyTSVRowDataSequentially(currentRow, rowStartCell as HTMLElement, tsvRow);
                 }
-                
+
                 // Move to next row
                 const nextRow = currentRow.nextElementSibling as HTMLTableRowElement | null;
                 console.log('[TSV Paste] Looking for next row:', nextRow?.tagName, nextRow?.classList.toString());
@@ -225,7 +225,7 @@ export class NMRTable {
         }
         console.log('[TSV Paste] Completed all rows');
     }
-    
+
     /**
      * Apply TSV row data to a table row
      * @param row - The table row element
@@ -237,17 +237,17 @@ export class NMRTable {
         // Build column type map dynamically as we go
         const startCellElement = startCell.closest('td');
         if (!startCellElement) return;
-        
+
         // Get all cells
         let allCells = Array.from(row.querySelectorAll('td'));
         let currentCellIndex = allCells.indexOf(startCellElement as HTMLTableCellElement);
-        
+
         if (currentCellIndex === -1) return;
-        
+
         // Apply each data value sequentially
         for (let dataIdx = 0; dataIdx < data.length; dataIdx++) {
             const value = data[dataIdx];
-            
+
             // Find next visible cell from current position
             let targetCell: HTMLTableCellElement | null = null;
             for (let i = currentCellIndex; i < allCells.length; i++) {
@@ -259,26 +259,26 @@ export class NMRTable {
                     break;
                 }
             }
-            
+
             if (!targetCell) break; // No more visible cells
-            
+
             // Get the input element in this cell
-            const inputElement = targetCell.querySelector('input, [contenteditable="true"]') as HTMLInputElement | HTMLElement;
+            const inputElement = targetCell.querySelector('input, [contenteditable="true"]') as HTMLElement;
             if (!inputElement) continue;
-            
+
             // Determine column type
             const colType = this.getCellColumnType(targetCell);
-            
+
             // Set value
             if (colType === 'assignment') {
                 inputElement.innerHTML = value;
             } else {
-                (inputElement as HTMLInputElement).value = value;
+                inputElement.textContent = value;
             }
-            
+
             // Dispatch input event to trigger validation and state update
             inputElement.dispatchEvent(new Event('input', { bubbles: true }));
-            
+
             // If this is multiplicity, wait for J columns to update
             if (colType === 'multiplicity') {
                 // Wait for DOM updates to complete
@@ -289,7 +289,7 @@ export class NMRTable {
                         });
                     });
                 });
-                
+
                 // Rebuild the cell list with updated visibility
                 allCells = Array.from(row.querySelectorAll('td'));
                 // Find current position in updated list
@@ -312,36 +312,36 @@ export class NMRTable {
         if (existingAddRow) {
             existingAddRow.remove();
         }
-        
+
         const addRow = document.createElement('tr');
         addRow.className = 'add-row-footer';
-        
+
         // Empty delete cell
         const deleteCell = document.createElement('td');
         deleteCell.className = 'delete-cell';
         addRow.appendChild(deleteCell);
-        
+
         // Calculate remaining columns (shift + mult + J columns + integration + assignment)
         const remainingColumns = 4 + this.maxJColumns;
-        
+
         const addCell = document.createElement('td');
         addCell.className = 'add-row-cell';
         addCell.colSpan = remainingColumns;
-        addCell.innerHTML = '<button class="add-row-btn" title="Add new row">+</button>';
-        
-        const addButton = addCell.querySelector('.add-row-btn') as HTMLButtonElement;
+        addCell.innerHTML = '<a class="add-row-btn btn-txt btn-trans" title="Add new row" role="button" tabindex="0">+</a>';
+
+        const addButton = addCell.querySelector('.btn-txt') as HTMLAnchorElement;
         addButton.tabIndex = -1; // Exclude from tab order
         addButton.addEventListener('click', () => {
             const newId = this.tableState.addRow();
             requestAnimationFrame(() => {
                 const newRow = this.rowElements.get(newId);
                 if (newRow) {
-                    const firstInput = newRow.querySelector('.shift-input') as HTMLInputElement;
+                    const firstInput = newRow.querySelector('.shift-input') as HTMLElement;
                     firstInput?.focus();
                 }
             });
         }, { signal: this.abortController.signal });
-        
+
         addRow.appendChild(addCell);
         this.tableBody.appendChild(addRow);
     }
@@ -362,7 +362,7 @@ export class NMRTable {
 
         // Update J column visibility to preserve table state
         this.updateJColumnVisibility();
-        
+
         // Re-render footer to update column span
         this.renderAddRowFooter();
     }
@@ -376,7 +376,7 @@ export class NMRTable {
         deleteCell.className = 'delete-cell';
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-row-btn';
-        deleteBtn.textContent = '×';
+        deleteBtn.textContent = '\u00d7';
         deleteBtn.title = 'Delete this row';
         deleteBtn.tabIndex = -1;
         deleteCell.appendChild(deleteBtn);
@@ -385,22 +385,22 @@ export class NMRTable {
 
         // Chemical shift cell
         const shiftCell = document.createElement('td');
-        const shiftInput = document.createElement('input');
-        shiftInput.type = 'text';
-        shiftInput.className = 'shift-input';
-        shiftInput.placeholder = '0.00 or 7.53–7.50';
-        shiftInput.value = rowData.shift;
+        const shiftInput = document.createElement('div');
+        shiftInput.contentEditable = 'true';
+        shiftInput.className = 'shift-input entry';
+        shiftInput.setAttribute('data-placeholder', '0.00 or 7.53–7.50');
+        shiftInput.textContent = rowData.shift;
         shiftCell.appendChild(shiftInput);
         this.setupShiftInput(shiftInput, rowData.id, row);
         row.appendChild(shiftCell);
 
         // Multiplicity cell
         const multCell = document.createElement('td');
-        const multInput = document.createElement('input');
-        multInput.type = 'text';
-        multInput.className = 'mult-input';
-        multInput.placeholder = 's, d, t...';
-        multInput.value = rowData.multiplicity;
+        const multInput = document.createElement('div');
+        multInput.contentEditable = 'true';
+        multInput.className = 'mult-input entry';
+        multInput.setAttribute('data-placeholder', 's, d, t...');
+        multInput.textContent = rowData.multiplicity;
         multCell.appendChild(multInput);
         this.setupMultiplicityInput(multInput, rowData.id, row);
         row.appendChild(multCell);
@@ -411,15 +411,15 @@ export class NMRTable {
             const jCell = document.createElement('td');
             jCell.className = 'j-input-cell';
 
-            const jInput = document.createElement('input');
-            jInput.type = 'text';
-            jInput.className = 'j-input';
+            const jInput = document.createElement('div');
+            jInput.contentEditable = 'true';
+            jInput.className = 'j-input entry';
             jInput.setAttribute('data-j-index', i.toString());
             jInput.setAttribute('inputmode', 'decimal');
-            jInput.placeholder = '0.0';
+            jInput.setAttribute('data-placeholder', '0.0');
 
             if (i < rowData.jValues.length) {
-                jInput.value = rowData.jValues[i].toString();
+                jInput.textContent = rowData.jValues[i].toString();
             }
 
             jCell.appendChild(jInput);
@@ -433,13 +433,13 @@ export class NMRTable {
         // Integration cell
         const intCell = document.createElement('td');
         intCell.className = 'int-cell';
-        const intInput = document.createElement('input');
-        intInput.type = 'text';
-        intInput.className = 'int-input';
+        const intInput = document.createElement('div');
+        intInput.contentEditable = 'true';
+        intInput.className = 'int-input entry';
         intInput.setAttribute('inputmode', 'decimal');
-        intInput.placeholder = '1';
+        intInput.setAttribute('data-placeholder', '1');
         if (rowData.integration) {
-            intInput.value = rowData.integration.toString();
+            intInput.textContent = rowData.integration.toString();
         }
         intCell.appendChild(intInput);
         this.setupIntegrationInput(intInput, rowData.id, row);
@@ -449,9 +449,9 @@ export class NMRTable {
         const assignmentCell = document.createElement('td');
         assignmentCell.className = 'assignment-cell';
         const assignmentInput = document.createElement('div');
-        assignmentInput.className = 'assignment-input input-richtext';
+        assignmentInput.className = 'assignment-input input-richtext entry';
         assignmentInput.setAttribute('contenteditable', 'true');
-        assignmentInput.setAttribute('data-placeholder', 'e.g., H-8');
+        assignmentInput.setAttribute('data-placeholder', 'H-8');
         assignmentInput.innerHTML = rowData.assignment;
         assignmentCell.appendChild(assignmentInput);
         this.setupAssignmentInput(assignmentInput, rowData.id, row);
@@ -460,25 +460,48 @@ export class NMRTable {
         return row;
     }
 
-    private setupShiftInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
+
+    /**
+     * Move cursor to end of contenteditable element
+     */
+    private moveCursorToEnd(element: HTMLElement): void {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        if (!selection) return;
+
+        range.selectNodeContents(element);
+        range.collapse(false); // false = collapse to end
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    private setupShiftInput(input: HTMLElement, rowId: string, row: HTMLTableRowElement): void {
         // Handle paste event
         input.addEventListener('paste', (e) => {
             const clipboardData = (e as ClipboardEvent).clipboardData;
             const text = clipboardData?.getData('text/plain') || '';
-            
+
             if (isTSVData(text)) {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
+            } else {
+                // Filter pasted content
+                e.preventDefault();
+                const filtered = filterChemicalShiftInput(text);
+                document.execCommand('insertText', false, filtered);
             }
-            // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            // Filter to allow numbers, decimal points, and range indicators (-–)
-            const filtered = filterChemicalShiftInput(input.value);
-            if (filtered !== input.value) {
-                input.value = filtered;
+            const currentValue = input.textContent || '';
+            const filtered = filterChemicalShiftInput(currentValue);
+
+            // Update textContent if filtering changed the value
+            if (filtered !== currentValue) {
+                input.textContent = filtered;
+                this.moveCursorToEnd(input);
             }
+
             this.tableState.updateRow(rowId, { shift: filtered });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`shift-${rowId}`);
@@ -498,7 +521,7 @@ export class NMRTable {
                         requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
-                                const targetInput = newRow.querySelector('.shift-input') as HTMLInputElement;
+                                const targetInput = newRow.querySelector('.shift-input') as HTMLElement;
                                 targetInput?.focus();
                             }
                         });
@@ -513,12 +536,12 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
     }
 
-    private setupMultiplicityInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
+    private setupMultiplicityInput(input: HTMLElement, rowId: string, row: HTMLTableRowElement): void {
         // Handle paste event
         input.addEventListener('paste', (e) => {
             const clipboardData = (e as ClipboardEvent).clipboardData;
             const text = clipboardData?.getData('text/plain') || '';
-            
+
             if (isTSVData(text)) {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
@@ -527,7 +550,7 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            this.tableState.updateRow(rowId, { multiplicity: input.value });
+            this.tableState.updateRow(rowId, { multiplicity: input.textContent || '' });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`mult-${rowId}`);
 
@@ -549,7 +572,7 @@ export class NMRTable {
                         requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
-                                const targetInput = newRow.querySelector('.mult-input') as HTMLInputElement;
+                                const targetInput = newRow.querySelector('.mult-input') as HTMLElement;
                                 targetInput?.focus();
                             }
                         });
@@ -564,31 +587,37 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
     }
 
-    private setupJInput(input: HTMLInputElement, rowId: string, index: number, row: HTMLTableRowElement): void {
+    private setupJInput(input: HTMLElement, rowId: string, index: number, row: HTMLTableRowElement): void {
         // Handle paste event
         input.addEventListener('paste', (e) => {
             const clipboardData = (e as ClipboardEvent).clipboardData;
             const text = clipboardData?.getData('text/plain') || '';
-            
+
             if (isTSVData(text)) {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
+            } else {
+                // Filter pasted content
+                e.preventDefault();
+                const filtered = filterNumericInput(text);
+                document.execCommand('insertText', false, filtered);
             }
-            // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            // Use shared input filter
-            const filtered = filterNumericInput(input.value);
-            
-            if (filtered !== input.value) {
-                input.value = filtered;
+            const currentValue = input.textContent || '';
+            const filtered = filterNumericInput(currentValue);
+
+            // Update textContent if filtering changed the value
+            if (filtered !== currentValue) {
+                input.textContent = filtered;
+                this.moveCursorToEnd(input);
             }
 
             const rowData = this.tableState.getRow(rowId);
             if (rowData) {
                 const jValues = [...rowData.jValues];
-                const value = parseFloat(input.value);
+                const value = parseFloat(filtered);
 
                 if (!isNaN(value)) {
                     jValues[index] = Math.abs(value); // Auto-correct to absolute
@@ -618,7 +647,7 @@ export class NMRTable {
                             if (newRow) {
                                 const cellIndex = Array.from(row.children).indexOf(input.closest('td')!);
                                 const targetCell = newRow.children[cellIndex] as HTMLTableCellElement;
-                                const targetInput = targetCell?.querySelector('input') as HTMLInputElement;
+                                const targetInput = targetCell?.querySelector('.j-input') as HTMLElement;
                                 targetInput?.focus();
                             }
                         });
@@ -633,28 +662,34 @@ export class NMRTable {
         }, { signal: this.abortController.signal });
     }
 
-    private setupIntegrationInput(input: HTMLInputElement, rowId: string, row: HTMLTableRowElement): void {
+    private setupIntegrationInput(input: HTMLElement, rowId: string, row: HTMLTableRowElement): void {
         // Handle paste event
         input.addEventListener('paste', (e) => {
             const clipboardData = (e as ClipboardEvent).clipboardData;
             const text = clipboardData?.getData('text/plain') || '';
-            
+
             if (isTSVData(text)) {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
+            } else {
+                // Filter pasted content
+                e.preventDefault();
+                const filtered = filterNumericInput(text);
+                document.execCommand('insertText', false, filtered);
             }
-            // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
 
         input.addEventListener('input', () => {
-            // Use shared input filter
-            const filtered = filterNumericInput(input.value);
-            
-            if (filtered !== input.value) {
-                input.value = filtered;
+            const currentValue = input.textContent || '';
+            const filtered = filterNumericInput(currentValue);
+
+            // Update textContent if filtering changed the value
+            if (filtered !== currentValue) {
+                input.textContent = filtered;
+                this.moveCursorToEnd(input);
             }
 
-            const value = parseFloat(input.value);
+            const value = parseFloat(filtered);
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`int-${rowId}`);
@@ -674,7 +709,7 @@ export class NMRTable {
                         requestAnimationFrame(() => {
                             const newRow = this.rowElements.get(newId);
                             if (newRow) {
-                                const targetInput = newRow.querySelector('.int-input') as HTMLInputElement;
+                                const targetInput = newRow.querySelector('.int-input') as HTMLElement;
                                 targetInput?.focus();
                             }
                         });
@@ -694,14 +729,14 @@ export class NMRTable {
         input.addEventListener('paste', (e) => {
             const clipboardData = (e as ClipboardEvent).clipboardData;
             const text = clipboardData?.getData('text/plain') || '';
-            
+
             // Check if TSV data
             if (isTSVData(text)) {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
                 return;
             }
-            
+
             // Otherwise, handle as rich text paste (existing behavior)
             e.preventDefault();
             const htmlText = clipboardData?.getData('text/html') || clipboardData?.getData('text/plain') || '';
@@ -767,7 +802,7 @@ export class NMRTable {
                     const selection = window.getSelection();
                     if (selection && selection.rangeCount > 0) {
                         const isAtEnd = this.isCaretAtEnd(input);
-                        
+
                         if (isAtEnd) {
                             e.preventDefault();
                             const nextRow = row.nextElementSibling as HTMLTableRowElement | null;
@@ -780,7 +815,7 @@ export class NMRTable {
                                 requestAnimationFrame(() => {
                                     const newRow = this.rowElements.get(newId);
                                     if (newRow) {
-                                        const firstInput = newRow.querySelector('.shift-input') as HTMLInputElement;
+                                        const firstInput = newRow.querySelector('.shift-input') as HTMLElement;
                                         firstInput?.focus();
                                     }
                                 });
@@ -837,7 +872,7 @@ export class NMRTable {
                 const targetCell = searchRow.children[cellIndex] as HTMLTableCellElement;
                 if (targetCell) {
                     const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]') as HTMLElement;
-                    if (targetInput && !(targetInput as HTMLInputElement).disabled) {
+                    if (targetInput) {
                         targetInput.focus();
                         return;
                     }
@@ -851,7 +886,7 @@ export class NMRTable {
                 const targetCell = searchRow.children[cellIndex] as HTMLTableCellElement;
                 if (targetCell) {
                     const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]') as HTMLElement;
-                    if (targetInput && !(targetInput as HTMLInputElement).disabled) {
+                    if (targetInput) {
                         targetInput.focus();
                         return;
                     }
@@ -866,7 +901,7 @@ export class NMRTable {
                 if (newRow) {
                     const targetCell = newRow.children[cellIndex] as HTMLTableCellElement;
                     const targetInput = targetCell?.querySelector('input:not([disabled]), [contenteditable="true"]') as HTMLElement;
-                    if (targetInput && !(targetInput as HTMLInputElement).disabled) {
+                    if (targetInput) {
                         targetInput.focus();
                     } else {
                         // Find first enabled input
@@ -879,10 +914,10 @@ export class NMRTable {
     }
 
     private updateJInputsForRow(row: HTMLTableRowElement, jValues: number[]): void {
-        const jInputs = row.querySelectorAll('.j-input:not([disabled])') as NodeListOf<HTMLInputElement>;
+        const jInputs = row.querySelectorAll('.j-input:not([disabled])') as NodeListOf<HTMLElement>;
         jInputs.forEach((input, index) => {
             if (index < jValues.length) {
-                input.value = jValues[index].toString();
+                input.textContent = jValues[index].toString();
             }
         });
     }
@@ -910,28 +945,28 @@ export class NMRTable {
             const requiredForRow = this.calculateRequiredJColumns(rowData.multiplicity);
 
             jCells.forEach((cell, cellIndex) => {
-                const input = cell.querySelector('.j-input') as HTMLInputElement;
+                const input = cell.querySelector('.j-input') as HTMLElement;
 
                 if (cellIndex < requiredForRow) {
                     // Active cell
                     cell.style.display = '';
                     cell.classList.remove('disabled');
-                    if (input) input.disabled = false;
+                    if (input) input.contentEditable = 'true';
                 } else if (cellIndex < tableMaxJ) {
                     // Placeholder cell
                     cell.style.display = '';
                     cell.classList.add('disabled');
-                    if (input) input.disabled = true;
+                    if (input) input.contentEditable = 'false';
                 } else {
                     // Hidden cell
                     cell.style.display = 'none';
-                    if (input) input.disabled = true;
+                    if (input) input.contentEditable = 'false';
                 }
             });
         });
 
         this.updateTableHeader();
-        
+
         // Re-render footer to update colspan based on new maxJColumns
         this.renderAddRowFooter();
     }
@@ -953,7 +988,7 @@ export class NMRTable {
         }
     }
 
-    
+
 
     private updateTableHeader(): void {
         const thead = this.tableElement.querySelector('thead tr');
@@ -980,20 +1015,20 @@ export class NMRTable {
         if (!selection || selection.rangeCount === 0) return false;
 
         const range = selection.getRangeAt(0);
-        
+
         // Check if selection is collapsed (cursor, not selection)
         if (!range.collapsed) return false;
-        
+
         // Create a range from current position to end of element
         const testRange = document.createRange();
         testRange.selectNodeContents(element);
         testRange.setStart(range.endContainer, range.endOffset);
-        
+
         // If range is empty, we're at the end
         return testRange.toString().length === 0;
     }
 
-    
+
 
     getFirstInput(): HTMLElement | null {
         const firstRow = this.tableBody.querySelector('tr');
@@ -1010,10 +1045,10 @@ export class NMRTable {
     public destroy(): void {
         // Abort all event listeners attached with AbortController
         this.abortController.abort();
-        
+
         // Clear row elements map
         this.rowElements.clear();
-        
+
         // Create new AbortController for potential reuse
         this.abortController = new AbortController();
     }

@@ -245,7 +245,7 @@ class NMRTable {
                 inputElement.innerHTML = value;
             }
             else {
-                inputElement.value = value;
+                inputElement.textContent = value;
             }
             // Dispatch input event to trigger validation and state update
             inputElement.dispatchEvent(new Event('input', { bubbles: true }));
@@ -287,8 +287,8 @@ class NMRTable {
         const addCell = document.createElement('td');
         addCell.className = 'add-row-cell';
         addCell.colSpan = remainingColumns;
-        addCell.innerHTML = '<button class="add-row-btn" title="Add new row">+</button>';
-        const addButton = addCell.querySelector('.add-row-btn');
+        addCell.innerHTML = '<a class="add-row-btn btn-txt btn-trans" title="Add new row" role="button" tabindex="0">+</a>';
+        const addButton = addCell.querySelector('.btn-txt');
         addButton.tabIndex = -1; // Exclude from tab order
         addButton.addEventListener('click', () => {
             const newId = this.tableState.addRow();
@@ -327,7 +327,7 @@ class NMRTable {
         deleteCell.className = 'delete-cell';
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-row-btn';
-        deleteBtn.textContent = '×';
+        deleteBtn.textContent = '\u00d7';
         deleteBtn.title = 'Delete this row';
         deleteBtn.tabIndex = -1;
         deleteCell.appendChild(deleteBtn);
@@ -335,21 +335,21 @@ class NMRTable {
         row.appendChild(deleteCell);
         // Chemical shift cell
         const shiftCell = document.createElement('td');
-        const shiftInput = document.createElement('input');
-        shiftInput.type = 'text';
-        shiftInput.className = 'shift-input';
-        shiftInput.placeholder = '0.00 or 7.53–7.50';
-        shiftInput.value = rowData.shift;
+        const shiftInput = document.createElement('div');
+        shiftInput.contentEditable = 'true';
+        shiftInput.className = 'shift-input entry';
+        shiftInput.setAttribute('data-placeholder', '0.00 or 7.53–7.50');
+        shiftInput.textContent = rowData.shift;
         shiftCell.appendChild(shiftInput);
         this.setupShiftInput(shiftInput, rowData.id, row);
         row.appendChild(shiftCell);
         // Multiplicity cell
         const multCell = document.createElement('td');
-        const multInput = document.createElement('input');
-        multInput.type = 'text';
-        multInput.className = 'mult-input';
-        multInput.placeholder = 's, d, t...';
-        multInput.value = rowData.multiplicity;
+        const multInput = document.createElement('div');
+        multInput.contentEditable = 'true';
+        multInput.className = 'mult-input entry';
+        multInput.setAttribute('data-placeholder', 's, d, t...');
+        multInput.textContent = rowData.multiplicity;
         multCell.appendChild(multInput);
         this.setupMultiplicityInput(multInput, rowData.id, row);
         row.appendChild(multCell);
@@ -358,14 +358,14 @@ class NMRTable {
         for (let i = 0; i < MAX_J_CELLS; i++) {
             const jCell = document.createElement('td');
             jCell.className = 'j-input-cell';
-            const jInput = document.createElement('input');
-            jInput.type = 'text';
-            jInput.className = 'j-input';
+            const jInput = document.createElement('div');
+            jInput.contentEditable = 'true';
+            jInput.className = 'j-input entry';
             jInput.setAttribute('data-j-index', i.toString());
             jInput.setAttribute('inputmode', 'decimal');
-            jInput.placeholder = '0.0';
+            jInput.setAttribute('data-placeholder', '0.0');
             if (i < rowData.jValues.length) {
-                jInput.value = rowData.jValues[i].toString();
+                jInput.textContent = rowData.jValues[i].toString();
             }
             jCell.appendChild(jInput);
             this.setupJInput(jInput, rowData.id, i, row);
@@ -376,13 +376,13 @@ class NMRTable {
         // Integration cell
         const intCell = document.createElement('td');
         intCell.className = 'int-cell';
-        const intInput = document.createElement('input');
-        intInput.type = 'text';
-        intInput.className = 'int-input';
+        const intInput = document.createElement('div');
+        intInput.contentEditable = 'true';
+        intInput.className = 'int-input entry';
         intInput.setAttribute('inputmode', 'decimal');
-        intInput.placeholder = '1';
+        intInput.setAttribute('data-placeholder', '1');
         if (rowData.integration) {
-            intInput.value = rowData.integration.toString();
+            intInput.textContent = rowData.integration.toString();
         }
         intCell.appendChild(intInput);
         this.setupIntegrationInput(intInput, rowData.id, row);
@@ -391,14 +391,27 @@ class NMRTable {
         const assignmentCell = document.createElement('td');
         assignmentCell.className = 'assignment-cell';
         const assignmentInput = document.createElement('div');
-        assignmentInput.className = 'assignment-input input-richtext';
+        assignmentInput.className = 'assignment-input input-richtext entry';
         assignmentInput.setAttribute('contenteditable', 'true');
-        assignmentInput.setAttribute('data-placeholder', 'e.g., H-8');
+        assignmentInput.setAttribute('data-placeholder', 'H-8');
         assignmentInput.innerHTML = rowData.assignment;
         assignmentCell.appendChild(assignmentInput);
         this.setupAssignmentInput(assignmentInput, rowData.id, row);
         row.appendChild(assignmentCell);
         return row;
+    }
+    /**
+     * Move cursor to end of contenteditable element
+     */
+    moveCursorToEnd(element) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        if (!selection)
+            return;
+        range.selectNodeContents(element);
+        range.collapse(false); // false = collapse to end
+        selection.removeAllRanges();
+        selection.addRange(range);
     }
     setupShiftInput(input, rowId, row) {
         // Handle paste event
@@ -409,13 +422,20 @@ class NMRTable {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
             }
-            // Otherwise, allow default paste behavior
+            else {
+                // Filter pasted content
+                e.preventDefault();
+                const filtered = (0, input_filters_1.filterChemicalShiftInput)(text);
+                document.execCommand('insertText', false, filtered);
+            }
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Filter to allow numbers, decimal points, and range indicators (-–)
-            const filtered = (0, input_filters_1.filterChemicalShiftInput)(input.value);
-            if (filtered !== input.value) {
-                input.value = filtered;
+            const currentValue = input.textContent || '';
+            const filtered = (0, input_filters_1.filterChemicalShiftInput)(currentValue);
+            // Update textContent if filtering changed the value
+            if (filtered !== currentValue) {
+                input.textContent = filtered;
+                this.moveCursorToEnd(input);
             }
             this.tableState.updateRow(rowId, { shift: filtered });
             // Clear error on input (real-time clearing, no new errors shown)
@@ -461,7 +481,7 @@ class NMRTable {
             // Otherwise, allow default paste behavior
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            this.tableState.updateRow(rowId, { multiplicity: input.value });
+            this.tableState.updateRow(rowId, { multiplicity: input.textContent || '' });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`mult-${rowId}`);
             // Recalculate J columns when multiplicity changes
@@ -504,18 +524,25 @@ class NMRTable {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
             }
-            // Otherwise, allow default paste behavior
+            else {
+                // Filter pasted content
+                e.preventDefault();
+                const filtered = (0, input_filters_1.filterNumericInput)(text);
+                document.execCommand('insertText', false, filtered);
+            }
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Use shared input filter
-            const filtered = (0, input_filters_1.filterNumericInput)(input.value);
-            if (filtered !== input.value) {
-                input.value = filtered;
+            const currentValue = input.textContent || '';
+            const filtered = (0, input_filters_1.filterNumericInput)(currentValue);
+            // Update textContent if filtering changed the value
+            if (filtered !== currentValue) {
+                input.textContent = filtered;
+                this.moveCursorToEnd(input);
             }
             const rowData = this.tableState.getRow(rowId);
             if (rowData) {
                 const jValues = [...rowData.jValues];
-                const value = parseFloat(input.value);
+                const value = parseFloat(filtered);
                 if (!isNaN(value)) {
                     jValues[index] = Math.abs(value); // Auto-correct to absolute
                     // Don't sort during input - only update state
@@ -543,7 +570,7 @@ class NMRTable {
                             if (newRow) {
                                 const cellIndex = Array.from(row.children).indexOf(input.closest('td'));
                                 const targetCell = newRow.children[cellIndex];
-                                const targetInput = targetCell === null || targetCell === void 0 ? void 0 : targetCell.querySelector('input');
+                                const targetInput = targetCell === null || targetCell === void 0 ? void 0 : targetCell.querySelector('.j-input');
                                 targetInput === null || targetInput === void 0 ? void 0 : targetInput.focus();
                             }
                         });
@@ -565,15 +592,22 @@ class NMRTable {
                 e.preventDefault();
                 this.handleTSVPaste(input, row, text);
             }
-            // Otherwise, allow default paste behavior
+            else {
+                // Filter pasted content
+                e.preventDefault();
+                const filtered = (0, input_filters_1.filterNumericInput)(text);
+                document.execCommand('insertText', false, filtered);
+            }
         }, { signal: this.abortController.signal });
         input.addEventListener('input', () => {
-            // Use shared input filter
-            const filtered = (0, input_filters_1.filterNumericInput)(input.value);
-            if (filtered !== input.value) {
-                input.value = filtered;
+            const currentValue = input.textContent || '';
+            const filtered = (0, input_filters_1.filterNumericInput)(currentValue);
+            // Update textContent if filtering changed the value
+            if (filtered !== currentValue) {
+                input.textContent = filtered;
+                this.moveCursorToEnd(input);
             }
-            const value = parseFloat(input.value);
+            const value = parseFloat(filtered);
             this.tableState.updateRow(rowId, { integration: isNaN(value) ? 0 : value });
             // Clear error on input (real-time clearing, no new errors shown)
             this.validationState.clearError(`int-${rowId}`);
@@ -748,7 +782,7 @@ class NMRTable {
                 const targetCell = searchRow.children[cellIndex];
                 if (targetCell) {
                     const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
-                    if (targetInput && !targetInput.disabled) {
+                    if (targetInput) {
                         targetInput.focus();
                         return;
                     }
@@ -763,7 +797,7 @@ class NMRTable {
                 const targetCell = searchRow.children[cellIndex];
                 if (targetCell) {
                     const targetInput = targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
-                    if (targetInput && !targetInput.disabled) {
+                    if (targetInput) {
                         targetInput.focus();
                         return;
                     }
@@ -777,7 +811,7 @@ class NMRTable {
                 if (newRow) {
                     const targetCell = newRow.children[cellIndex];
                     const targetInput = targetCell === null || targetCell === void 0 ? void 0 : targetCell.querySelector('input:not([disabled]), [contenteditable="true"]');
-                    if (targetInput && !targetInput.disabled) {
+                    if (targetInput) {
                         targetInput.focus();
                     }
                     else {
@@ -793,7 +827,7 @@ class NMRTable {
         const jInputs = row.querySelectorAll('.j-input:not([disabled])');
         jInputs.forEach((input, index) => {
             if (index < jValues.length) {
-                input.value = jValues[index].toString();
+                input.textContent = jValues[index].toString();
             }
         });
     }
@@ -822,20 +856,20 @@ class NMRTable {
                     cell.style.display = '';
                     cell.classList.remove('disabled');
                     if (input)
-                        input.disabled = false;
+                        input.contentEditable = 'true';
                 }
                 else if (cellIndex < tableMaxJ) {
                     // Placeholder cell
                     cell.style.display = '';
                     cell.classList.add('disabled');
                     if (input)
-                        input.disabled = true;
+                        input.contentEditable = 'false';
                 }
                 else {
                     // Hidden cell
                     cell.style.display = 'none';
                     if (input)
-                        input.disabled = true;
+                        input.contentEditable = 'false';
                 }
             });
         });

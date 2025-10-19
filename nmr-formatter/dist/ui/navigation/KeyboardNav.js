@@ -135,6 +135,38 @@ class KeyboardNav {
         if (currentIndex === -1)
             return;
         const targetIndex = direction === 'right' ? currentIndex + 1 : currentIndex - 1;
+        // Handle wrap to previous row when at leftmost cell
+        if (direction === 'left' && targetIndex < 0) {
+            const currentInput = currentCell.querySelector('input, [contenteditable="true"]');
+            const cursorAtStart = this.isCursorAtStart(currentInput);
+            if (cursorAtStart) {
+                // Navigate to previous row's rightmost cell
+                const prevRow = currentRow.previousElementSibling;
+                if (prevRow) {
+                    const prevCells = Array.from(prevRow.querySelectorAll('td:not(.checkbox-cell)'));
+                    const prevVisibleCells = prevCells.filter(cell => {
+                        if (cell.style.display === 'none')
+                            return false;
+                        const input = cell.querySelector('input, [contenteditable="true"]');
+                        if (!input)
+                            return false;
+                        if (input.disabled)
+                            return false;
+                        return true;
+                    });
+                    if (prevVisibleCells.length > 0) {
+                        const lastCell = prevVisibleCells[prevVisibleCells.length - 1];
+                        const targetInput = lastCell.querySelector('input:not([disabled]), [contenteditable="true"]');
+                        if (targetInput) {
+                            targetInput.focus();
+                            // Set cursor to end
+                            this.setCursorToEnd(targetInput);
+                        }
+                    }
+                }
+            }
+            return;
+        }
         if (targetIndex < 0 || targetIndex >= visibleCells.length)
             return;
         const targetCell = visibleCells[targetIndex];
@@ -169,6 +201,47 @@ class KeyboardNav {
                     input.setSelectionRange(len, len);
                 }
             }
+        }
+    }
+    /**
+     * Check if cursor is at the start of the input
+     */
+    isCursorAtStart(input) {
+        if (input.getAttribute('contenteditable') === 'true') {
+            const selection = window.getSelection();
+            const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+            return range ? range.startOffset === 0 : false;
+        }
+        else if (input.type === 'number') {
+            // Number inputs don't support selection, so always return false
+            return false;
+        }
+        else {
+            const textInput = input;
+            return (textInput.selectionStart || 0) === 0;
+        }
+    }
+    /**
+     * Set cursor to the end of the input
+     */
+    setCursorToEnd(input) {
+        var _a;
+        if (input.getAttribute('contenteditable') === 'true') {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            const textNode = input.firstChild;
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                const length = ((_a = textNode.textContent) === null || _a === void 0 ? void 0 : _a.length) || 0;
+                range.setStart(textNode, length);
+                range.collapse(true);
+                sel === null || sel === void 0 ? void 0 : sel.removeAllRanges();
+                sel === null || sel === void 0 ? void 0 : sel.addRange(range);
+            }
+        }
+        else if (input.type !== 'number') {
+            const textInput = input;
+            const len = textInput.value.length;
+            textInput.setSelectionRange(len, len);
         }
     }
 }

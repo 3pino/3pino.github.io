@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NMR Formatter</title>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/styles.css">
     <link rel="icon" type="image/png" href="/icons/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
     <link rel="shortcut icon" href="/icons/favicon.ico" />
@@ -21,42 +21,42 @@
         </header>
         <!-- Toolbar and Metadata Section -->
         <section class="toolbar-container-wrapper">
-            <div class="toolbar-container">
+            <div class="frame">
                 <div class="toolbar">
-                    <a id="format-bold-btn" class="format-btn" title="Bold (Ctrl+B)" role="button" tabindex="0">
+                    <a id="format-bold-btn" class="btn-trans" title="Bold (Ctrl+B)" role="button" tabindex="0">
                         <i class="fi fi-rr-bold"></i>
                     </a>
-                    <a id="format-italic-btn" class="format-btn" title="Italic (Ctrl+I)" role="button" tabindex="0">
+                    <a id="format-italic-btn" class="btn-trans" title="Italic (Ctrl+I)" role="button" tabindex="0">
                         <i class="fi fi-rr-italic"></i>
                     </a>
-                    <a id="format-sup-btn" class="format-btn" title="Superscript" role="button" tabindex="0">
+                    <a id="format-sup-btn" class="btn-trans" title="Superscript" role="button" tabindex="0">
                         <i class="fi fi-rr-superscript"></i>
                     </a>
-                    <a id="format-sub-btn" class="format-btn" title="Subscript" role="button" tabindex="0">
+                    <a id="format-sub-btn" class="btn-trans" title="Subscript" role="button" tabindex="0">
                         <i class="fi fi-rr-subscript"></i>
                     </a>
-                    <a id="insert-endash-btn" class="format-btn" title="Insert en-dash" role="button" tabindex="0">
+                    <a id="insert-endash-btn" class="btn-trans" title="Insert en-dash" role="button" tabindex="0">
                         <i class="fi fi-rr-minus"></i>
                     </a>
                 </div>
                 <div class="metadata">
                     <div class="metadata-group">
                         <label for="nuclei">Nuclei:</label>
-                        <div id="nuclei" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., ¹H"></div>
+                        <div id="nuclei" class="metadata-input metadata-editable entry" contenteditable="true" data-placeholder="¹H"></div>
                         <div class="metadata-dropdown" id="nuclei-dropdown">
                             <!-- Dropdown items will be dynamically generated from NUCLEI_PRESETS -->
                         </div>
                     </div>
                     <div class="metadata-group">
                         <label for="solvent">Solvent:</label>
-                        <div id="solvent" class="metadata-input metadata-editable" contenteditable="true" data-placeholder="e.g., CDCl₃"></div>
+                        <div id="solvent" class="metadata-input metadata-editable entry" contenteditable="true" data-placeholder="CDCl₃"></div>
                         <div class="metadata-dropdown" id="solvent-dropdown">
                             <!-- Dropdown items will be dynamically generated from SOLVENT_PRESETS -->
                         </div>
                     </div>
                     <div class="metadata-group">
                         <label for="frequency">Frequency (MHz):</label>
-                        <div id="frequency" class="metadata-input metadata-number" contenteditable="true" data-placeholder="e.g., 500" inputmode="numeric"></div>
+                        <div id="frequency" class="metadata-input metadata-number entry" contenteditable="true" data-placeholder="500" inputmode="numeric"></div>
                     </div>
                 </div>
             </div>
@@ -85,8 +85,8 @@
 
         <!-- Conversion Buttons -->
         <section class="conversion-section">
-            <button id="convert-up-btn" class="conversion-btn" style="display: none;" title="Convert rich text to table (disabled)">↑ Parse Text</button>
-            <button id="convert-down-btn" class="conversion-btn" title="Generate formatted text from table">↓ Generate Text</button>
+            <a id="convert-up-btn" class="btn-txt" style="display: none;" title="Convert rich text to table (disabled)" role="button" tabindex="0">↑ Parse Text</a>
+            <a id="convert-down-btn" class="btn-txt" title="Generate formatted text from table" role="button" tabindex="0">↓ Generate Text</a>
         </section>
 
         <!-- Bottom Section: Rich Text Display (Read-only) -->
@@ -96,26 +96,26 @@
                 <div class="output-settings">
                     <div class="setting-group">
                         <label for="shift-precision">Shift Sig Figs:</label>
-                        <div id="shift-precision" class="setting-input metadata-number" contenteditable="true" data-placeholder="3" inputmode="numeric"></div>
+                        <div id="shift-precision" class="setting-input metadata-number entry" contenteditable="true" data-placeholder="3" inputmode="numeric"></div>
                     </div>
                     <div class="setting-group">
                         <label for="j-precision">J-Value Sig Figs:</label>
-                        <div id="j-precision" class="setting-input metadata-number" contenteditable="true" data-placeholder="2" inputmode="numeric"></div>
+                        <div id="j-precision" class="setting-input metadata-number entry" contenteditable="true" data-placeholder="2" inputmode="numeric"></div>
                     </div>
                     <div class="setting-group">
                         <label for="sort-order">Sort:</label>
-                        <a id="sort-order" class="format-btn" title="Toggle sort order" role="button" tabindex="0">
+                        <a id="sort-order" class="btn-trans" title="Toggle sort order entry" role="button" tabindex="0">
                             <i class="fi fi-rr-down"></i>
                         </a>
                     </div>
                 </div>
-                <button id="copy-btn" class="copy-btn" title="Copy formatted text to clipboard">Copy</button>
+                <a id="copy-btn" class="btn-txt" title="Copy formatted text to clipboard" role="button" tabindex="0">Copy</a>
             </div>
             <!--
                 To enable editing, uncomment the line below and comment out the read-only line:
                 <div id="rich-text-editor" class="rich-text-editor" contenteditable="true"></div>
             -->
-            <div id="rich-text-editor" class="rich-text-editor" contenteditable="false"></div>
+            <div id="rich-text-editor" class="rich-text-editor entry" contenteditable="false"></div>
         </section>
     </div>
 

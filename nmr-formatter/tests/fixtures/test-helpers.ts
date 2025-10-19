@@ -267,11 +267,12 @@ export class TableHelper {
   }
 
   /**
-   * Check if a J-input is disabled
+   * Check if a J-input is disabled (contenteditable="false")
    */
   async isJInputDisabled(rowIndex: number, jIndex: number): Promise<boolean> {
     const jInput = this.getJInput(rowIndex, jIndex);
-    return await jInput.isDisabled();
+    const contentEditable = await jInput.getAttribute('contenteditable');
+    return contentEditable === 'false';
   }
 
   /**
@@ -285,9 +286,9 @@ export class TableHelper {
     const display = await parentCell.evaluate((el) => window.getComputedStyle(el).display);
     if (display === 'none') return false;
 
-    // Check if input is disabled
-    const isDisabled = await jInput.isDisabled();
-    if (!isDisabled) return false;
+    // Check if input is disabled (contenteditable="false")
+    const contentEditable = await jInput.getAttribute('contenteditable');
+    if (contentEditable !== 'false') return false;
 
     // Check if parent cell has disabled class (which applies grey background)
     const hasDisabledClass = await parentCell.evaluate((el) => el.classList.contains('disabled'));
@@ -381,9 +382,45 @@ export class TableHelper {
   }
 
   /**
-   * Get the value of a text input field
+   * Fill an input field (supports both <input> and contenteditable)
+   */
+  async fillInput(input: Locator, value: string): Promise<void> {
+    const isContentEditable = await input.getAttribute('contenteditable');
+    if (isContentEditable === 'true' || isContentEditable === '') {
+      // For contenteditable, clear and type the value
+      await input.click();
+      await input.press('Control+A');
+      await input.press('Backspace');
+      await input.type(value);
+      // Wait for validation
+      await this.page.waitForTimeout(50);
+    } else {
+      // For <input>, use fill()
+      await input.fill(value);
+    }
+  }
+
+  /**
+   * Type into an input field character by character (supports contenteditable)
+   * This simulates real typing by using Playwright's native type() method
+   */
+  async typeIntoInput(input: Locator, text: string): Promise<void> {
+    // Use Playwright's native type() which works with contenteditable
+    await input.type(text);
+    // Wait for validation to complete
+    await this.page.waitForTimeout(50);
+  }
+
+  /**
+   * Get the value of an input field (supports both input and contenteditable)
    */
   async getInputValue(input: Locator): Promise<string> {
+    // Check if it's a contenteditable element
+    const isContentEditable = await input.getAttribute('contenteditable');
+    if (isContentEditable === 'true' || isContentEditable === '') {
+      return await input.textContent() || '';
+    }
+    // Fallback to inputValue for <input> elements (if any remain)
     return await input.inputValue();
   }
 

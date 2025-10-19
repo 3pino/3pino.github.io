@@ -2,46 +2,79 @@
    Buttons Component - Shared Button Styles
    ============================================ */
 
-/* Conversion Button */
-.conversion-btn {
-  padding: var(--space-8) var(--space-24);
-  border: 2px solid var(--color-primary);
-  background-color: var(--color-white);
-  color: var(--color-primary);
+/* Common base styles for all button-like elements */
+button, a[role="button"]{
+  /* Reset and base styles */
+  border: none;
+  text-decoration: none;
+  user-select: none;
+
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Interaction */
   cursor: pointer;
+  transition: all var(--transition);
+
+  padding: var(--space-8);
+  color: var(--color-bg);
   border-radius: var(--radius-md);
-  font-size: var(--font-base);
-  font-weight: 600;
-  transition: all var(--transition);
+  width: var(--height-sm);
+  height: var(--height-sm);
+  background-color: var(--color-btn-bg);
+  color: var(--color-btn-txt);
+
+  &:hover:not(.disabled){
+    background-color: var(--color-btn-bg-hover);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.disabled{
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: var(--focus-outline);
+    outline-offset: var(--focus-outline-offset);
+  }
+
 }
 
-.conversion-btn:hover {
-  background-color: var(--color-primary);
-  color: var(--color-white);
-}
-
-.conversion-btn:active {
-  transform: scale(0.98);
-}
-
-/* Copy Button */
-.copy-btn {
+/* Text button styles */
+a[role="button"].btn-txt {
   padding: var(--space-6) var(--space-16);
-  border: 1px solid var(--color-primary);
-  background-color: var(--color-white);
-  color: var(--color-primary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-sm);
-  font-weight: 500;
-  transition: all var(--transition);
+  width: auto;
+  height: auto;
 }
 
-.copy-btn:hover {
-  background-color: var(--color-primary);
-  color: var(--color-white);
+/* Icon-only button styles
+   icon: `i.fi`
+*/
+a[role="button"]:has(i.fi:only-child) {
+
+  &.disabled {
+    color: var(--color-text-disabled);
+    opacity: 0.5;
+  }
+
+  &>i.fi{
+  display: block;
+  font-size: var(--size-icon);
+  line-height: var(--size-icon);
+  }
 }
 
-.copy-btn:active {
-  transform: scale(0.98);
+a[role="button"].btn-trans{
+  background-color: transparent;
+  color: var(--color-text);
+
+  &:hover:not(.disabled){
+    background-color: var(--color-btn-trans-hover);
+  }
 }
+

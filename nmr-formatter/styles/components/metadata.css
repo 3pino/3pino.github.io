@@ -1,7 +1,8 @@
 /* ============================================
-   Metadata Component - Form Inputs
+   Metadata Component - Form Layout
    ============================================ */
 
+/* Metadata Grid Layout */
 .metadata {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -20,64 +21,20 @@
 .metadata-group label {
   font-weight: 600;
   font-size: var(--font-sm);
-  color: var(--color-gray-900);
-  text-transform: uppercase;
+  color: var(--color-text);
 }
 
-.metadata-input {
-  padding: var(--space-6) var(--space-8);
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-base);
-  background-color: var(--color-white);
-  transition: border-color var(--transition);
-  min-height: var(--height-md);
-  height: var(--height-md);
-  line-height: var(--line-height-relaxed);
-  box-sizing: border-box;
-}
+/* Metadata input styles moved to entry.css */
 
-.metadata-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus);
-}
 
-.metadata-input::placeholder {
-  color: var(--color-gray-700);
-}
-
-/* Contenteditable metadata inputs */
-.metadata-editable,
-.metadata-number {
-  cursor: text;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.metadata-select {
-  cursor: pointer;
-  appearance: auto;
-  -webkit-appearance: auto;
-  -moz-appearance: auto;
-}
-
-/* Read-only dropdown field (sort-order) - no text selection, no cursor */
+/* Read-only dropdown field (sort-order) */
 #sort-order {
   cursor: pointer;
   user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   caret-color: transparent;
 }
 
-.metadata-editable:empty:before,
-.metadata-number:empty:before {
-  content: attr(data-placeholder);
-  color: var(--color-gray-700);
-  font-style: italic;
-}
+
 
 /* Custom dropdown for metadata presets */
 .metadata-dropdown {
@@ -88,7 +45,7 @@
   right: 0;
   max-height: 200px;
   overflow-y: auto;
-  background-color: var(--color-white);
+  background-color: var(--color-entry-bg);
   border: 1px solid var(--color-primary);
   border-top: none;
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
@@ -118,4 +75,9 @@
 
 .dropdown-item:active {
   background-color: var(--color-primary-pale);
+}
+
+.dropdown-item:focus {
+  outline: var(--focus-outline);
+  outline-offset: calc(-1 * var(--focus-outline-offset));
 }

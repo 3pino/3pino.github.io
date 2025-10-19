@@ -1,0 +1,24 @@
+/* ============================================
+   NMR Formatter - Main Styles
+   Modular CSS Architecture
+   ============================================ */
+
+/* CSS Variables */
+@import url('variables.css');
+
+/* Base & Layout */
+@import url('base.css');
+@import url('layout.css');
+
+/* Components */
+@import url('components/frame.css');
+@import url('components/entry.css');
+@import url('components/buttons.css');
+@import url('components/toolbar.css');
+@import url('components/metadata.css');
+@import url('components/table.css');
+@import url('components/notifications.css');
+
+/* Utilities & Responsive */
+@import url('utilities.css');
+@import url('responsive.css');
