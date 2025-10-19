@@ -1,5 +1,16 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.5 (2025-10-19)
+
+### Table Enhancements
+
+- Automatically remove empty last row when navigating upward with Arrow Up, Arrow Left, or Shift+Enter keys
+
+### UI/UX Improvements
+
+- Changed copy button from text to icon for cleaner appearance
+- Improved metadata section layout to automatically adapt to different screen sizes
+
 ## ver 1.4.4 (2025-10-19)
 
 ### Bug Fixes
