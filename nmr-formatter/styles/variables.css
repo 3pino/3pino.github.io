@@ -40,7 +40,7 @@
   --color-btn-bg: light-dark(var(--color-primary-600), var(--color-primary-600));
   --color-btn-bg-hover: light-dark(var(--color-primary-700), var(--color-primary-700));
   --color-btn-txt: var(--color-white);
-  --color-btn-trans-hover: light-dark(var(--color-primary-300), var(--color-primary-300));
+  --color-btn-trans-hover: light-dark(var(--color-primary-300), var(--color-primary-700));
 
   /* Entry colors */
   --color-entry-bg: light-dark(var(--color-white), var(--color-black));
@@ -52,6 +52,10 @@
 
   /* Frame colors*/
   --color-frame-bg: light-dark(var(--color-gray-100), var(--color-gray-900));
+
+  /*Table colors*/
+  --color-th-bg: light-dark(var(--color-gray-100), var(--color-gray-900));
+  --color-btn-bg-addrow: var(--color-th-bg);
 
   /* Hover/Active states */
   --color-primary: var(--color-primary-600);

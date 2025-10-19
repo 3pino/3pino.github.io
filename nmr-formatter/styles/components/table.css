@@ -10,7 +10,7 @@
 
 /* Table Headers */
 .nmr-table th {
-  background-color: var(--color-gray-100);
+  background-color: var(--color-th-bg);
   border: 1px solid var(--color-border);
   padding: var(--space-8) var(--space-12);
   text-align: left;
@@ -141,7 +141,7 @@
 .add-row-cell {
   padding: 0 !important;
   border: none !important;
-  background-color: var(--color-gray-100);
+  background-color: var(--color-btn-bg-addrow);
   text-align: center;
 }
 
@@ -149,6 +149,7 @@ td>a[role="button"].add-row-btn {
   width: 100%;
   height: var(--height-sm);
   line-height: var(--line-height-tight);
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
