@@ -3079,7 +3079,8 @@ class RichTextEditor {
         this.element.innerHTML = '';
     }
     showPlaceholder(message = 'No valid peaks to display. Add peak data in the table above.') {
-        this.element.innerHTML = `<span style="color: #999;">${message}</span>`;
+        this.element.setAttribute('data-placeholder', message);
+        this.element.innerHTML = '';
     }
     showError(message) {
         this.element.innerHTML = `<span style="color: red;">Error: ${message}</span>`;

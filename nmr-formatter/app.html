@@ -109,13 +109,17 @@
                         </a>
                     </div>
                 </div>
-                <a id="copy-btn" class="btn-txt" title="Copy formatted text to clipboard" role="button" tabindex="0">Copy</a>
+</div>
+<div class="rich-text-wrapper">
+                <a id="copy-btn" title="Copy formatted text to clipboard" role="button" tabindex="0">
+                    <i class="fi fi-rr-copy-alt"></i>
+                </a>
+                <!--
+                    To enable editing, uncomment the line below and comment out the read-only line:
+                    <div id="rich-text-editor" class="rich-text-editor" contenteditable="true"></div>
+                -->
+                <div id="rich-text-editor" class="rich-text-editor entry" contenteditable="false" data-placeholder="Formatted NMR text will appear here..."></div>
             </div>
-            <!--
-                To enable editing, uncomment the line below and comment out the read-only line:
-                <div id="rich-text-editor" class="rich-text-editor" contenteditable="true"></div>
-            -->
-            <div id="rich-text-editor" class="rich-text-editor entry" contenteditable="false"></div>
         </section>
     </div>
 

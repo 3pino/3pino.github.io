@@ -49,8 +49,7 @@
 /* Toolbar & Metadata Wrapper */
 .toolbar-container-wrapper {
   flex: 0 0 auto;
-  border-bottom: 2px solid var(--color-border);
-  padding: var(--space-12);
+  padding: var(--space-8);
 }
 
 /* Table Section */
@@ -67,7 +66,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: auto;
-  padding: 0 var(--space-12) var(--space-12) var(--space-12);
+  padding: 0;
   min-height: 0;
 }
 

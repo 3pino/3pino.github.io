@@ -17,6 +17,7 @@
 @import url('components/toolbar.css');
 @import url('components/metadata.css');
 @import url('components/table.css');
+@import url('components/rich-text-editor.css');
 @import url('components/notifications.css');
 
 /* Utilities & Responsive */

@@ -73,23 +73,6 @@
   }
 }
 
-
-/* Rich Text Editor */
-.entry.rich-text-editor {
-  flex: 1;
-  white-space: normal; /* Override nowrap */
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--space-12);
-  line-height: var(--line-height-base);
-  font-size: var(--font-base);
-  min-height: 30px;
-}
-
-.entry.rich-text-editor:empty:before {
-  content: "Formatted NMR text will appear here...";
-}
-
 /* ----------------
    Input Type Classes
    ---------------- */
