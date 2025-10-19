@@ -1,5 +1,15 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.4 (2025-10-19)
+
+### Bug Fixes
+
+- Fixed favicon loading issues in local environment
+
+### UI/UX Improvements
+
+- Unified button styling for consistent appearance across the interface
+
 ## ver 1.4.3 (2025-10-18)
 
 ### Minor Changes
