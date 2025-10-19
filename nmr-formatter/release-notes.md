@@ -1,5 +1,11 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.6 (2025-10-20)
+
+### Bug Fixes
+
+- Fixed copy button feedback to display check icon instead of text
+
 ## ver 1.4.5 (2025-10-19)
 
 ### Table Enhancements
