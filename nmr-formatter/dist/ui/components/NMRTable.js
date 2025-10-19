@@ -464,7 +464,9 @@ class NMRTable {
                     }
                 }
                 this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
-                    this.keyboardNav.navigateToCell(row, input, direction);
+                    this.keyboardNav.navigateToCell(row, input, direction, (rowId) => {
+                        this.deleteLastRowIfEmpty(rowId);
+                    });
                 });
             }
         }, { signal: this.abortController.signal });
@@ -510,7 +512,9 @@ class NMRTable {
                     }
                 }
                 this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
-                    this.keyboardNav.navigateToCell(row, input, direction);
+                    this.keyboardNav.navigateToCell(row, input, direction, (rowId) => {
+                        this.deleteLastRowIfEmpty(rowId);
+                    });
                 });
             }
         }, { signal: this.abortController.signal });
@@ -578,7 +582,9 @@ class NMRTable {
                     }
                 }
                 this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
-                    this.keyboardNav.navigateToCell(row, input, direction);
+                    this.keyboardNav.navigateToCell(row, input, direction, (rowId) => {
+                        this.deleteLastRowIfEmpty(rowId);
+                    });
                 });
             }
         }, { signal: this.abortController.signal });
@@ -635,7 +641,9 @@ class NMRTable {
                     }
                 }
                 this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
-                    this.keyboardNav.navigateToCell(row, input, direction);
+                    this.keyboardNav.navigateToCell(row, input, direction, (rowId) => {
+                        this.deleteLastRowIfEmpty(rowId);
+                    });
                 });
             }
         }, { signal: this.abortController.signal });
@@ -671,6 +679,11 @@ class NMRTable {
                 if (e.shiftKey) {
                     const prevRow = row.previousElementSibling;
                     if (prevRow) {
+                        // Delete current row if it's the last row and empty
+                        const currentRowId = row.dataset.rowId;
+                        if (currentRowId) {
+                            this.deleteLastRowIfEmpty(currentRowId);
+                        }
                         const prevAssignment = prevRow.querySelector('.assignment-input');
                         prevAssignment === null || prevAssignment === void 0 ? void 0 : prevAssignment.focus();
                     }
@@ -740,7 +753,9 @@ class NMRTable {
                 }
                 // Handle arrow key navigation for contenteditable
                 this.keyboardNav.handleCellNavigation(e, input, row, (direction) => {
-                    this.keyboardNav.navigateToCell(row, input, direction);
+                    this.keyboardNav.navigateToCell(row, input, direction, (rowId) => {
+                        this.deleteLastRowIfEmpty(rowId);
+                    });
                 });
             }
             // Keyboard shortcuts
@@ -776,8 +791,23 @@ class NMRTable {
             return;
         const cellIndex = Array.from(currentRow.children).indexOf(currentCell);
         if (reverse) {
-            // Move up
+            // Move up - check if we should delete current row if it's empty
+            const currentRowId = currentRow.dataset.rowId;
+            let shouldDelete = false;
+            if (currentRowId) {
+                // Only delete if there is a previous row to move to
+                const prevRow = currentRow.previousElementSibling;
+                if (prevRow) {
+                    shouldDelete = this.deleteLastRowIfEmpty(currentRowId);
+                }
+            }
+            // Find target row (might be different after deletion)
             let searchRow = currentRow.previousElementSibling;
+            // If current row was deleted, searchRow is now null, need to find the new last row
+            if (shouldDelete) {
+                const rows = this.tableBody.querySelectorAll('tr:not(.add-row-footer)');
+                searchRow = rows[rows.length - 1];
+            }
             while (searchRow) {
                 const targetCell = searchRow.children[cellIndex];
                 if (targetCell) {
@@ -925,6 +955,43 @@ class NMRTable {
         testRange.setStart(range.endContainer, range.endOffset);
         // If range is empty, we're at the end
         return testRange.toString().length === 0;
+    }
+    /**
+     * Check if a row is completely empty (all fields are empty strings)
+     */
+    isRowCompletelyEmpty(rowId) {
+        const row = this.tableState.getRow(rowId);
+        if (!row)
+            return false;
+        return (row.shift === '' &&
+            row.multiplicity === '' &&
+            row.jValues.every(j => j === 0 || isNaN(j)) &&
+            row.integration === 0 &&
+            row.assignment === '');
+    }
+    /**
+     * Delete the last row if it is completely empty
+     * @param currentRowId - ID of the row being navigated away from
+     * @returns true if the row was deleted, false otherwise
+     */
+    deleteLastRowIfEmpty(currentRowId) {
+        const rows = this.tableState.getRows();
+        if (rows.length === 0)
+            return false;
+        const lastRow = rows[rows.length - 1];
+        // Check if current row is the last row and is completely empty
+        if (lastRow.id === currentRowId && this.isRowCompletelyEmpty(currentRowId)) {
+            // Find and remove the row element from DOM
+            const rowElement = this.rowElements.get(currentRowId);
+            if (rowElement) {
+                rowElement.remove();
+                this.rowElements.delete(currentRowId);
+            }
+            // Remove from state
+            this.tableState.removeRow(currentRowId);
+            return true;
+        }
+        return false;
     }
     getFirstInput() {
         const firstRow = this.tableBody.querySelector('tr');

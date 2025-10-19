@@ -108,28 +108,38 @@ export class KeyboardNav {
     navigateToCell(
         currentRow: HTMLTableRowElement,
         currentInput: HTMLElement,
-        direction: 'up' | 'down' | 'left' | 'right'
+        direction: 'up' | 'down' | 'left' | 'right',
+        onBeforeNavigateUp?: (currentRowId: string) => void
     ): void {
         const currentCell = currentInput.closest('td');
         if (!currentCell) return;
 
         if (direction === 'up' || direction === 'down') {
-            this.navigateVertical(currentRow, currentCell, direction);
+            this.navigateVertical(currentRow, currentCell, direction, onBeforeNavigateUp);
         } else {
-            this.navigateHorizontal(currentRow, currentCell, direction);
+            this.navigateHorizontal(currentRow, currentCell, direction, onBeforeNavigateUp);
         }
     }
 
     private navigateVertical(
         currentRow: HTMLTableRowElement,
         currentCell: HTMLTableCellElement,
-        direction: 'up' | 'down'
+        direction: 'up' | 'down',
+        onBeforeNavigateUp?: (currentRowId: string) => void
     ): void {
         const targetRow = direction === 'up'
             ? currentRow.previousElementSibling as HTMLTableRowElement
             : currentRow.nextElementSibling as HTMLTableRowElement;
 
         if (!targetRow) return;
+
+        // If navigating up and callback is provided, call it before navigation
+        if (direction === 'up' && onBeforeNavigateUp) {
+            const currentRowId = currentRow.dataset.rowId;
+            if (currentRowId) {
+                onBeforeNavigateUp(currentRowId);
+            }
+        }
 
         const cellIndex = Array.from(currentRow.children).indexOf(currentCell);
         const targetCell = targetRow.children[cellIndex] as HTMLTableCellElement;
@@ -143,7 +153,8 @@ export class KeyboardNav {
     private navigateHorizontal(
         currentRow: HTMLTableRowElement,
         currentCell: HTMLTableCellElement,
-        direction: 'left' | 'right'
+        direction: 'left' | 'right',
+        onBeforeNavigateUp?: (currentRowId: string) => void
     ): void {
         // Find all visible, enabled cells
         const allCells = Array.from(currentRow.querySelectorAll('td:not(.checkbox-cell)')) as HTMLTableCellElement[];
@@ -167,8 +178,18 @@ export class KeyboardNav {
             const cursorAtStart = this.isCursorAtStart(currentInput);
 
             if (cursorAtStart) {
-                // Navigate to previous row's rightmost cell
+                // Get previous row BEFORE calling callback (currentRow might be deleted)
                 const prevRow = currentRow.previousElementSibling as HTMLTableRowElement;
+                
+                // If navigating up and callback is provided, call it before navigation
+                if (onBeforeNavigateUp) {
+                    const currentRowId = currentRow.dataset.rowId;
+                    if (currentRowId) {
+                        onBeforeNavigateUp(currentRowId);
+                    }
+                }
+
+                // Navigate to previous row's rightmost cell
                 if (prevRow) {
                     const prevCells = Array.from(prevRow.querySelectorAll('td:not(.checkbox-cell)')) as HTMLTableCellElement[];
                     const prevVisibleCells = prevCells.filter(cell => {
