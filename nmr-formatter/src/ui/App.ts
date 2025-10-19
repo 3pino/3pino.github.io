@@ -322,13 +322,13 @@ export class NMRFormatterApp {
             // Show feedback
             const copyBtn = document.getElementById('copy-btn');
             if (copyBtn) {
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = 'Copied!';
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fi fi-rr-check"></i>';
                 (copyBtn as HTMLButtonElement).style.backgroundColor = '#28a745';
                 (copyBtn as HTMLButtonElement).style.color = 'white';
 
                 setTimeout(() => {
-                    copyBtn.textContent = originalText || 'Copy';
+                    copyBtn.innerHTML = originalHTML || '<i class="fi fi-rr-copy-alt"></i>';
                     (copyBtn as HTMLButtonElement).style.backgroundColor = '';
                     (copyBtn as HTMLButtonElement).style.color = '';
                 }, 2000);
