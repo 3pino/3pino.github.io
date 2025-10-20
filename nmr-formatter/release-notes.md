@@ -1,5 +1,21 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.7 (2025-10-20)
+
+### Bug Fixes
+
+- Improved drag-and-drop functionality compatibility in Firefox and Safari browsers
+- Fixed validation error not clearing when selecting nuclei or solvent from dropdown menus
+- Fixed nested HTML tags appearing in metadata fields when selecting pre-formatted values from dropdowns (e.g., D₂O no longer becomes D₍₂₎O)
+- Fixed validation display to properly highlight all empty table cells when clicking "Generate Text"
+- Fixed metadata field validation to correctly detect empty fields that contain only HTML tags
+- Improved clipboard copy to use modern API and strip unnecessary HTML attributes for cleaner paste results
+
+### UI/UX Improvements
+
+- Unified metadata form field setup with improved input filtering using regex patterns
+- Added scrollbar gutter and margin-bottom to table for better visual spacing
+
 ## ver 1.4.6 (2025-10-20)
 
 ### Bug Fixes
