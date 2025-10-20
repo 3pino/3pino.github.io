@@ -141,7 +141,7 @@ export class DragDropHandler {
   }
 
   /**
-   * Extract files from drag event
+   * Extract files from drag event with progressive fallback
    */
   private async extractFilesFromDrop(e: DragEvent): Promise<File[]> {
     const files: File[] = [];
@@ -156,24 +156,96 @@ export class DragDropHandler {
       if (item.kind !== 'file') continue;
 
       try {
-        // Use File System Access API
-        const handle = await (item as any).getAsFileSystemHandle();
-        
-        if (handle.kind === 'directory') {
-          // Recursively read directory
-          const dirFiles = await this.readDirectoryHandle(handle);
-          files.push(...dirFiles);
-        } else if (handle.kind === 'file') {
-          // Read single file
-          const file = await handle.getFile();
-          files.push(file);
+        // Try modern File System Access API first
+        if (typeof (item as any).getAsFileSystemHandle === 'function') {
+          const handle = await (item as any).getAsFileSystemHandle();
+          
+          if (handle.kind === 'directory') {
+            const dirFiles = await this.readDirectoryHandle(handle);
+            files.push(...dirFiles);
+          } else if (handle.kind === 'file') {
+            const file = await handle.getFile();
+            files.push(file);
+          }
+        }
+        // Fallback to webkitGetAsEntry (widely supported)
+        else if (typeof (item as any).webkitGetAsEntry === 'function') {
+          const entry = (item as any).webkitGetAsEntry();
+          if (entry) {
+            const entryFiles = await this.readEntry(entry);
+            files.push(...entryFiles);
+          }
+        }
+        // Final fallback to getAsFile (single files only)
+        else {
+          const file = item.getAsFile();
+          if (file) files.push(file);
         }
       } catch (error) {
         console.error('Error reading dropped item:', error);
-        // Fallback: try getAsFile() for single files
+        // Last resort fallback
         const file = item.getAsFile();
         if (file) files.push(file);
       }
+    }
+
+    return files;
+  }
+
+
+  /**
+   * Read FileSystemEntry (webkit API fallback) with support for files and directories
+   */
+  private async readEntry(entry: any): Promise<File[]> {
+    if (entry.isFile) {
+      return new Promise<File[]>((resolve, reject) => {
+        entry.file(
+          (file: File) => resolve([file]),
+          (error: Error) => {
+            console.error('Error reading file entry:', error);
+            resolve([]);
+          }
+        );
+      });
+    } else if (entry.isDirectory) {
+      return this.readDirectoryEntry(entry);
+    }
+    return [];
+  }
+
+  /**
+   * Read directory entry recursively (webkit API)
+   * Uses batch reading to avoid 100-file limit
+   */
+  private async readDirectoryEntry(dirEntry: any): Promise<File[]> {
+    const files: File[] = [];
+    const reader = dirEntry.createReader();
+
+    // readEntries() must be called repeatedly until it returns empty array
+    // Each call returns max ~100 entries, so we need to loop
+    const readBatch = (): Promise<any[]> => {
+      return new Promise((resolve, reject) => {
+        reader.readEntries(
+          (entries: any[]) => resolve(entries),
+          (error: Error) => reject(error)
+        );
+      });
+    };
+
+    try {
+      // Keep reading until we get an empty batch
+      let entries: any[] = [];
+      do {
+        entries = await readBatch();
+        
+        // Process each entry in this batch
+        for (const entry of entries) {
+          const entryFiles = await this.readEntry(entry);
+          files.push(...entryFiles);
+        }
+      } while (entries.length > 0);
+    } catch (error) {
+      console.error(`Error reading directory ${dirEntry.name}:`, error);
     }
 
     return files;

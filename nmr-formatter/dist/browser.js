@@ -3436,7 +3436,7 @@ class DragDropHandler {
         }
     }
     /**
-     * Extract files from drag event
+     * Extract files from drag event with progressive fallback
      */
     async extractFilesFromDrop(e) {
         var _a;
@@ -3449,26 +3449,88 @@ class DragDropHandler {
             if (item.kind !== 'file')
                 continue;
             try {
-                // Use File System Access API
-                const handle = await item.getAsFileSystemHandle();
-                if (handle.kind === 'directory') {
-                    // Recursively read directory
-                    const dirFiles = await this.readDirectoryHandle(handle);
-                    files.push(...dirFiles);
+                // Try modern File System Access API first
+                if (typeof item.getAsFileSystemHandle === 'function') {
+                    const handle = await item.getAsFileSystemHandle();
+                    if (handle.kind === 'directory') {
+                        const dirFiles = await this.readDirectoryHandle(handle);
+                        files.push(...dirFiles);
+                    }
+                    else if (handle.kind === 'file') {
+                        const file = await handle.getFile();
+                        files.push(file);
+                    }
                 }
-                else if (handle.kind === 'file') {
-                    // Read single file
-                    const file = await handle.getFile();
-                    files.push(file);
+                // Fallback to webkitGetAsEntry (widely supported)
+                else if (typeof item.webkitGetAsEntry === 'function') {
+                    const entry = item.webkitGetAsEntry();
+                    if (entry) {
+                        const entryFiles = await this.readEntry(entry);
+                        files.push(...entryFiles);
+                    }
+                }
+                // Final fallback to getAsFile (single files only)
+                else {
+                    const file = item.getAsFile();
+                    if (file)
+                        files.push(file);
                 }
             }
             catch (error) {
                 console.error('Error reading dropped item:', error);
-                // Fallback: try getAsFile() for single files
+                // Last resort fallback
                 const file = item.getAsFile();
                 if (file)
                     files.push(file);
             }
+        }
+        return files;
+    }
+    /**
+     * Read FileSystemEntry (webkit API fallback) with support for files and directories
+     */
+    async readEntry(entry) {
+        if (entry.isFile) {
+            return new Promise((resolve, reject) => {
+                entry.file((file) => resolve([file]), (error) => {
+                    console.error('Error reading file entry:', error);
+                    resolve([]);
+                });
+            });
+        }
+        else if (entry.isDirectory) {
+            return this.readDirectoryEntry(entry);
+        }
+        return [];
+    }
+    /**
+     * Read directory entry recursively (webkit API)
+     * Uses batch reading to avoid 100-file limit
+     */
+    async readDirectoryEntry(dirEntry) {
+        const files = [];
+        const reader = dirEntry.createReader();
+        // readEntries() must be called repeatedly until it returns empty array
+        // Each call returns max ~100 entries, so we need to loop
+        const readBatch = () => {
+            return new Promise((resolve, reject) => {
+                reader.readEntries((entries) => resolve(entries), (error) => reject(error));
+            });
+        };
+        try {
+            // Keep reading until we get an empty batch
+            let entries = [];
+            do {
+                entries = await readBatch();
+                // Process each entry in this batch
+                for (const entry of entries) {
+                    const entryFiles = await this.readEntry(entry);
+                    files.push(...entryFiles);
+                }
+            } while (entries.length > 0);
+        }
+        catch (error) {
+            console.error(`Error reading directory ${dirEntry.name}:`, error);
         }
         return files;
     }
