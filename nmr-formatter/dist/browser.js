@@ -1810,6 +1810,8 @@ class MetadataForm {
         else if (field === 'solvent') {
             this.metadataState.setSolvent(value);
         }
+        // Clear validation error when dropdown item is selected
+        this.validationState.clearError(field);
     }
     /**
      * Get cursor position in contenteditable element
