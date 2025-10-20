@@ -9,12 +9,12 @@ test.describe('Metadata Form - Input Validation', () => {
     await helper.goto();
   });
 
-  test.describe('Numeric Field Validation (1-10 range)', () => {
-    test('shift-precision: should accept valid numbers 1-10', async () => {
+  test.describe('Numeric Field Validation (1-9 range)', () => {
+    test('shift-precision: should accept valid numbers 1-9', async () => {
       const field = helper.shiftPrecision;
 
       // Test valid values
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= 9; i++) {
         await helper.clearField(field);
         await field.type(i.toString());
 
@@ -27,24 +27,7 @@ test.describe('Metadata Form - Input Validation', () => {
       }
     });
 
-    test('shift-precision: should reject values outside 1-10 range', async () => {
-      const field = helper.shiftPrecision;
 
-      // Test out-of-range values (should show error)
-      const invalidValues = [0, 11, 15, 100];
-
-      for (const value of invalidValues) {
-        await helper.clearField(field);
-        await field.type(value.toString());
-
-        const content = await helper.getTextContent(field);
-        expect(content).toBe(value.toString());
-
-        // Should have error class for invalid values
-        const hasError = await helper.hasError(field);
-        expect(hasError).toBe(true);
-      }
-    });
 
     test('shift-precision: should reject non-numeric characters', async () => {
       const field = helper.shiftPrecision;
@@ -52,16 +35,16 @@ test.describe('Metadata Form - Input Validation', () => {
       await helper.clearField(field);
       await field.type('abc123xyz');
 
-      // Only numeric characters should remain
+      // Only first numeric character should remain (1-digit limit)
       const content = await helper.getTextContent(field);
-      expect(content).toBe('123');
+      expect(content).toBe('1');
     });
 
-    test('j-precision: should accept valid numbers 1-10', async () => {
+    test('j-precision: should accept valid numbers 1-9', async () => {
       const field = helper.jPrecision;
 
       // Test valid values
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= 9; i++) {
         await helper.clearField(field);
         await field.type(i.toString());
 
@@ -73,22 +56,7 @@ test.describe('Metadata Form - Input Validation', () => {
       }
     });
 
-    test('j-precision: should reject values outside 1-10 range', async () => {
-      const field = helper.jPrecision;
 
-      const invalidValues = [0, 11, 20, 99];
-
-      for (const value of invalidValues) {
-        await helper.clearField(field);
-        await field.type(value.toString());
-
-        const content = await helper.getTextContent(field);
-        expect(content).toBe(value.toString());
-
-        const hasError = await helper.hasError(field);
-        expect(hasError).toBe(true);
-      }
-    });
 
     test('j-precision: should reject non-numeric characters', async () => {
       const field = helper.jPrecision;
@@ -96,9 +64,9 @@ test.describe('Metadata Form - Input Validation', () => {
       await helper.clearField(field);
       await field.type('test5.5@#$');
 
-      // Only numeric characters should remain
+      // Only first numeric character should remain (1-digit limit)
       const content = await helper.getTextContent(field);
-      expect(content).toBe('55');
+      expect(content).toBe('5');
     });
 
     test('frequency: should accept any positive number', async () => {
@@ -137,17 +105,17 @@ test.describe('Metadata Form - Input Validation', () => {
       let content = await helper.getTextContent(helper.frequency);
       expect(content).toBe('123456'); // Decimal point removed
 
-      // Test shift-precision field  
+      // Test shift-precision field (1-digit limit: only first digit)
       await helper.clearField(helper.shiftPrecision);
       await helper.shiftPrecision.type('5.5');
       content = await helper.getTextContent(helper.shiftPrecision);
-      expect(content).toBe('55'); // Decimal point removed
+      expect(content).toBe('5'); // Decimal point removed, only first digit kept
 
-      // Test j-precision field
+      // Test j-precision field (1-digit limit: only first digit)
       await helper.clearField(helper.jPrecision);
       await helper.jPrecision.type('2.1');
       content = await helper.getTextContent(helper.jPrecision);
-      expect(content).toBe('21'); // Decimal point removed
+      expect(content).toBe('2'); // Decimal point removed, only first digit kept
     });
   });
 
@@ -375,19 +343,19 @@ test.describe('Metadata Form - Input Validation', () => {
   test.describe('Dropdown Selection', () => {
     test('nuclei: should be able to select from dropdown', async () => {
       const field = helper.nuclei;
-      
+
       // Clear and focus field to show dropdown
       await helper.clearField(field);
       await field.click();
-      
+
       // Wait for dropdown to appear
       const dropdown = helper.page.locator('#nuclei-dropdown');
       await expect(dropdown).toHaveClass(/active/);
-      
+
       // Click on a dropdown item (13C)
       const item = dropdown.locator('.dropdown-item').filter({ hasText: '13C' }).first();
       await item.click();
-      
+
       // Check that value was set
       const html = await helper.getInnerHTML(field);
       expect(html).toContain('<sup>13</sup>C');
@@ -395,17 +363,17 @@ test.describe('Metadata Form - Input Validation', () => {
 
     test('solvent: should be able to select from dropdown', async () => {
       const field = helper.solvent;
-      
+
       await helper.clearField(field);
       await field.click();
-      
+
       const dropdown = helper.page.locator('#solvent-dropdown');
       await expect(dropdown).toHaveClass(/active/);
-      
+
       // Click on DMSO
       const item = dropdown.locator('.dropdown-item').filter({ hasText: 'DMSO' }).first();
       await item.click();
-      
+
       const html = await helper.getInnerHTML(field);
       expect(html).toContain('DMSO');
     });
@@ -474,6 +442,292 @@ test.describe('Metadata Form - Input Validation', () => {
       // Tab should navigate to previous field (Shift+Tab navigates backward)
       await button.press('Shift+Tab');
       await expect(helper.jPrecision).toBeFocused();
+    });
+  });
+
+  test.describe('Keyboard Shortcuts (Ctrl+B/I)', () => {
+    test('nuclei: should support Ctrl+B for bold formatting', async () => {
+      const field = helper.nuclei;
+
+      await helper.clearField(field);
+      await field.click();
+      await field.type('Test');
+
+      // Select all and apply bold
+      await field.press('Control+A');
+      await field.press('Control+B');
+
+      const html = await helper.getInnerHTML(field);
+      expect(html).toContain('<b>Test</b>');
+    });
+
+    test('solvent: should support Ctrl+I for italic formatting', async () => {
+      const field = helper.solvent;
+
+      await helper.clearField(field);
+      await field.click();
+      await field.type('DMSO');
+
+      // Select all and apply italic
+      await field.press('Control+A');
+      await field.press('Control+I');
+
+      const html = await helper.getInnerHTML(field);
+      expect(html).toContain('<i>DMSO</i>');
+    });
+
+    test('frequency: should NOT support Ctrl+B (numeric field with inputFilter)', async () => {
+      const field = helper.frequency;
+
+      await helper.clearField(field);
+      await field.type('500');
+
+      await field.press('Control+A');
+      await field.press('Control+B');
+
+      // Should remain plain text (no <b> tag)
+      const html = await helper.getInnerHTML(field);
+      expect(html).not.toContain('<b>');
+      expect(await helper.getTextContent(field)).toBe('500');
+    });
+
+    test('shift-precision: should NOT support Ctrl+I (numeric field with inputFilter)', async () => {
+      const field = helper.shiftPrecision;
+
+      await helper.clearField(field);
+      await field.type('2');
+
+      await field.press('Control+A');
+      await field.press('Control+I');
+
+      const html = await helper.getInnerHTML(field);
+      expect(html).not.toContain('<i>');
+      expect(await helper.getTextContent(field)).toBe('2');
+    });
+
+    test('j-precision: should NOT support Ctrl+B (numeric field with inputFilter)', async () => {
+      const field = helper.jPrecision;
+
+      await helper.clearField(field);
+      await field.type('3');
+
+      await field.press('Control+A');
+      await field.press('Control+B');
+
+      const html = await helper.getInnerHTML(field);
+      expect(html).not.toContain('<b>');
+      expect(await helper.getTextContent(field)).toBe('3');
+    });
+  });
+
+  test.describe('Paste Filtering', () => {
+    test('frequency: should filter non-numeric characters on paste', async () => {
+      const field = helper.frequency;
+
+      await helper.clearField(field);
+      await field.click();
+
+      // Simulate paste with clipboard data containing non-numeric characters
+      await field.evaluate((el) => {
+        const dt = new DataTransfer();
+        dt.setData('text/plain', '500MHz');
+        const pasteEvent = new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true
+        });
+        el.dispatchEvent(pasteEvent);
+      });
+
+      // Wait for paste to be processed
+      await helper.page.waitForTimeout(100);
+
+      const content = await helper.getTextContent(field);
+      expect(content).toBe('500'); // 'MHz' should be filtered out
+    });
+
+    test('shift-precision: should extract only valid digits on paste', async () => {
+      const field = helper.shiftPrecision;
+
+      await helper.clearField(field);
+      await field.click();
+
+      await field.evaluate((el) => {
+        const dt = new DataTransfer();
+        dt.setData('text/plain', 'abc5def');
+        const pasteEvent = new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true
+        });
+        el.dispatchEvent(pasteEvent);
+      });
+
+      await helper.page.waitForTimeout(100);
+
+      const content = await helper.getTextContent(field);
+      expect(content).toBe('5'); // Only digit 5 should remain
+    });
+
+    test('j-precision: should extract only first valid digit on paste', async () => {
+      const field = helper.jPrecision;
+
+      await helper.clearField(field);
+      await field.click();
+
+      await field.evaluate((el) => {
+        const dt = new DataTransfer();
+        dt.setData('text/plain', '2.5Hz');
+        const pasteEvent = new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true
+        });
+        el.dispatchEvent(pasteEvent);
+      });
+
+      await helper.page.waitForTimeout(100);
+
+      const content = await helper.getTextContent(field);
+      expect(content).toBe('2'); // Extract only first digit '2', filter '.5Hz'
+    });
+
+    test('nuclei: should preserve HTML formatting on paste', async () => {
+      const field = helper.nuclei;
+
+      await helper.clearField(field);
+      await field.click();
+
+      await field.evaluate((el) => {
+        const dt = new DataTransfer();
+        dt.setData('text/html', '<sup>13</sup>C');
+        const pasteEvent = new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true
+        });
+        el.dispatchEvent(pasteEvent);
+      });
+
+      await helper.page.waitForTimeout(100);
+
+      const html = await helper.getInnerHTML(field);
+      expect(html).toContain('<sup>13</sup>');
+      expect(html).toContain('C');
+    });
+
+    test('solvent: should filter disallowed HTML tags on paste', async () => {
+      const field = helper.solvent;
+
+      await helper.clearField(field);
+      await field.click();
+
+      await field.evaluate((el) => {
+        const dt = new DataTransfer();
+        dt.setData('text/html', '<strong>CDCl</strong><sub>3</sub>');
+        const pasteEvent = new ClipboardEvent('paste', {
+          clipboardData: dt,
+          bubbles: true,
+          cancelable: true
+        });
+        el.dispatchEvent(pasteEvent);
+      });
+
+      await helper.page.waitForTimeout(100);
+
+      const html = await helper.getInnerHTML(field);
+      // <strong> should be filtered, <sub> should be preserved
+      expect(html).not.toContain('<strong>');
+      expect(html).toContain('<sub>3</sub>');
+    });
+  });
+
+  test.describe('Multi-digit Numeric Input', () => {
+    test('frequency: should accept multi-digit numbers', async () => {
+      const field = helper.frequency;
+
+      await helper.clearField(field);
+      await field.type('500');
+
+      let content = await helper.getTextContent(field);
+      expect(content).toBe('500');
+
+      // Should be able to add more digits
+      await field.type('0');
+      content = await helper.getTextContent(field);
+      expect(content).toBe('5000');
+    });
+
+    test('frequency: should handle typing zero after other digits', async () => {
+      const field = helper.frequency;
+
+      await helper.clearField(field);
+      await field.type('5');
+
+      let content = await helper.getTextContent(field);
+      expect(content).toBe('5');
+
+      // Type '0' - should be accepted
+      await field.type('0');
+      content = await helper.getTextContent(field);
+      expect(content).toBe('50');
+
+      // Type another '0'
+      await field.type('0');
+      content = await helper.getTextContent(field);
+      expect(content).toBe('500');
+    });
+
+    test('frequency: should reject leading zeros (pattern /[1-9]\\d*/)', async () => {
+      const field = helper.frequency;
+
+      await helper.clearField(field);
+      await field.type('007');
+
+      const content = await helper.getTextContent(field);
+      // Pattern /[1-9]\d*/ requires first digit to be 1-9, so '007' -> '7'
+      expect(content).toBe('7');
+    });
+
+    test('frequency: should accept very large numbers', async () => {
+      const field = helper.frequency;
+
+      await helper.clearField(field);
+      await field.type('123456789');
+
+      const content = await helper.getTextContent(field);
+      expect(content).toBe('123456789');
+    });
+
+    test('shift-precision: should only keep first digit with /[1-9]/ pattern', async () => {
+      const field = helper.shiftPrecision;
+
+      await helper.clearField(field);
+      await field.type('5');
+
+      let content = await helper.getTextContent(field);
+      expect(content).toBe('5');
+
+      // Try to add another digit - should keep only the first digit
+      await field.type('7');
+      content = await helper.getTextContent(field);
+      // Only first digit should remain (1-digit limit)
+      expect(content).toBe('5');
+    });
+
+    test('j-precision: should only keep first digit from input', async () => {
+      const field = helper.jPrecision;
+
+      await helper.clearField(field);
+      await field.type('3');
+
+      let content = await helper.getTextContent(field);
+      expect(content).toBe('3');
+
+      // Try to add another digit - should keep only the first digit
+      await field.type('9');
+      content = await helper.getTextContent(field);
+      expect(content).toBe('3');
     });
   });
 

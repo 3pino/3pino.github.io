@@ -24,7 +24,7 @@ export class MetadataForm {
         nuclei: HTMLElement;
         solvent: HTMLElement;
     };
-    
+
     // AbortController for cleaning up event listeners
     private abortController: AbortController = new AbortController();
 
@@ -59,11 +59,11 @@ export class MetadataForm {
 
     private initializeValues(): void {
         const data = this.metadataState.getData();
-        
+
         // Add .input-richtext class for toolbar integration
         this.elements.nuclei.classList.add('input-richtext');
         this.elements.solvent.classList.add('input-richtext');
-        
+
         this.elements.nuclei.innerHTML = data.nuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
@@ -76,27 +76,35 @@ export class MetadataForm {
 
     private initializeEventListeners(onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void): void {
         // Nuclei input
-        this.setupContentEditableField(this.elements.nuclei, (value) => {
+        this.setupField(this.elements.nuclei, (value) => {
             this.metadataState.setNuclei(value);
         }, onNavigateNext);
 
         // Solvent input
-        this.setupContentEditableField(this.elements.solvent, (value) => {
+        this.setupField(this.elements.solvent, (value) => {
             this.metadataState.setSolvent(value);
         }, onNavigateNext);
 
-        // Number fields
-        this.setupNumberField(this.elements.frequency, (value) => {
-            this.metadataState.setFrequency(value);
-        }, null, null, onNavigateNext);
+        // Number fields - frequency (no min/max in UI, validated on Generate Text)
+        this.setupField(this.elements.frequency, (value) => {
+            const text = value.replace(/<[^>]*>/g, ''); // Strip any HTML
+            const num = parseInt(text);
+            this.metadataState.setFrequency(isNaN(num) ? 0 : num);
+        }, onNavigateNext, /[1-9]\d*/);
 
-        this.setupNumberField(this.elements.shiftPrecision, (value) => {
-            this.metadataState.setShiftPrecision(value);
-        }, 1, 10, onNavigateNext);
+        // Number fields - shift precision (1-10, validated on Generate Text)
+        this.setupField(this.elements.shiftPrecision, (value) => {
+            const text = value.replace(/<[^>]*>/g, '');
+            const num = parseInt(text);
+            this.metadataState.setShiftPrecision(isNaN(num) ? 0 : num);
+        }, onNavigateNext, /[1-9]/);
 
-        this.setupNumberField(this.elements.jPrecision, (value) => {
-            this.metadataState.setJPrecision(value);
-        }, 1, 10, onNavigateNext);
+        // Number fields - j precision (1-10, validated on Generate Text)
+        this.setupField(this.elements.jPrecision, (value) => {
+            const text = value.replace(/<[^>]*>/g, '');
+            const num = parseInt(text);
+            this.metadataState.setJPrecision(isNaN(num) ? 0 : num);
+        }, onNavigateNext, /[1-9]/);
 
         // Sort order - toggle button
         this.setupSortOrderToggle(onNavigateNext);
@@ -116,23 +124,50 @@ export class MetadataForm {
         });
     }
 
-    private setupContentEditableField(
+    private setupField(
         element: HTMLElement,
         onChange: (value: string) => void,
-        onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void
+        onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void,
+        inputFilter?: RegExp | null
     ): void {
-        // Paste filtering (only allow B, I, SUB, SUP tags)
+        // Paste filtering
         element.addEventListener('paste', (e) => {
             e.preventDefault();
-            const text = e.clipboardData?.getData('text/html') || e.clipboardData?.getData('text/plain') || '';
+            const htmlText = e.clipboardData?.getData('text/html') || e.clipboardData?.getData('text/plain') || '';
             const temp = document.createElement('div');
-            temp.innerHTML = text;
-            const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
-            document.execCommand('insertHTML', false, filtered);
+            temp.innerHTML = htmlText;
+
+            // Always filter HTML tags (only allow B, I, SUB, SUP)
+            let filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
+
+            // Apply input filter if provided
+            if (inputFilter) {
+                // Extract text content and match entire string against pattern
+                const textOnly = temp.textContent || '';
+                const matches = textOnly.match(new RegExp(inputFilter, 'g'));
+                // For single-character patterns like /[1-9]/, only keep the first match
+                filtered = matches ? (matches.length > 0 ? matches[0] : '') : '';
+                document.execCommand('insertText', false, filtered);
+            } else {
+                document.execCommand('insertHTML', false, filtered);
+            }
         }, { signal: this.abortController.signal });
 
         // Input handling
         element.addEventListener('input', () => {
+            // Apply input filter if provided (force filter invalid characters)
+            if (inputFilter) {
+                const text = element.textContent || '';
+                const matches = text.match(new RegExp(inputFilter, 'g'));
+                // For single-character patterns like /[1-9]/, only keep the first match
+                const cleanText = matches ? (matches.length > 0 ? matches[0] : '') : '';
+
+                if (text !== cleanText) {
+                    element.textContent = cleanText;
+                    this.moveCursorToEnd(element);
+                }
+            }
+
             onChange(element.innerHTML);
             this.validationState.clearError(element.id);
         }, { signal: this.abortController.signal });
@@ -143,7 +178,7 @@ export class MetadataForm {
             const fieldId = element.id;
             const dropdown = fieldId === 'nuclei' ? this.dropdowns.nuclei :
                            fieldId === 'solvent' ? this.dropdowns.solvent : null;
-            
+
             if (e.key === 'Enter') {
                 // If dropdown is active and has a highlighted item, let it handle Enter
                 if (dropdown && dropdown.classList.contains('active')) {
@@ -158,7 +193,7 @@ export class MetadataForm {
                 this.navigateWithinGroup(element, e.shiftKey);
                 return;
             }
-            
+
             if (e.key === 'Tab') {
                 e.preventDefault();
                 this.navigateWithinGroup(element, e.shiftKey);
@@ -172,13 +207,13 @@ export class MetadataForm {
 
                 const range = selection.getRangeAt(0);
                 const text = element.textContent || '';
-                
+
                 // Check if there's a selection
                 const hasSelection = !range.collapsed;
-                
+
                 if (!hasSelection) {
                     const cursorPosition = this.getCursorPosition(element);
-                    
+
                     if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
                         // At right boundary, move to next field within group
                         e.preventDefault();
@@ -205,14 +240,18 @@ export class MetadataForm {
                 }
             }
 
-            // Keyboard shortcuts (Ctrl+B, Ctrl+I)
+            // Keyboard shortcuts (Ctrl+B, Ctrl+I) - only if no input filter
             if (e.ctrlKey || e.metaKey) {
                 if (e.key === 'b' || e.key === 'B') {
                     e.preventDefault();
-                    document.execCommand('bold');
+                    if (!inputFilter) {
+                        document.execCommand('bold');
+                    }
                 } else if (e.key === 'i' || e.key === 'I') {
                     e.preventDefault();
-                    document.execCommand('italic');
+                    if (!inputFilter) {
+                        document.execCommand('italic');
+                    }
                 }
             }
         }, { signal: this.abortController.signal });
@@ -228,115 +267,7 @@ export class MetadataForm {
         }, { signal: this.abortController.signal });
     }
 
-    private setupNumberField(
-        element: HTMLElement,
-        onChange: (value: number) => void,
-        min: number | null,
-        max: number | null,
-        onNavigateNext: (currentField: HTMLElement, reverse: boolean) => void
-    ): void {
-        // Enter, Tab, and Arrow key navigation
-        element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                // Prevent default behavior and stop propagation to avoid input event
-                e.stopPropagation();
-                this.navigateWithinGroup(element, e.shiftKey);
-                return;
-            }
-            
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                this.navigateWithinGroup(element, e.shiftKey);
-                return;
-            }
 
-            // Smart left/right arrow navigation at boundaries
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                const selection = window.getSelection();
-                if (!selection || selection.rangeCount === 0) return;
-
-                const range = selection.getRangeAt(0);
-                const text = element.textContent || '';
-                
-                // Check if there's a selection
-                const hasSelection = !range.collapsed;
-                
-                if (!hasSelection) {
-                    const cursorPosition = this.getCursorPosition(element);
-                    
-                    if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
-                        // At right boundary, move to next field within group
-                        e.preventDefault();
-                        const fieldGroup = this.getFieldGroup(element);
-                        const fieldIndex = fieldGroup.indexOf(element);
-                        if (fieldIndex < fieldGroup.length - 1) {
-                            const nextField = fieldGroup[fieldIndex + 1];
-                            nextField.focus();
-                            this.moveCursorToStart(nextField);
-                        }
-                        return;
-                    } else if (e.key === 'ArrowLeft' && cursorPosition === 0) {
-                        // At left boundary, move to previous field within group
-                        e.preventDefault();
-                        const fieldGroup = this.getFieldGroup(element);
-                        const fieldIndex = fieldGroup.indexOf(element);
-                        if (fieldIndex > 0) {
-                            const prevField = fieldGroup[fieldIndex - 1];
-                            prevField.focus();
-                            this.moveCursorToEnd(prevField);
-                        }
-                        return;
-                    }
-                }
-            }
-        }, { signal: this.abortController.signal });
-
-        // Input validation
-        element.addEventListener('input', () => {
-            const text = element.textContent || '';
-            const cleanText = text.replace(/[^0-9]/g, '');
-
-            if (text !== cleanText) {
-                element.textContent = cleanText;
-                this.moveCursorToEnd(element);
-            }
-
-            if (cleanText !== '') {
-                const num = parseInt(cleanText);
-                onChange(num);
-
-                if ((min !== null && num < min) || (max !== null && num > max)) {
-                    element.classList.add('error');
-                } else {
-                    element.classList.remove('error');
-                }
-            } else {
-                element.classList.remove('error');
-            }
-        }, { signal: this.abortController.signal });
-
-        // Paste filtering
-        element.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const text = e.clipboardData?.getData('text/plain') || '';
-            const cleanText = text.replace(/[^0-9]/g, '');
-            document.execCommand('insertText', false, cleanText);
-        }, { signal: this.abortController.signal });
-
-        // Clear error on focus
-        element.addEventListener('focus', () => {
-            this.validationState.clearError(element.id);
-        }, { signal: this.abortController.signal });
-
-        // Ensure placeholder shows when field is empty on blur
-        element.addEventListener('blur', () => {
-            const text = element.textContent || '';
-            if (text.trim() === '') {
-                element.textContent = '';
-            }
-        }, { signal: this.abortController.signal });
-    }
 
     private initializeDropdowns(): void {
         this.setupDropdown('nuclei', NUCLEI_PRESETS);
@@ -581,7 +512,7 @@ export class MetadataForm {
         if (element.childNodes.length > 0) {
             // Find the last node (could be text or element)
             const lastNode = element.childNodes[element.childNodes.length - 1];
-            
+
             if (lastNode.nodeType === Node.TEXT_NODE) {
                 // Text node: set cursor at end
                 const length = lastNode.textContent?.length || 0;
@@ -593,7 +524,7 @@ export class MetadataForm {
                 // Fallback: set after last node
                 range.setStartAfter(lastNode);
             }
-            
+
             range.collapse(true);
             sel?.removeAllRanges();
             sel?.addRange(range);
@@ -608,7 +539,7 @@ export class MetadataForm {
     private cleanupEmptyTags(html: string): string {
         const temp = document.createElement('div');
         temp.innerHTML = html.trim();
-        
+
         // Recursively remove empty elements
         const removeEmptyElements = (element: Element): void => {
             const children = Array.from(element.children);
@@ -621,7 +552,7 @@ export class MetadataForm {
                 }
             });
         };
-        
+
         removeEmptyElements(temp);
         return temp.innerHTML;
     }
@@ -666,7 +597,7 @@ export class MetadataForm {
     private getFieldGroup(element: HTMLElement): HTMLElement[] {
         const metadataFields = this.getMetadataFieldOrder();
         const settingsFields = this.getSettingsFieldOrder();
-        
+
         if (metadataFields.includes(element)) {
             return metadataFields;
         } else if (settingsFields.includes(element)) {
@@ -701,7 +632,7 @@ export class MetadataForm {
 
         const targetField = fieldGroup[targetIndex];
         targetField.focus();
-        
+
         // Select all text in the target field
         this.selectAllText(targetField);
     }
@@ -712,7 +643,7 @@ export class MetadataForm {
     private selectAllText(element: HTMLElement): void {
         const range = document.createRange();
         const sel = window.getSelection();
-        
+
         range.selectNodeContents(element);
         sel?.removeAllRanges();
         sel?.addRange(range);
@@ -733,7 +664,7 @@ export class MetadataForm {
     public destroy(): void {
         // Abort all event listeners attached with AbortController
         this.abortController.abort();
-        
+
         // Create new AbortController for potential reuse
         this.abortController = new AbortController();
     }

@@ -44,23 +44,31 @@ class MetadataForm {
     }
     initializeEventListeners(onNavigateNext) {
         // Nuclei input
-        this.setupContentEditableField(this.elements.nuclei, (value) => {
+        this.setupField(this.elements.nuclei, (value) => {
             this.metadataState.setNuclei(value);
         }, onNavigateNext);
         // Solvent input
-        this.setupContentEditableField(this.elements.solvent, (value) => {
+        this.setupField(this.elements.solvent, (value) => {
             this.metadataState.setSolvent(value);
         }, onNavigateNext);
-        // Number fields
-        this.setupNumberField(this.elements.frequency, (value) => {
-            this.metadataState.setFrequency(value);
-        }, null, null, onNavigateNext);
-        this.setupNumberField(this.elements.shiftPrecision, (value) => {
-            this.metadataState.setShiftPrecision(value);
-        }, 1, 10, onNavigateNext);
-        this.setupNumberField(this.elements.jPrecision, (value) => {
-            this.metadataState.setJPrecision(value);
-        }, 1, 10, onNavigateNext);
+        // Number fields - frequency (no min/max in UI, validated on Generate Text)
+        this.setupField(this.elements.frequency, (value) => {
+            const text = value.replace(/<[^>]*>/g, ''); // Strip any HTML
+            const num = parseInt(text);
+            this.metadataState.setFrequency(isNaN(num) ? 0 : num);
+        }, onNavigateNext, /[1-9]\d*/);
+        // Number fields - shift precision (1-10, validated on Generate Text)
+        this.setupField(this.elements.shiftPrecision, (value) => {
+            const text = value.replace(/<[^>]*>/g, '');
+            const num = parseInt(text);
+            this.metadataState.setShiftPrecision(isNaN(num) ? 0 : num);
+        }, onNavigateNext, /[1-9]/);
+        // Number fields - j precision (1-10, validated on Generate Text)
+        this.setupField(this.elements.jPrecision, (value) => {
+            const text = value.replace(/<[^>]*>/g, '');
+            const num = parseInt(text);
+            this.metadataState.setJPrecision(isNaN(num) ? 0 : num);
+        }, onNavigateNext, /[1-9]/);
         // Sort order - toggle button
         this.setupSortOrderToggle(onNavigateNext);
         // Validation error display
@@ -78,19 +86,42 @@ class MetadataForm {
             });
         });
     }
-    setupContentEditableField(element, onChange, onNavigateNext) {
-        // Paste filtering (only allow B, I, SUB, SUP tags)
+    setupField(element, onChange, onNavigateNext, inputFilter) {
+        // Paste filtering
         element.addEventListener('paste', (e) => {
             var _a, _b;
             e.preventDefault();
-            const text = ((_a = e.clipboardData) === null || _a === void 0 ? void 0 : _a.getData('text/html')) || ((_b = e.clipboardData) === null || _b === void 0 ? void 0 : _b.getData('text/plain')) || '';
+            const htmlText = ((_a = e.clipboardData) === null || _a === void 0 ? void 0 : _a.getData('text/html')) || ((_b = e.clipboardData) === null || _b === void 0 ? void 0 : _b.getData('text/plain')) || '';
             const temp = document.createElement('div');
-            temp.innerHTML = text;
-            const filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
-            document.execCommand('insertHTML', false, filtered);
+            temp.innerHTML = htmlText;
+            // Always filter HTML tags (only allow B, I, SUB, SUP)
+            let filtered = this.filterHTMLTags(temp, ['B', 'I', 'SUB', 'SUP']);
+            // Apply input filter if provided
+            if (inputFilter) {
+                // Extract text content and match entire string against pattern
+                const textOnly = temp.textContent || '';
+                const matches = textOnly.match(new RegExp(inputFilter, 'g'));
+                // For single-character patterns like /[1-9]/, only keep the first match
+                filtered = matches ? (matches.length > 0 ? matches[0] : '') : '';
+                document.execCommand('insertText', false, filtered);
+            }
+            else {
+                document.execCommand('insertHTML', false, filtered);
+            }
         }, { signal: this.abortController.signal });
         // Input handling
         element.addEventListener('input', () => {
+            // Apply input filter if provided (force filter invalid characters)
+            if (inputFilter) {
+                const text = element.textContent || '';
+                const matches = text.match(new RegExp(inputFilter, 'g'));
+                // For single-character patterns like /[1-9]/, only keep the first match
+                const cleanText = matches ? (matches.length > 0 ? matches[0] : '') : '';
+                if (text !== cleanText) {
+                    element.textContent = cleanText;
+                    this.moveCursorToEnd(element);
+                }
+            }
             onChange(element.innerHTML);
             this.validationState.clearError(element.id);
         }, { signal: this.abortController.signal });
@@ -156,15 +187,25 @@ class MetadataForm {
                     }
                 }
             }
-            // Keyboard shortcuts (Ctrl+B, Ctrl+I)
+            // Keyboard shortcuts (Ctrl+B, Ctrl+I) - only if no input filter
             if (e.ctrlKey || e.metaKey) {
                 if (e.key === 'b' || e.key === 'B') {
-                    e.preventDefault();
-                    document.execCommand('bold');
+                    if (!inputFilter) {
+                        e.preventDefault();
+                        document.execCommand('bold');
+                    }
+                    else {
+                        e.preventDefault(); // Block the shortcut
+                    }
                 }
                 else if (e.key === 'i' || e.key === 'I') {
-                    e.preventDefault();
-                    document.execCommand('italic');
+                    if (!inputFilter) {
+                        e.preventDefault();
+                        document.execCommand('italic');
+                    }
+                    else {
+                        e.preventDefault(); // Block the shortcut
+                    }
                 }
             }
         }, { signal: this.abortController.signal });
@@ -176,101 +217,6 @@ class MetadataForm {
             }
             else if (cleaned !== element.innerHTML) {
                 element.innerHTML = cleaned;
-            }
-        }, { signal: this.abortController.signal });
-    }
-    setupNumberField(element, onChange, min, max, onNavigateNext) {
-        // Enter, Tab, and Arrow key navigation
-        element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                // Prevent default behavior and stop propagation to avoid input event
-                e.stopPropagation();
-                this.navigateWithinGroup(element, e.shiftKey);
-                return;
-            }
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                this.navigateWithinGroup(element, e.shiftKey);
-                return;
-            }
-            // Smart left/right arrow navigation at boundaries
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                const selection = window.getSelection();
-                if (!selection || selection.rangeCount === 0)
-                    return;
-                const range = selection.getRangeAt(0);
-                const text = element.textContent || '';
-                // Check if there's a selection
-                const hasSelection = !range.collapsed;
-                if (!hasSelection) {
-                    const cursorPosition = this.getCursorPosition(element);
-                    if (e.key === 'ArrowRight' && cursorPosition >= text.length) {
-                        // At right boundary, move to next field within group
-                        e.preventDefault();
-                        const fieldGroup = this.getFieldGroup(element);
-                        const fieldIndex = fieldGroup.indexOf(element);
-                        if (fieldIndex < fieldGroup.length - 1) {
-                            const nextField = fieldGroup[fieldIndex + 1];
-                            nextField.focus();
-                            this.moveCursorToStart(nextField);
-                        }
-                        return;
-                    }
-                    else if (e.key === 'ArrowLeft' && cursorPosition === 0) {
-                        // At left boundary, move to previous field within group
-                        e.preventDefault();
-                        const fieldGroup = this.getFieldGroup(element);
-                        const fieldIndex = fieldGroup.indexOf(element);
-                        if (fieldIndex > 0) {
-                            const prevField = fieldGroup[fieldIndex - 1];
-                            prevField.focus();
-                            this.moveCursorToEnd(prevField);
-                        }
-                        return;
-                    }
-                }
-            }
-        }, { signal: this.abortController.signal });
-        // Input validation
-        element.addEventListener('input', () => {
-            const text = element.textContent || '';
-            const cleanText = text.replace(/[^0-9]/g, '');
-            if (text !== cleanText) {
-                element.textContent = cleanText;
-                this.moveCursorToEnd(element);
-            }
-            if (cleanText !== '') {
-                const num = parseInt(cleanText);
-                onChange(num);
-                if ((min !== null && num < min) || (max !== null && num > max)) {
-                    element.classList.add('error');
-                }
-                else {
-                    element.classList.remove('error');
-                }
-            }
-            else {
-                element.classList.remove('error');
-            }
-        }, { signal: this.abortController.signal });
-        // Paste filtering
-        element.addEventListener('paste', (e) => {
-            var _a;
-            e.preventDefault();
-            const text = ((_a = e.clipboardData) === null || _a === void 0 ? void 0 : _a.getData('text/plain')) || '';
-            const cleanText = text.replace(/[^0-9]/g, '');
-            document.execCommand('insertText', false, cleanText);
-        }, { signal: this.abortController.signal });
-        // Clear error on focus
-        element.addEventListener('focus', () => {
-            this.validationState.clearError(element.id);
-        }, { signal: this.abortController.signal });
-        // Ensure placeholder shows when field is empty on blur
-        element.addEventListener('blur', () => {
-            const text = element.textContent || '';
-            if (text.trim() === '') {
-                element.textContent = '';
             }
         }, { signal: this.abortController.signal });
     }
