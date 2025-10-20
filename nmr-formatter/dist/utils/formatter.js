@@ -115,15 +115,19 @@ function formatMetadata(metadata) {
     // Nuclei with superscript
     if (metadata.nuclei) {
         let nucleiFormatted = metadata.nuclei;
-        // Apply superscript formatting for nuclei numbers
-        nucleiFormatted = nucleiFormatted.replace(/^(\d+)/, "<sup>$1</sup>");
+        // Apply superscript formatting for nuclei numbers (skip if already formatted)
+        if (!nucleiFormatted.includes('<sup>')) {
+            nucleiFormatted = nucleiFormatted.replace(/^(\d+)/, "<sup>$1</sup>");
+        }
         parts.push(`${nucleiFormatted} NMR`);
     }
     // Solvent with subscript formatting
     if (metadata.solvent) {
         let solventFormatted = metadata.solvent;
-        // Apply subscript formatting for numbers in solvent names
-        solventFormatted = solventFormatted.replace(/(\d+)/g, "<sub>$1</sub>");
+        // Apply subscript formatting for numbers in solvent names (skip if already formatted)
+        if (!solventFormatted.includes('<sub>')) {
+            solventFormatted = solventFormatted.replace(/(\d+)/g, "<sub>$1</sub>");
+        }
         parts.push(`(${solventFormatted}`);
     }
     // Frequency

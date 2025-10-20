@@ -305,43 +305,56 @@ export class NMRFormatterApp {
             return;
         }
 
-        // Create temporary element to copy HTML content
+        // Create temporary element WITHOUT styles
         const tempElement = document.createElement('div');
         tempElement.innerHTML = richTextContent;
-        document.body.appendChild(tempElement);
 
-        // Select the content
-        const range = document.createRange();
-        range.selectNodeContents(tempElement);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
+        // Remove all style attributes from copied content
+        tempElement.querySelectorAll('[style]').forEach(el => {
+            el.removeAttribute('style');
+        });
 
-        try {
-            // Copy to clipboard
-            document.execCommand('copy');
+        // Remove contenteditable attributes
+        tempElement.querySelectorAll('[contenteditable]').forEach(el => {
+            el.removeAttribute('contenteditable');
+        });
 
-            // Show feedback
-            const copyBtn = document.getElementById('copy-btn');
-            if (copyBtn) {
-                const originalHTML = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fi fi-rr-check"></i>';
-                (copyBtn as HTMLButtonElement).style.backgroundColor = '#28a745';
-                (copyBtn as HTMLButtonElement).style.color = 'white';
+        // Remove class attributes (optional - keeps HTML minimal)
+        tempElement.querySelectorAll('[class]').forEach(el => {
+            el.removeAttribute('class');
+        });
 
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalHTML || '<i class="fi fi-rr-copy-alt"></i>';
-                    (copyBtn as HTMLButtonElement).style.backgroundColor = '';
-                    (copyBtn as HTMLButtonElement).style.color = '';
-                }, 2000);
-            }
-        } catch (error) {
+        const cleanHTML = tempElement.innerHTML;
+
+        // Use modern Clipboard API
+        navigator.clipboard.write([
+            new ClipboardItem({
+                'text/html': new Blob([cleanHTML], { type: 'text/html' }),
+                'text/plain': new Blob([tempElement.textContent || ''], { type: 'text/plain' })
+            })
+        ])
+        .then(() => {
+            this.showCopySuccess();
+        })
+        .catch((error) => {
             console.error('Failed to copy:', error);
             alert('Failed to copy to clipboard');
-        } finally {
-            // Clean up
-            document.body.removeChild(tempElement);
-            selection?.removeAllRanges();
+        });
+    }
+
+    private showCopySuccess(): void {
+        const copyBtn = document.getElementById('copy-btn');
+        if (copyBtn) {
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fi fi-rr-check"></i>';
+            (copyBtn as HTMLButtonElement).style.backgroundColor = '#28a745';
+            (copyBtn as HTMLButtonElement).style.color = 'white';
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHTML || '<i class="fi fi-rr-copy-alt"></i>';
+                (copyBtn as HTMLButtonElement).style.backgroundColor = '';
+                (copyBtn as HTMLButtonElement).style.color = '';
+            }, 2000);
         }
     }
 }

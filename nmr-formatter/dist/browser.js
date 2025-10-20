@@ -713,15 +713,19 @@ function formatMetadata(metadata) {
     // Nuclei with superscript
     if (metadata.nuclei) {
         let nucleiFormatted = metadata.nuclei;
-        // Apply superscript formatting for nuclei numbers
-        nucleiFormatted = nucleiFormatted.replace(/^(\d+)/, "<sup>$1</sup>");
+        // Apply superscript formatting for nuclei numbers (skip if already formatted)
+        if (!nucleiFormatted.includes('<sup>')) {
+            nucleiFormatted = nucleiFormatted.replace(/^(\d+)/, "<sup>$1</sup>");
+        }
         parts.push(`${nucleiFormatted} NMR`);
     }
     // Solvent with subscript formatting
     if (metadata.solvent) {
         let solventFormatted = metadata.solvent;
-        // Apply subscript formatting for numbers in solvent names
-        solventFormatted = solventFormatted.replace(/(\d+)/g, "<sub>$1</sub>");
+        // Apply subscript formatting for numbers in solvent names (skip if already formatted)
+        if (!solventFormatted.includes('<sub>')) {
+            solventFormatted = solventFormatted.replace(/(\d+)/g, "<sub>$1</sub>");
+        }
         parts.push(`(${solventFormatted}`);
     }
     // Frequency
@@ -4115,41 +4119,49 @@ class NMRFormatterApp {
             alert('No formatted text to copy. Generate text first.');
             return;
         }
-        // Create temporary element to copy HTML content
+        // Create temporary element WITHOUT styles
         const tempElement = document.createElement('div');
         tempElement.innerHTML = richTextContent;
-        document.body.appendChild(tempElement);
-        // Select the content
-        const range = document.createRange();
-        range.selectNodeContents(tempElement);
-        const selection = window.getSelection();
-        selection === null || selection === void 0 ? void 0 : selection.removeAllRanges();
-        selection === null || selection === void 0 ? void 0 : selection.addRange(range);
-        try {
-            // Copy to clipboard
-            document.execCommand('copy');
-            // Show feedback
-            const copyBtn = document.getElementById('copy-btn');
-            if (copyBtn) {
-                const originalHTML = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fi fi-rr-check"></i>';
-                copyBtn.style.backgroundColor = '#28a745';
-                copyBtn.style.color = 'white';
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalHTML || '<i class="fi fi-rr-copy-alt"></i>';
-                    copyBtn.style.backgroundColor = '';
-                    copyBtn.style.color = '';
-                }, 2000);
-            }
-        }
-        catch (error) {
+        // Remove all style attributes from copied content
+        tempElement.querySelectorAll('[style]').forEach(el => {
+            el.removeAttribute('style');
+        });
+        // Remove contenteditable attributes
+        tempElement.querySelectorAll('[contenteditable]').forEach(el => {
+            el.removeAttribute('contenteditable');
+        });
+        // Remove class attributes (optional - keeps HTML minimal)
+        tempElement.querySelectorAll('[class]').forEach(el => {
+            el.removeAttribute('class');
+        });
+        const cleanHTML = tempElement.innerHTML;
+        // Use modern Clipboard API
+        navigator.clipboard.write([
+            new ClipboardItem({
+                'text/html': new Blob([cleanHTML], { type: 'text/html' }),
+                'text/plain': new Blob([tempElement.textContent || ''], { type: 'text/plain' })
+            })
+        ])
+            .then(() => {
+            this.showCopySuccess();
+        })
+            .catch((error) => {
             console.error('Failed to copy:', error);
             alert('Failed to copy to clipboard');
-        }
-        finally {
-            // Clean up
-            document.body.removeChild(tempElement);
-            selection === null || selection === void 0 ? void 0 : selection.removeAllRanges();
+        });
+    }
+    showCopySuccess() {
+        const copyBtn = document.getElementById('copy-btn');
+        if (copyBtn) {
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fi fi-rr-check"></i>';
+            copyBtn.style.backgroundColor = '#28a745';
+            copyBtn.style.color = 'white';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHTML || '<i class="fi fi-rr-copy-alt"></i>';
+                copyBtn.style.backgroundColor = '';
+                copyBtn.style.color = '';
+            }, 2000);
         }
     }
 }
