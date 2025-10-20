@@ -133,11 +133,11 @@ export class NMRFormatterApp {
             // Sort all J-values in descending order
             this.appState.table.sortAllJValues();
 
-            // Remove empty rows from table
-            this.appState.table.removeEmptyRows();
-
-            // Validate and highlight errors (after removing empty rows)
+            // Validate and highlight errors BEFORE removing empty rows
             const hasErrors = this.validateAndHighlightTable();
+
+            // Remove empty rows from table (after validation)
+            this.appState.table.removeEmptyRows();
 
             // Get peaks from table state
             const tableRows = this.appState.table.getRows();

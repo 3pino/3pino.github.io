@@ -64,11 +64,10 @@
 /* Table Inputs - Transparent base, focus shows border */
 .nmr-table .entry {
   width: 100%;
-  border-width: 0px;
   padding: var(--space-2);
 
-  &:focus{
-    border-width: 2px;
+  &:not(:focus):not(.error){
+    border-width: 0px;
 
   }
 }
