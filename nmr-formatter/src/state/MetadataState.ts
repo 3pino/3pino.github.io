@@ -18,11 +18,11 @@ export class MetadataState {
 
     constructor(initialData?: Partial<MetadataStateData>) {
         this.data = {
-            nuclei: '<sup>1</sup>H',
+            nuclei: '',
             solvent: '',
             frequency: NaN,
-            shiftPrecision: 3,
-            jPrecision: 2,
+            shiftPrecision: NaN,
+            jPrecision: NaN,
             sortOrder: 'desc',
             ...initialData
         };

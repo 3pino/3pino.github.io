@@ -137,7 +137,9 @@ class NMRFormatterApp {
         hasErrors = (0, form_validation_1.validateMetadata)({
             nuclei: metadataData.nuclei,
             solvent: metadataData.solvent,
-            frequency: metadataData.frequency
+            frequency: metadataData.frequency,
+            shiftPrecision: metadataData.shiftPrecision,
+            jPrecision: metadataData.jPrecision
         }, this.appState.validation);
         // Validate table rows
         const tableRows = this.appState.table.getRows();

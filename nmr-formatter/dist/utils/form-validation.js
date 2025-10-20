@@ -15,16 +15,32 @@ const field_validators_1 = require("./validators/field-validators");
  */
 function validateMetadata(metadata, validationState) {
     let hasErrors = false;
-    if (!metadata.nuclei || metadata.nuclei.trim() === '') {
+    // Helper to strip HTML tags and get text content
+    const stripHTML = (html) => {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        return temp.textContent || '';
+    };
+    const nucleiText = stripHTML(metadata.nuclei).trim();
+    if (!nucleiText || nucleiText === '') {
         validationState.setError('nuclei', 'Nuclei is required');
         hasErrors = true;
     }
-    if (!metadata.solvent || metadata.solvent.trim() === '') {
+    const solventText = stripHTML(metadata.solvent).trim();
+    if (!solventText || solventText === '') {
         validationState.setError('solvent', 'Solvent is required');
         hasErrors = true;
     }
     if (!metadata.frequency || metadata.frequency === 0) {
         validationState.setError('frequency', 'Frequency is required');
+        hasErrors = true;
+    }
+    if (isNaN(metadata.shiftPrecision) || metadata.shiftPrecision < 1 || metadata.shiftPrecision > 9) {
+        validationState.setError('shift-precision', 'Shift sig figs must be 1-9');
+        hasErrors = true;
+    }
+    if (isNaN(metadata.jPrecision) || metadata.jPrecision < 1 || metadata.jPrecision > 9) {
+        validationState.setError('j-precision', 'J sig figs must be 1-9');
         hasErrors = true;
     }
     return hasErrors;

@@ -34,11 +34,19 @@ class MetadataForm {
         // Add .input-richtext class for toolbar integration
         this.elements.nuclei.classList.add('input-richtext');
         this.elements.solvent.classList.add('input-richtext');
-        this.elements.nuclei.innerHTML = data.nuclei;
+        // Set default values on app startup
+        const defaultNuclei = '<sup>1</sup>H';
+        const defaultShiftPrecision = 3;
+        const defaultJPrecision = 2;
+        this.elements.nuclei.innerHTML = defaultNuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
-        this.elements.shiftPrecision.textContent = '';
-        this.elements.jPrecision.textContent = '';
+        this.elements.shiftPrecision.textContent = defaultShiftPrecision.toString();
+        this.elements.jPrecision.textContent = defaultJPrecision.toString();
+        // Update state to match DOM
+        this.metadataState.setNuclei(defaultNuclei);
+        this.metadataState.setShiftPrecision(defaultShiftPrecision);
+        this.metadataState.setJPrecision(defaultJPrecision);
         // Set sort order icon (default: Descending = down arrow)
         this.updateSortOrderIcon(data.sortOrder);
     }
@@ -190,21 +198,15 @@ class MetadataForm {
             // Keyboard shortcuts (Ctrl+B, Ctrl+I) - only if no input filter
             if (e.ctrlKey || e.metaKey) {
                 if (e.key === 'b' || e.key === 'B') {
+                    e.preventDefault();
                     if (!inputFilter) {
-                        e.preventDefault();
                         document.execCommand('bold');
-                    }
-                    else {
-                        e.preventDefault(); // Block the shortcut
                     }
                 }
                 else if (e.key === 'i' || e.key === 'I') {
+                    e.preventDefault();
                     if (!inputFilter) {
-                        e.preventDefault();
                         document.execCommand('italic');
-                    }
-                    else {
-                        e.preventDefault(); // Block the shortcut
                     }
                 }
             }

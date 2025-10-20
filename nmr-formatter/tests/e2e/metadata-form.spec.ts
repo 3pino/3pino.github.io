@@ -212,6 +212,35 @@ test.describe('Metadata Form - Input Validation', () => {
     });
   });
 
+  test.describe('Empty Field Validation', () => {
+    test('should show error when required fields are empty on Generate Text', async () => {
+      // Clear all fields to make them empty
+      await helper.clearField(helper.nuclei);
+      await helper.clearField(helper.solvent);
+      await helper.clearField(helper.frequency);
+      await helper.clearField(helper.shiftPrecision);
+      await helper.clearField(helper.jPrecision);
+
+      // Blur to trigger cleanup
+      await helper.nuclei.blur();
+      await helper.solvent.blur();
+      await helper.frequency.blur();
+      await helper.shiftPrecision.blur();
+      await helper.jPrecision.blur();
+
+      // Click Generate Text button
+      const generateBtn = helper.page.locator('#convert-down-btn');
+      await generateBtn.click();
+
+      // All fields should show error
+      expect(await helper.hasError(helper.nuclei)).toBe(true);
+      expect(await helper.hasError(helper.solvent)).toBe(true);
+      expect(await helper.hasError(helper.frequency)).toBe(true);
+      expect(await helper.hasError(helper.shiftPrecision)).toBe(true);
+      expect(await helper.hasError(helper.jPrecision)).toBe(true);
+    });
+  });
+
   test.describe('Empty Tag Cleanup', () => {
     test('nuclei: should cleanup empty HTML tags and show placeholder', async () => {
       const field = helper.nuclei;

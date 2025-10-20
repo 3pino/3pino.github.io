@@ -64,11 +64,21 @@ export class MetadataForm {
         this.elements.nuclei.classList.add('input-richtext');
         this.elements.solvent.classList.add('input-richtext');
 
-        this.elements.nuclei.innerHTML = data.nuclei;
+        // Set default values on app startup
+        const defaultNuclei = '<sup>1</sup>H';
+        const defaultShiftPrecision = 3;
+        const defaultJPrecision = 2;
+
+        this.elements.nuclei.innerHTML = defaultNuclei;
         this.elements.solvent.innerHTML = data.solvent;
         this.elements.frequency.textContent = isNaN(data.frequency) ? '' : data.frequency.toString();
-        this.elements.shiftPrecision.textContent = '';
-        this.elements.jPrecision.textContent = '';
+        this.elements.shiftPrecision.textContent = defaultShiftPrecision.toString();
+        this.elements.jPrecision.textContent = defaultJPrecision.toString();
+
+        // Update state to match DOM
+        this.metadataState.setNuclei(defaultNuclei);
+        this.metadataState.setShiftPrecision(defaultShiftPrecision);
+        this.metadataState.setJPrecision(defaultJPrecision);
 
         // Set sort order icon (default: Descending = down arrow)
         this.updateSortOrderIcon(data.sortOrder);

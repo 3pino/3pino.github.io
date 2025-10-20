@@ -197,7 +197,9 @@ export class NMRFormatterApp {
             {
                 nuclei: metadataData.nuclei,
                 solvent: metadataData.solvent,
-                frequency: metadataData.frequency
+                frequency: metadataData.frequency,
+                shiftPrecision: metadataData.shiftPrecision,
+                jPrecision: metadataData.jPrecision
             },
             this.appState.validation
         );
