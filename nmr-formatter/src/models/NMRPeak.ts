@@ -41,6 +41,8 @@ export class NMRPeak {
         const clean = multiplicityText.toLowerCase().trim();
         let normalized = clean;
 
+
+        // Words from https://chemistry.stackexchange.com/questions/39151/is-there-a-consensus-how-to-report-coupling-patterns-greater-than-quartets
         const replacementMap: [RegExp, string][] = [
             [/\s+of\s+/g, ' '],
             [/[\s\-–()]+/g, ' '],
@@ -51,8 +53,10 @@ export class NMRPeak {
             [/nonets?/g, '9'],
             [/octets?/g, '8'],
             [/septets?/g, '7'],
+            [/heptets?/g, '7'],
             [/sextets?/g, '6'],
             [/quintets?/g, '5'],
+            [/pentets?/g, '5'],
             [/quartets?/g, '4'],
             [/triplets?/g, '3'],
             [/doublets?/g, '2'],
@@ -63,8 +67,13 @@ export class NMRPeak {
             [/non(?!et)/g, '9'],
             [/oct(?!et)/g, '8'],
             [/sept(?!et)/g, '7'],
-            [/sext(?!et)/g, '6'],
+            [/he?pt(?!et)/g, '7'],
+            [/se?xt(?!et)/g, '6'],
             [/quint(?!et)/g, '5'],
+            [/qnt/g, '5'],
+            [/quin?/g, '5'],
+            [/pent(?!et)/g, '5'],
+            [/pnt/g, '5'],
             [/q(?!u)/g, '4'],
             [/t(?!r|e)/g, '3'],
             [/d(?!o)/g, '2'],

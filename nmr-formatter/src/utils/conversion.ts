@@ -48,12 +48,16 @@ export function convertMultiplicityToText(input: string): string {
             '2': 'd',
             '3': 't',
             '4': 'q',
-            '5': 'quint'
+            '5': 'quint',
+            '6': 'sext',
+            '7': 'sept',
+            '8': 'oct',
+            '9': 'non'
         };
 
         let result = '';
         for (const digit of trimmed) {
-            if (digit >= '1' && digit <= '5') {
+            if (digit >= '1' && digit <= '9') {
                 result += digitMap[digit];
             }
         }
