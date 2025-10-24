@@ -698,7 +698,9 @@ function formatAssignment(assignment) {
 function formatSinglePeak(peak, shiftSigFigs = 3, jValueSigFigs = 2, integrationDecimalPlaces = 0, nuclei = "1H") {
     const shift = formatChemicalShift(peak.chemicalShift, shiftSigFigs);
     const mult = formatMultiplicity(peak.multiplicity);
-    const jValues = formatJValues(peak.jValues, jValueSigFigs);
+    // Only include J-values if multipletnumbers is not null (same logic as table grayout)
+    const shouldShowJValues = NMRPeak.multipletnumbers(peak.multiplicity) !== null;
+    const jValues = shouldShowJValues ? formatJValues(peak.jValues, jValueSigFigs) : "";
     const integration = formatIntegration(peak.integration, integrationDecimalPlaces, nuclei);
     const assignment = formatAssignment(peak.assignment);
     // Build the peak string: δ shift (multiplicity, J-values, integration, assignment)
