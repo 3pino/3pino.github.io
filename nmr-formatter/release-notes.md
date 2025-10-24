@@ -1,5 +1,13 @@
 # NMR Formatter Release Notes
 
+## ver 1.4.8 (2025-10-24)
+
+### Bug Fixes
+
+- Fixed J-values appearing in formatted text output when multiplicity disallows them (e.g., "m", "br", "broad")
+- Fixed numeric multiplicity input support for sextet and higher (6-9: sextet, septet, octet, nonet)
+- Added support for alternative multiplicity patterns (heptet, pentet, variants)
+
 ## ver 1.4.7 (2025-10-20)
 
 ### Bug Fixes
