@@ -26,7 +26,7 @@ export function createBarcodeReader({
   window = globalThis.window,
   createReader,
 } = {}) {
-  const ui = Object.fromEntries(['start', 'stop', 'preview', 'video', 'status', 'result', 'code', 'copy', 'copyClose']
+  const ui = Object.fromEntries(['start', 'stop', 'preview', 'video', 'status', 'result', 'code', 'copyClose']
     .map((id) => [id, document.getElementById(id)]));
   const available = window.isSecureContext && Boolean(navigator.mediaDevices?.getUserMedia);
   let session = null, starting = false, copying = false, code = '';
@@ -41,7 +41,6 @@ export function createBarcodeReader({
     ui.stop.hidden = !session;
     ui.preview.hidden = !session;
     ui.result.hidden = !code;
-    ui.copy.disabled = !code || copying;
     ui.copyClose.disabled = !code || copying;
   }
 
@@ -124,17 +123,15 @@ export function createBarcodeReader({
     }
   }
 
-  async function copy(close = false) {
+  async function copy() {
     if (!code || copying) return false;
     copying = true;
     render();
     try {
       // 数字への変換やtrimをせず、先頭の0・改行なども読み取り結果のままコピーする。
       await navigator.clipboard.writeText(code);
-      if (close) {
-        status('コピーしました。閉じられない場合は、このタブを閉じてください。');
-        try { window.close(); } catch { /* コピー成功は維持し、タブは利用者に閉じてもらう。 */ }
-      } else status('コピーしました。');
+      status('コピーしました。閉じられない場合は、このタブを閉じてください。');
+      try { window.close(); } catch { /* コピー成功は維持し、タブは利用者に閉じてもらう。 */ }
       return true;
     } catch {
       ui.code.focus();
@@ -149,8 +146,7 @@ export function createBarcodeReader({
 
   ui.start.addEventListener('click', start);
   ui.stop.addEventListener('click', stop);
-  ui.copy.addEventListener('click', () => { void copy(); });
-  ui.copyClose.addEventListener('click', () => { void copy(true); });
+  ui.copyClose.addEventListener('click', () => { void copy(); });
   window.addEventListener('pagehide', stop);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   if (!available) status(window.isSecureContext

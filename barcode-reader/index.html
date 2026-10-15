@@ -6,35 +6,44 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
     <title>バーコード読み取り</title>
-    <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js"></script>
+    <link rel="stylesheet" href="./styles.css?theme=gas">
+    <script type="module" src="./app.js?copy=close"></script>
   </head>
-  <body>
-    <main>
-      <h1>バーコード読み取り</h1>
-      <p>カメラで読み取り、結果をコピーできます。</p>
-      <div class="actions">
-        <button id="start" type="button" disabled>読み取りを開始</button>
-        <button id="stop" class="secondary" type="button" hidden>停止</button>
+  <body data-format="all">
+    <header>
+      <div class="header-inner">
+        <h1><a href="./">バーコード読み取り</a></h1>
+        <nav aria-label="読み取り形式">
+          <a href="./" aria-current="page">すべて</a>
+          <a href="./code128/">Code 128のみ</a>
+        </nav>
       </div>
-      <section id="preview" aria-label="カメラ映像" hidden>
-        <video id="video" autoplay muted playsinline></video>
-        <div class="guide" aria-hidden="true"></div>
-      </section>
-      <p id="status" role="status" aria-live="polite">開始するとカメラの使用許可を求めます。</p>
-      <section id="result" hidden>
-        <label for="code">読み取り結果</label>
-        <textarea id="code" rows="4" readonly spellcheck="false" autocapitalize="off"></textarea>
+    </header>
+    <main>
+      <div class="reader">
+        <h2>バーコードを読み取る</h2>
         <div class="actions">
-          <button id="copyClose" type="button" disabled>コピーして閉じる</button>
-          <button id="copy" class="secondary" type="button" disabled>コピー</button>
+          <button id="start" type="button" disabled>読み取りを開始</button>
+          <button id="stop" class="muted" type="button" hidden>停止</button>
         </div>
-      </section>
-      <footer>
-        <p>JAN / EAN・Code 128・QR・Data Matrix などに対応。<br>画像・読み取り結果のサーバー送信や履歴の保存は行いません。</p>
-        <a href="./vendor/NOTICE.txt">使用ライブラリ</a>
-      </footer>
-      <noscript><p>JavaScriptを有効にしてください。</p></noscript>
+        <section id="preview" aria-label="カメラ映像" hidden>
+          <video id="video" autoplay muted playsinline></video>
+          <div class="guide" aria-hidden="true"></div>
+        </section>
+        <p id="status" class="hint" role="status" aria-live="polite">開始するとカメラの使用許可を求めます。</p>
+        <section id="result" hidden>
+          <label for="code">読み取り結果</label>
+          <textarea id="code" rows="4" readonly spellcheck="false" autocapitalize="off"></textarea>
+          <div class="actions">
+            <button id="copyClose" type="button" disabled>コピーして閉じる</button>
+          </div>
+        </section>
+        <footer class="hint">
+          <p>JAN / EAN・Code 128・QR・Data Matrix などに対応。<br>画像・読み取り結果のサーバー送信や履歴の保存は行いません。</p>
+          <a href="./vendor/NOTICE.txt">使用ライブラリ</a>
+        </footer>
+        <noscript><p>JavaScriptを有効にしてください。</p></noscript>
+      </div>
     </main>
   </body>
 </html>

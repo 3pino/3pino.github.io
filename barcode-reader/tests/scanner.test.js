@@ -100,12 +100,13 @@ test('the first result stops the camera, preserves raw text and never interprets
   assert.equal(f.nodes.video.srcObject, null);
   assert.ok(f.counts().stopped > 0);
   assert.equal(f.nodes.start.textContent, 'もう一度読み取る');
-  assert.equal(f.nodes.copy.disabled, false);
+  assert.equal(f.nodes.copyClose.disabled, false);
+  assert.equal(f.nodes.copy, undefined);
   f.emit('later result');
   assert.equal(f.nodes.code.value, value);
   await f.app.copy();
   assert.deepEqual(f.writes, [value]);
-  assert.equal(f.counts().closed, 0);
+  assert.equal(f.counts().closed, 1);
 });
 
 test('a result delivered before the decode Promise resolves is accepted and its controls released', async () => {
@@ -215,22 +216,22 @@ test('hiding the tab, leaving the page or ending the video track stops the camer
 test('clipboard failures select the code for manual copying and never close the tab', async () => {
   for (const options of [{ copyError: true }, { noClipboard: true }]) {
     const f = fixture(options); await f.app.start(); f.emit('00000123');
-    assert.equal(await f.app.copy(true), false);
+    assert.equal(await f.app.copy(), false);
     assert.equal(f.counts().closed, 0);
     assert.equal(f.nodes.code.selected, true);
     assert.match(f.nodes.status.textContent, /長押し/);
-    assert.equal(f.nodes.copy.disabled, false);
+    assert.equal(f.nodes.copyClose.disabled, false);
   }
 });
 
 test('copy-and-close only closes after successful clipboard writing and suppresses duplicate clicks', async () => {
   const write = deferred(), f = fixture({ copyPromise: write.promise });
   await f.app.start(); f.emit('00000123');
-  const pending = f.app.copy(true); await tick();
+  const pending = f.app.copy(); await tick();
   assert.equal(f.counts().closed, 0);
-  assert.equal(f.nodes.copy.disabled, true);
+  assert.equal(f.nodes.copyClose.disabled, true);
   assert.equal(f.nodes.start.disabled, true);
-  await f.app.copy(true);
+  await f.app.copy();
   assert.deepEqual(f.writes, ['00000123']);
   write.resolve(); assert.equal(await pending, true);
   assert.equal(f.counts().closed, 1);
@@ -240,10 +241,18 @@ test('copy-and-close only closes after successful clipboard writing and suppress
 test('a browser blocking window.close does not turn a successful copy into a clipboard failure', async () => {
   const f = fixture(); await f.app.start(); f.emit('00000123');
   f.window.close = () => { throw Error('Closing blocked'); };
-  assert.equal(await f.app.copy(true), true);
+  assert.equal(await f.app.copy(), true);
   assert.deepEqual(f.writes, ['00000123']);
   assert.equal(f.nodes.code.selected, undefined);
   assert.match(f.nodes.status.textContent, /このタブを閉じて/);
+});
+
+test('the single copy-and-close button writes and then closes, without a separate copy control', async () => {
+  const f = fixture(); await f.app.start(); f.emit('00000123');
+  assert.equal(f.nodes.copy, undefined);
+  f.nodes.copyClose.fire('click'); await tick();
+  assert.deepEqual(f.writes, ['00000123']);
+  assert.equal(f.counts().closed, 1);
 });
 
 test('failed scanner cleanup still stops tracks and allows a new scan', async () => {

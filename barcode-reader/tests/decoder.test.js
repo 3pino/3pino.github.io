@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { isDecodeMiss } from '../scanner.js';
+import { createDecoder } from '../reader.js';
 import '../vendor/zxing-browser-0.1.5.min.js';
 
 const { BrowserMultiFormatReader, BarcodeFormat } = globalThis.ZXingBrowser;
@@ -25,12 +26,27 @@ function canvasFrom(fixture) {
 }
 
 for (const fixture of fixtures) {
-  test('vendored ZXing decodes actual ' + fixture.format + ' pixels', () => {
-    const result = new BrowserMultiFormatReader().decodeFromCanvas(canvasFrom(fixture));
+  test('unrestricted page decoder reads actual ' + fixture.format + ' pixels', async () => {
+    const result = (await createDecoder('all')).decodeFromCanvas(canvasFrom(fixture));
     assert.equal(result.getText(), fixture.text);
     assert.equal(BarcodeFormat[result.getBarcodeFormat()], fixture.format);
   });
 }
+
+for (const fixture of fixtures) {
+  test('Code 128 page decoder ' + (fixture.format === 'CODE_128' ? 'accepts ' : 'rejects ') + fixture.format, async () => {
+    const reader = await createDecoder('code128');
+    if (fixture.format === 'CODE_128') {
+      const result = reader.decodeFromCanvas(canvasFrom(fixture));
+      assert.equal(result.getText(), fixture.text);
+      assert.equal(result.getBarcodeFormat(), BarcodeFormat.CODE_128);
+    } else assert.throws(() => reader.decodeFromCanvas(canvasFrom(fixture)), isDecodeMiss);
+  });
+}
+
+test('an unknown format fails closed instead of falling back to unrestricted detection', async () => {
+  await assert.rejects(createDecoder('unknown'), /読み取り形式が不正/);
+});
 
 test('a blank frame raises a recognized decode miss in the minified distribution', () => {
   const canvas = canvasFrom({ rows: Array(60).fill('0'.repeat(100)), scaleX: 1, scaleY: 1 });
@@ -43,16 +59,32 @@ test('the vendored bundle is the pinned, unmodified npm distribution', () => {
     'b5ad3df920738ca7adcb74508d7e6b6a5b9024993fb9a0c702da1ad8964eca07');
 });
 
-test('the page uses only local scripts/styles and blocks data uploads with CSP', () => {
-  const page = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  assert.match(page, /connect-src 'none'/);
-  assert.match(page, /<video[^>]*\bmuted\b[^>]*\bplaysinline\b/);
-  assert.match(page, /<textarea[^>]*\breadonly\b/);
-  assert.doesNotMatch(page, /<iframe|<form|https?:\/\//);
-  for (const match of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
-    assert.ok(match[1].startsWith('./'));
-    assert.ok(fs.existsSync(new URL('../' + match[1], import.meta.url)));
-  }
-  const ids = [...page.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
-  assert.equal(new Set(ids).size, ids.length);
+for (const [file, format] of [['index.html', 'all'], ['code128/index.html', 'code128']]) {
+  test(file + ' has one copy-and-close control, the correct mode, and only local resources', () => {
+    const url = new URL('../' + file, import.meta.url);
+    const page = fs.readFileSync(url, 'utf8');
+    assert.match(page, new RegExp('data-format="' + format + '"'));
+    assert.match(page, /connect-src 'none'/);
+    assert.match(page, /<video[^>]*\bmuted\b[^>]*\bplaysinline\b/);
+    assert.match(page, /<textarea[^>]*\breadonly\b/);
+    assert.match(page, /id="copyClose"[^>]*>コピーして閉じる<\/button>/);
+    assert.doesNotMatch(page, /id="copy"|<iframe|<form|https?:\/\//);
+    for (const match of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
+      assert.match(match[1], /^\.\.?\//);
+      assert.ok(fs.existsSync(new URL(match[1], url)));
+    }
+    const ids = [...page.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+    assert.equal(new Set(ids).size, ids.length);
+  });
+}
+
+test('both pages share the dark GAS-style tokens and use the configured reader factory', () => {
+  const css = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  for (const declaration of [
+    'color-scheme: dark', '--color-bg: #0f1419', '--color-surface: #182029',
+    '--color-header-bg: #0b2237', '--color-primary: #2f7fb8', '--radius: 6px',
+  ]) assert.ok(css.includes(declaration));
+  const app = fs.readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+  assert.match(app, /document\.body\.dataset\.format/);
+  assert.match(app, /createDecoder\(format\)/);
 });
