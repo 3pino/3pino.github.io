@@ -90,7 +90,6 @@ textarea {
   resize: vertical;
 }
 footer { margin-top: 24px; }
-footer p { margin-bottom: 4px; }
 a { color: var(--color-muted-text); }
 @media (max-width: 600px) {
   .header-inner { padding: 0 16px; }

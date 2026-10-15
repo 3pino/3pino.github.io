@@ -302,8 +302,8 @@ test('retry can rescan after a result without reintroducing initial start contro
   assert.equal(f.nodes.code.value, 'second');
 });
 
-test('the actual page entry requests camera permission on load for both modes without a click', { timeout: 5000 }, async () => {
-  for (const format of ['all', 'code128']) {
+test('the actual page entry requests camera permission on load for every mode without a click', { timeout: 5000 }, async () => {
+  for (const format of ['all', 'code128', 'ean', 'qr', 'datamatrix']) {
     const permission = deferred(), requested = deferred();
     const f = fixture({ skipController: true, mediaPromise: permission.promise, onMedia: () => requested.resolve() });
     f.document.body = { dataset: { format } };

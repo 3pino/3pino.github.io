@@ -33,19 +33,31 @@ for (const fixture of fixtures) {
   });
 }
 
-for (const fixture of fixtures) {
-  test('Code 128 page decoder ' + (fixture.format === 'CODE_128' ? 'accepts ' : 'rejects ') + fixture.format, async () => {
-    const reader = await createDecoder('code128');
-    if (fixture.format === 'CODE_128') {
-      const result = reader.decodeFromCanvas(canvasFrom(fixture));
-      assert.equal(result.getText(), fixture.text);
-      assert.equal(result.getBarcodeFormat(), BarcodeFormat.CODE_128);
-    } else assert.throws(() => reader.decodeFromCanvas(canvasFrom(fixture)), isDecodeMiss);
-  });
+const restrictedFormats = {
+  code128: ['CODE_128'],
+  ean: ['EAN_13', 'EAN_8', 'UPC_A'],
+  qr: ['QR_CODE'],
+  datamatrix: ['DATA_MATRIX'],
+};
+for (const [mode, accepted] of Object.entries(restrictedFormats)) {
+  for (const fixture of fixtures) {
+    test(mode + ' decoder ' + (accepted.includes(fixture.format) ? 'accepts ' : 'rejects ') + fixture.format, async () => {
+      const reader = await createDecoder(mode);
+      if (accepted.includes(fixture.format)) {
+        const result = reader.decodeFromCanvas(canvasFrom(fixture));
+        // UPC-Aと先頭0のEAN-13は同じバー列。EAN限定時は13桁で返る。
+        const upcAsEan = mode === 'ean' && fixture.format === 'UPC_A';
+        assert.equal(result.getText(), (upcAsEan ? '0' : '') + fixture.text);
+        assert.equal(result.getBarcodeFormat(), BarcodeFormat[upcAsEan ? 'EAN_13' : fixture.format]);
+      } else assert.throws(() => reader.decodeFromCanvas(canvasFrom(fixture)), isDecodeMiss);
+    });
+  }
 }
 
 test('an unknown format fails closed instead of falling back to unrestricted detection', async () => {
-  await assert.rejects(createDecoder('unknown'), /読み取り形式が不正/);
+  for (const mode of ['unknown', 'toString', 'constructor']) {
+    await assert.rejects(createDecoder(mode), /読み取り形式が不正/);
+  }
 });
 
 test('a blank frame raises a recognized decode miss in the minified distribution', () => {
@@ -59,7 +71,10 @@ test('the vendored bundle is the pinned, unmodified npm distribution', () => {
     'b5ad3df920738ca7adcb74508d7e6b6a5b9024993fb9a0c702da1ad8964eca07');
 });
 
-for (const [file, format] of [['index.html', 'all'], ['code128/index.html', 'code128']]) {
+for (const [file, format] of [
+  ['index.html', 'all'], ['code128/index.html', 'code128'],
+  ['ean/index.html', 'ean'], ['qr/index.html', 'qr'], ['datamatrix/index.html', 'datamatrix'],
+]) {
   test(file + ' has one copy-and-close control, the correct mode, and only local resources', () => {
     const url = new URL('../' + file, import.meta.url);
     const page = fs.readFileSync(url, 'utf8');
@@ -70,6 +85,10 @@ for (const [file, format] of [['index.html', 'all'], ['code128/index.html', 'cod
     assert.match(page, /id="copyClose"[^>]*>コピーして閉じる<\/button>/);
     assert.doesNotMatch(page, /id="(?:copy|start|stop)"|<nav\b|<h2\b|<iframe|<form|https?:\/\//);
     assert.match(page, /id="retry"[^>]*hidden/);
+    const footer = page.match(/<footer\b[^>]*>([\s\S]*?)<\/footer>/)?.[1];
+    assert.ok(footer);
+    assert.doesNotMatch(footer, /<p\b/);
+    assert.doesNotMatch(page, /画像・読み取り結果のサーバー送信や履歴の保存/);
     for (const match of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
       assert.match(match[1], /^\.\.?\//);
       assert.ok(fs.existsSync(new URL(match[1], url)));
@@ -79,7 +98,7 @@ for (const [file, format] of [['index.html', 'all'], ['code128/index.html', 'cod
   });
 }
 
-test('both pages share the dark GAS-style tokens and use the configured reader factory', () => {
+test('pages share the dark GAS-style tokens and use the configured reader factory', () => {
   const css = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   for (const declaration of [
     'color-scheme: dark', '--color-bg: #0f1419', '--color-surface: #182029',
