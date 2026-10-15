@@ -2,6 +2,7 @@ const FORMATS = {
   all: null,
   code128: ['CODE_128'],
   code39: ['CODE_39'],
+  'code39-93': ['CODE_39', 'CODE_93'],
   ean: ['EAN_13', 'EAN_8'],
   qr: ['QR_CODE'],
   datamatrix: ['DATA_MATRIX'],

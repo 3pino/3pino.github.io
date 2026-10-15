@@ -36,6 +36,7 @@ for (const fixture of fixtures) {
 const restrictedFormats = {
   code128: ['CODE_128'],
   code39: ['CODE_39'],
+  'code39-93': ['CODE_39', 'CODE_93'],
   ean: ['EAN_13', 'EAN_8', 'UPC_A'],
   qr: ['QR_CODE'],
   datamatrix: ['DATA_MATRIX'],
@@ -75,6 +76,7 @@ test('the vendored bundle is the pinned, unmodified npm distribution', () => {
 for (const [file, format] of [
   ['index.html', 'all'], ['code128/index.html', 'code128'], ['code39/index.html', 'code39'],
   ['ean/index.html', 'ean'], ['qr/index.html', 'qr'], ['datamatrix/index.html', 'datamatrix'],
+  ['code39-93/index.html', 'code39-93'],
 ]) {
   test(file + ' has one copy-and-close control, the correct mode, and only local resources', () => {
     const url = new URL('../' + file, import.meta.url);
