@@ -26,21 +26,22 @@ export function createBarcodeReader({
   window = globalThis.window,
   createReader,
 } = {}) {
-  const ui = Object.fromEntries(['start', 'stop', 'preview', 'video', 'status', 'result', 'code', 'copyClose']
+  const ui = Object.fromEntries(['retry', 'preview', 'video', 'status', 'result', 'code', 'copyClose']
     .map((id) => [id, document.getElementById(id)]));
   const available = window.isSecureContext && Boolean(navigator.mediaDevices?.getUserMedia);
-  let session = null, starting = false, copying = false, code = '';
+  let session = null, starting = false, copying = false, attempted = false, code = '';
 
   function status(message) {
     ui.status.textContent = message;
   }
 
   function render() {
-    ui.start.disabled = !available || starting || Boolean(session) || copying;
-    ui.start.textContent = starting ? 'カメラを起動中…' : code ? 'もう一度読み取る' : '読み取りを開始';
-    ui.stop.hidden = !session;
+    ui.retry.hidden = !available || !attempted || starting || Boolean(session);
+    ui.retry.disabled = starting || Boolean(session) || copying;
+    ui.retry.textContent = code ? '読み直す' : '再試行';
     ui.preview.hidden = !session;
     ui.result.hidden = !code;
+    ui.copyClose.hidden = !code;
     ui.copyClose.disabled = !code || copying;
   }
 
@@ -69,7 +70,8 @@ export function createBarcodeReader({
   }
 
   async function start() {
-    if (!available || starting || session || copying) return;
+    if (!available || document.hidden || starting || session || copying) return;
+    attempted = true;
     const run = { stream: null, controls: null };
     session = run;
     starting = true;
@@ -78,8 +80,6 @@ export function createBarcodeReader({
     render();
     status('カメラを準備しています。使用許可を求められたら許可してください。');
     try {
-      const reader = await createReader();
-      if (session !== run) return;
       run.stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -89,9 +89,11 @@ export function createBarcodeReader({
         track.addEventListener('ended', () => {
           if (session !== run) return;
           release();
-          status('カメラが停止しました。もう一度読み取りを開始してください。');
+          status('カメラが停止しました。再試行してください。');
         }, { once: true });
       });
+      const reader = await createReader();
+      if (session !== run) return;
       const controls = await reader.decodeFromStream(run.stream, ui.video, (result, error, scanControls) => {
         if (session !== run) return;
         // 最初の結果はdecodeFromStreamのPromiseが解決する前に届くこともある。
@@ -106,7 +108,7 @@ export function createBarcodeReader({
           ui.copyClose.focus();
         } else if (error && !isDecodeMiss(error)) {
           release();
-          status('読み取り中に問題が発生しました。もう一度読み取りを開始してください。');
+          status('読み取り中に問題が発生しました。再試行してください。');
         }
       });
       run.controls = controls;
@@ -144,11 +146,13 @@ export function createBarcodeReader({
     }
   }
 
-  ui.start.addEventListener('click', start);
-  ui.stop.addEventListener('click', stop);
+  ui.retry.addEventListener('click', () => { void start(); });
   ui.copyClose.addEventListener('click', () => { void copy(); });
   window.addEventListener('pagehide', stop);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else if (!attempted) void start();
+  });
   if (!available) status(window.isSecureContext
     ? 'このブラウザではカメラを利用できません。SafariやChromeなどで開いてください。'
     : 'カメラを利用するにはHTTPSのページを開いてください。');

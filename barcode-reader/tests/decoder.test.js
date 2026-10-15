@@ -68,7 +68,8 @@ for (const [file, format] of [['index.html', 'all'], ['code128/index.html', 'cod
     assert.match(page, /<video[^>]*\bmuted\b[^>]*\bplaysinline\b/);
     assert.match(page, /<textarea[^>]*\breadonly\b/);
     assert.match(page, /id="copyClose"[^>]*>コピーして閉じる<\/button>/);
-    assert.doesNotMatch(page, /id="copy"|<iframe|<form|https?:\/\//);
+    assert.doesNotMatch(page, /id="(?:copy|start|stop)"|<nav\b|<h2\b|<iframe|<form|https?:\/\//);
+    assert.match(page, /id="retry"[^>]*hidden/);
     for (const match of page.matchAll(/(?:src|href)="([^"]+)"/g)) {
       assert.match(match[1], /^\.\.?\//);
       assert.ok(fs.existsSync(new URL(match[1], url)));
@@ -87,4 +88,5 @@ test('both pages share the dark GAS-style tokens and use the configured reader f
   const app = fs.readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   assert.match(app, /document\.body\.dataset\.format/);
   assert.match(app, /createDecoder\(format\)/);
+  assert.match(app, /createBarcodeReader\([\s\S]*\)\.start\(\)/);
 });

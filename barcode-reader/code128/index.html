@@ -6,38 +6,30 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
     <title>Code 128専用 | バーコード読み取り</title>
-    <link rel="stylesheet" href="../styles.css?theme=gas">
-    <script type="module" src="../app.js?copy=close"></script>
+    <link rel="stylesheet" href="../styles.css?view=auto">
+    <script type="module" src="../app.js?launch=auto"></script>
   </head>
   <body data-format="code128">
     <header>
       <div class="header-inner">
-        <h1><a href="../">バーコード読み取り</a></h1>
-        <nav aria-label="読み取り形式">
-          <a href="../">すべて</a>
-          <a href="./" aria-current="page">Code 128のみ</a>
-        </nav>
+        <h1>Code 128読み取り</h1>
       </div>
     </header>
     <main>
       <div class="reader">
-        <h2>Code 128を読み取る</h2>
-        <div class="actions">
-          <button id="start" type="button" disabled>読み取りを開始</button>
-          <button id="stop" class="muted" type="button" hidden>停止</button>
-        </div>
         <section id="preview" aria-label="カメラ映像" hidden>
           <video id="video" autoplay muted playsinline></video>
           <div class="guide" aria-hidden="true"></div>
         </section>
-        <p id="status" class="hint" role="status" aria-live="polite">開始するとカメラの使用許可を求めます。</p>
+        <p id="status" class="hint" role="status" aria-live="polite">カメラを準備しています。</p>
         <section id="result" hidden>
           <label for="code">読み取り結果</label>
           <textarea id="code" rows="4" readonly spellcheck="false" autocapitalize="off"></textarea>
-          <div class="actions">
-            <button id="copyClose" type="button" disabled>コピーして閉じる</button>
-          </div>
         </section>
+        <div class="actions">
+          <button id="copyClose" type="button" hidden disabled>コピーして閉じる</button>
+          <button id="retry" class="muted" type="button" hidden>読み直す</button>
+        </div>
         <footer class="hint">
           <p>Code 128のみ検出します。JAN・QRなどは検出しません。<br>画像・読み取り結果のサーバー送信や履歴の保存は行いません。</p>
           <a href="../vendor/NOTICE.txt">使用ライブラリ</a>

@@ -33,6 +33,7 @@ function fixture(options = {}) {
   const navigator = {
     mediaDevices: { getUserMedia: async (constraints) => {
       mediaCalls++; requested = constraints;
+      options.onMedia?.();
       if (options.mediaError) throw Object.assign(Error('camera'), { name: options.mediaError });
       return options.mediaPromise || stream;
     } },
@@ -53,7 +54,8 @@ function fixture(options = {}) {
     if (options.decodePromise) await options.decodePromise;
     return controls;
   } };
-  const app = createBarcodeReader({ document, navigator, window, createReader: () => options.readerPromise || reader });
+  const app = options.skipController ? null
+    : createBarcodeReader({ document, navigator, window, createReader: () => options.readerPromise || reader });
   return {
     app, nodes, document, window, navigator, stream, track, writes, reader,
     emit: (text) => callback({ getText: () => text }, undefined, controls),
@@ -63,16 +65,18 @@ function fixture(options = {}) {
   };
 }
 
-test('does not request the camera on load and uses the rear camera without audio on start', async () => {
+test('starting requests the rear camera immediately without start/stop controls or waiting for the decoder', async () => {
   const f = fixture();
-  assert.equal(f.counts().mediaCalls, 0);
-  assert.equal(f.nodes.start.disabled, false);
-  await f.app.start();
+  assert.equal(f.nodes.start, undefined);
+  assert.equal(f.nodes.stop, undefined);
+  assert.equal(f.nodes.retry.hidden, true);
+  const pending = f.app.start();
+  assert.equal(f.counts().mediaCalls, 1);
   assert.equal(f.constraints().audio, false);
   assert.equal(f.constraints().video.facingMode.ideal, 'environment');
+  await pending;
   assert.equal(f.nodes.preview.hidden, false);
-  assert.equal(f.nodes.start.disabled, true);
-  assert.equal(f.nodes.stop.hidden, false);
+  assert.equal(f.nodes.retry.hidden, true);
   f.app.stop();
   assert.equal(f.nodes.video.srcObject, null);
   assert.equal(f.nodes.preview.hidden, true);
@@ -82,7 +86,7 @@ test('does not request the camera on load and uses the rear camera without audio
 test('rejects insecure contexts and browsers without camera support', async () => {
   for (const options of [{ secure: false }, { noCamera: true }]) {
     const f = fixture(options);
-    assert.equal(f.nodes.start.disabled, true);
+    assert.equal(f.nodes.retry.hidden, true);
     await f.app.start();
     assert.equal(f.counts().mediaCalls, 0);
     assert.match(f.nodes.status.textContent, /HTTPS|このブラウザ/);
@@ -99,7 +103,8 @@ test('the first result stops the camera, preserves raw text and never interprets
   assert.equal(f.nodes.preview.hidden, true);
   assert.equal(f.nodes.video.srcObject, null);
   assert.ok(f.counts().stopped > 0);
-  assert.equal(f.nodes.start.textContent, 'もう一度読み取る');
+  assert.equal(f.nodes.retry.textContent, '読み直す');
+  assert.equal(f.nodes.retry.hidden, false);
   assert.equal(f.nodes.copyClose.disabled, false);
   assert.equal(f.nodes.copy, undefined);
   f.emit('later result');
@@ -115,7 +120,7 @@ test('a result delivered before the decode Promise resolves is accepted and its 
   assert.equal(f.nodes.code.value, '000123');
   assert.ok(f.counts().stopped > 0);
   assert.ok(f.counts().controlsStopped > 0);
-  assert.equal(f.nodes.start.disabled, false);
+  assert.equal(f.nodes.retry.disabled, false);
   assert.equal(f.nodes.status.textContent, '読み取りました。');
 });
 
@@ -130,13 +135,15 @@ test('repeated starts cannot open multiple cameras', async () => {
   f.app.stop();
 });
 
-test('cancel before the library loads prevents requesting camera permission', async () => {
+test('stopping while the decoder loads releases the already acquired camera and never starts decoding', async () => {
   const library = deferred(), f = fixture({ readerPromise: library.promise });
-  const pending = f.app.start();
+  const pending = f.app.start(); await tick();
+  assert.equal(f.counts().mediaCalls, 1);
   f.app.stop();
   library.resolve(f.reader); await pending;
-  assert.equal(f.counts().mediaCalls, 0);
-  assert.equal(f.nodes.start.disabled, false);
+  assert.ok(f.counts().stopped > 0);
+  assert.equal(f.counts().decodeCalls, 0);
+  assert.equal(f.nodes.retry.disabled, false);
 });
 
 test('late camera permission after cancellation releases its stream without starting decoding', async () => {
@@ -148,7 +155,7 @@ test('late camera permission after cancellation releases its stream without star
   permission.resolve(f.stream); await pending;
   assert.ok(f.counts().stopped > 0);
   assert.equal(f.counts().decodeCalls, 0);
-  assert.equal(f.nodes.start.disabled, false);
+  assert.equal(f.nodes.retry.disabled, false);
   assert.equal(f.nodes.status.textContent, '読み取りを停止しました。');
 });
 
@@ -162,7 +169,7 @@ test('stopping while video initialization is pending rejects late results and re
   decode.resolve(); await pending;
   assert.ok(f.counts().controlsStopped > 0);
   assert.equal(f.nodes.video.srcObject, null);
-  assert.equal(f.nodes.start.disabled, false);
+  assert.equal(f.nodes.retry.disabled, false);
 });
 
 test('decode misses continue scanning, while unexpected errors release the camera', async () => {
@@ -185,7 +192,8 @@ test('camera permission, missing devices and busy-camera errors show actionable 
   ]) {
     const f = fixture({ mediaError: name }); await f.app.start();
     assert.match(f.nodes.status.textContent, message);
-    assert.equal(f.nodes.start.disabled, false);
+    assert.equal(f.nodes.retry.hidden, false);
+    assert.equal(f.nodes.retry.disabled, false);
     assert.equal(f.nodes.preview.hidden, true);
   }
 });
@@ -193,12 +201,13 @@ test('camera permission, missing devices and busy-camera errors show actionable 
 test('failed library loading and failed video startup leave no active stream', async () => {
   const library = deferred(); library.reject(Error('library failed'));
   const f = fixture({ readerPromise: library.promise }); await f.app.start();
-  assert.equal(f.counts().mediaCalls, 0);
-  assert.equal(f.nodes.start.disabled, false);
+  assert.equal(f.counts().mediaCalls, 1);
+  assert.ok(f.counts().stopped > 0);
+  assert.equal(f.nodes.retry.disabled, false);
   const g = fixture({ decodeError: true }); await g.app.start();
   assert.ok(g.counts().stopped > 0);
   assert.equal(g.nodes.video.srcObject, null);
-  assert.equal(g.nodes.start.disabled, false);
+  assert.equal(g.nodes.retry.disabled, false);
 });
 
 test('hiding the tab, leaving the page or ending the video track stops the camera', async () => {
@@ -230,7 +239,7 @@ test('copy-and-close only closes after successful clipboard writing and suppress
   const pending = f.app.copy(); await tick();
   assert.equal(f.counts().closed, 0);
   assert.equal(f.nodes.copyClose.disabled, true);
-  assert.equal(f.nodes.start.disabled, true);
+  assert.equal(f.nodes.retry.disabled, true);
   await f.app.copy();
   assert.deepEqual(f.writes, ['00000123']);
   write.resolve(); assert.equal(await pending, true);
@@ -253,6 +262,76 @@ test('the single copy-and-close button writes and then closes, without a separat
   f.nodes.copyClose.fire('click'); await tick();
   assert.deepEqual(f.writes, ['00000123']);
   assert.equal(f.counts().closed, 1);
+});
+
+test('initially hidden pages wait for visibility before requesting camera permission', async () => {
+  const f = fixture();
+  f.document.hidden = true;
+  await f.app.start();
+  assert.equal(f.counts().mediaCalls, 0);
+  f.document.hidden = false;
+  f.document.fire('visibilitychange'); await tick();
+  assert.equal(f.counts().mediaCalls, 1);
+  f.app.stop();
+});
+
+test('returning after a hidden tab requires retry and does not discard a result automatically', async () => {
+  const f = fixture(); await f.app.start();
+  f.document.hidden = true; f.document.fire('visibilitychange');
+  f.document.hidden = false; f.document.fire('visibilitychange'); await tick();
+  assert.equal(f.counts().mediaCalls, 1);
+  assert.equal(f.nodes.retry.hidden, false);
+  assert.equal(f.nodes.retry.textContent, '再試行');
+  f.nodes.retry.fire('click'); await tick();
+  assert.equal(f.counts().mediaCalls, 2);
+  f.emit('00000123');
+  f.document.hidden = true; f.document.fire('visibilitychange');
+  f.document.hidden = false; f.document.fire('visibilitychange'); await tick();
+  assert.equal(f.counts().mediaCalls, 2);
+  assert.equal(f.nodes.code.value, '00000123');
+});
+
+test('retry can rescan after a result without reintroducing initial start controls', async () => {
+  const f = fixture(); await f.app.start(); f.emit('first');
+  f.nodes.retry.fire('click'); await tick();
+  assert.equal(f.counts().mediaCalls, 2);
+  assert.equal(f.nodes.result.hidden, true);
+  assert.equal(f.nodes.retry.hidden, true);
+  assert.equal(f.nodes.copyClose.hidden, true);
+  f.emit('second');
+  assert.equal(f.nodes.code.value, 'second');
+});
+
+test('the actual page entry requests camera permission on load for both modes without a click', { timeout: 5000 }, async () => {
+  for (const format of ['all', 'code128']) {
+    const permission = deferred(), requested = deferred();
+    const f = fixture({ skipController: true, mediaPromise: permission.promise, onMedia: () => requested.resolve() });
+    f.document.body = { dataset: { format } };
+    const saved = new Map();
+    for (const key of ['document', 'navigator', 'window']) {
+      saved.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
+      Object.defineProperty(globalThis, key, { configurable: true, value: f[key] });
+    }
+    try {
+      await import(new URL('../app.js?startup-test=' + format, import.meta.url));
+      await requested.promise;
+      assert.equal(f.counts().mediaCalls, 1);
+      assert.equal(f.nodes.start, undefined);
+      assert.equal(f.nodes.stop, undefined);
+      assert.equal(f.nodes.retry.hidden, true);
+      f.window.fire('pagehide');
+      permission.resolve(f.stream); await tick();
+      assert.ok(f.counts().stopped > 0);
+      assert.equal(f.nodes.video.srcObject, null);
+    } finally {
+      f.window.fire('pagehide');
+      permission.resolve(f.stream); await tick();
+      for (const [key, descriptor] of saved) {
+        if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+        else delete globalThis[key];
+      }
+    }
+  }
 });
 
 test('failed scanner cleanup still stops tracks and allows a new scan', async () => {

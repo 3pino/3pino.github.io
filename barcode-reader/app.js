@@ -1,5 +1,5 @@
-import { createBarcodeReader } from './scanner.js?copy=close';
+import { createBarcodeReader } from './scanner.js?launch=auto';
 import { createDecoder } from './reader.js';
 
 const format = document.body.dataset.format || 'all';
-createBarcodeReader({ createReader: () => createDecoder(format) });
+void createBarcodeReader({ createReader: () => createDecoder(format) }).start();
