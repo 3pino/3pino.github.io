@@ -2,6 +2,7 @@
 
 - 全形式版：<https://3pino.github.io/barcode-reader/>
 - Code 128専用版：<https://3pino.github.io/barcode-reader/code128/>
+- Code 39専用版：<https://3pino.github.io/barcode-reader/code39/>
 - JAN / EAN専用版：<https://3pino.github.io/barcode-reader/ean/>
 - QR専用版：<https://3pino.github.io/barcode-reader/qr/>
 - Data Matrix専用版：<https://3pino.github.io/barcode-reader/datamatrix/>
@@ -14,7 +15,7 @@
 2. カメラの使用を許可し、バーコードを映します。背面カメラを優先します。
 3. 読み取れたらカメラが停止します。「コピーして閉じる」を押します。
 
-- 全形式版はJAN / EAN、UPC、Code 128、QR、Data Matrixなど、ZXingの対応形式を読み取ります。専用版は指定した形式だけを検出します。
+- 全形式版はJAN / EAN、UPC、Code 128、Code 39、QR、Data Matrixなど、ZXingの対応形式を読み取ります。専用版は指定した形式だけを検出します。
 - 各ページの背景・ヘッダー・ボタン・入力欄はGAS版のダーク配色と共通の値にそろえています。
 - JANから品番を調べる処理はありません。結果を数字に変換せず、先頭の0・改行などをそのままコピーします。ただしEAN/UPCの形式判定など、ZXingによる表現の正規化はあります。
 - 読み取ったURLを自動で開くことはありません。
@@ -31,6 +32,7 @@
 | ページ | 判定対象 |
 | --- | --- |
 | Code 128 | `CODE_128` |
+| Code 39 | `CODE_39` |
 | JAN / EAN | `EAN_13`、`EAN_8` |
 | QR | `QR_CODE` |
 | Data Matrix | `DATA_MATRIX` |
@@ -51,7 +53,7 @@ python3 -m http.server 8000
 
 ローカルは `http://localhost:8000/` で開きます。カメラにはHTTPSまたはlocalhostのセキュアコンテキストが必要です。スマートフォンでLAN内のHTTPアドレスを開いても利用できないため、実機確認には公開HTTPS URLを使ってください。
 
-テストはカメラやクリップボードの制御をモックで確認し、EAN/UPC・Code 128・QR・Data Matrixのピクセル入力を配信するZXing本体で復号します。各専用版が指定形式を検出し、対象外の形式を拒否することも検証します。実機のカメラ・ブラウザの動作保証ではありません。
+テストはカメラやクリップボードの制御をモックで確認し、EAN/UPC・Code 128・Code 39・QR・Data Matrixのピクセル入力を配信するZXing本体で復号します。各専用版が指定形式を検出し、対象外の形式を拒否することも検証します。実機のカメラ・ブラウザの動作保証ではありません。
 
 ## 同梱ライブラリ
 
@@ -59,4 +61,4 @@ python3 -m http.server 8000
 - SHA-256：`b5ad3df920738ca7adcb74508d7e6b6a5b9024993fb9a0c702da1ad8964eca07`
 - 配布物は `npm pack @zxing/browser@0.1.5` で取得できます。
 - 同梱コードの権利表記は `vendor/NOTICE.txt`、ライセンス本文は `vendor/LICENSE-*` を参照してください。
-- テスト用ビットマップは架空のデータです。QRとData Matrixは `@zxing/library@0.21.3` で生成し、EAN/UPCとCode 128は各形式のパターンから作成しています。
+- テスト用ビットマップは架空のデータです。QRとData Matrixは `@zxing/library@0.21.3` で生成し、EAN/UPC・Code 128・Code 39は各形式のパターンから作成しています。
