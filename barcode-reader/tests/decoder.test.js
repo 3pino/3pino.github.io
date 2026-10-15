@@ -105,7 +105,7 @@ test('pages share the dark GAS-style tokens and use the configured reader factor
   const css = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
   for (const declaration of [
     'color-scheme: dark', '--color-bg: #0f1419', '--color-surface: #182029',
-    '--color-header-bg: #0b2237', '--color-primary: #2f7fb8', '--radius: 6px',
+    '--color-header-bg: #0b2237', '--color-primary: #26719f', '--radius: 6px',
   ]) assert.ok(css.includes(declaration));
   const app = fs.readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   assert.match(app, /document\.body\.dataset\.format/);
